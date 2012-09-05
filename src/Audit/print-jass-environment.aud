@@ -1,0 +1,133 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)print-jass-environment.aud	1.24	05/06/22 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Sun Security Toolkit: Community Edition (JASS) Environment"
+servfil="print-jass-environment"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   This script is used to display those variables used by the Sun
+   Security Toolkit.  It does not permit any validation or other checks
+   on the content.  The variables and their content are just displayed
+   below.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logNotice "This script does not perform any checks."
+
+
+# Shell script to align output after changes:
+# . print-jass-environment.*
+# newLine=0
+# for i in ${variableListing} ; do
+#    printf "   %-30s" $i
+#    [ "$newLine" = "1" ] && echo
+#    newLine=`expr \( $newLine + 1 \) % 2`
+# done; echo
+
+variableListing="
+   JASS_ACCT_DISABLE                JASS_ACCT_REMOVE
+   JASS_AGING_MAXWEEKS              JASS_AGING_MINWEEKS
+   JASS_AGING_WARNWEEKS             JASS_AT_ALLOW
+   JASS_AT_DENY                     JASS_AUDIT_DIR
+   JASS_BANNER_DTLOGIN              JASS_BANNER_FTPD
+   JASS_BANNER_SENDMAIL             JASS_BANNER_SSHD
+   JASS_BANNER_TELNETD              JASS_CHECK_MINIMIZED
+   JASS_CORE_PATTERN                JASS_CPR_MGT_USER
+   JASS_CRON_ALLOW                  JASS_CRON_DENY
+   JASS_CRON_LOG_SIZE               JASS_CRYPT_ALGORITHMS_ALLOW
+   JASS_CRYPT_DEFAULT               JASS_CRYPT_FORCE_EXPIRE
+   JASS_DISABLE_MODE                JASS_DISPLAY_HOSTNAME
+   JASS_DISPLAY_HOST_LENGTH         JASS_DISPLAY_SCRIPTNAME
+   JASS_DISPLAY_SCRIPT_LENGTH       JASS_DISPLAY_TIMESTAMP
+   JASS_DISPLAY_TIME_LENGTH         JASS_FILES_DIR
+   JASS_FILE_COPY_KEYWORD           JASS_FILE_LIST
+   JASS_FINISH_DIR                  JASS_FIXMODES_DIR
+   JASS_FIXMODES_OPTIONS            JASS_FTPD_UMASK
+   JASS_FTPUSERS                    JASS_HOME_DIR
+   JASS_HOSTNAME                    JASS_KILL_SCRIPT_DISABLE
+   JASS_LOGIN_RETRIES               JASS_LOG_BANNER
+   JASS_LOG_ERROR                   JASS_LOG_FAILURE
+   JASS_LOG_NOTICE                  JASS_LOG_SUCCESS
+   JASS_LOG_SUMMARY
+   JASS_LOG_WARNING                 JASS_MD5_DIR
+   JASS_MODE                        JASS_NOVICE_USER
+   JASS_OS_REVISION                 JASS_OS_TYPE
+   JASS_PACKAGE_DIR                 JASS_PACKAGE_MOUNT
+   JASS_PASSWD                      JASS_PASS_DICTIONDBDIR
+   JASS_PASS_DICTIONLIST            JASS_PASS_HISTORY
+   JASS_PASS_LENGTH                 JASS_PASS_MAXREPEATS
+   JASS_PASS_MINALPHA               JASS_PASS_MINDIFF
+   JASS_PASS_MINDIGIT               JASS_PASS_MINLOWER
+   JASS_PASS_MINSPECIAL             JASS_PASS_MINUPPER
+   JASS_PASS_NAMECHECK              JASS_PASS_WHITESPACE
+   JASS_PATCH_DIR                   JASS_PATCH_MOUNT
+   JASS_PKG                         JASS_POWER_MGT_USER
+   JASS_REC_PATCH_OPTIONS           JASS_REPOSITORY
+   JASS_RHOSTS_FILE                 JASS_ROOT_DIR
+   JASS_ROOT_GROUP                  JASS_ROOT_HOME_DIR
+   JASS_ROOT_PASSWORD               JASS_RUN_AUDIT_LOG
+   JASS_RUN_CHECKSUM                JASS_RUN_INSTALL_LOG
+   JASS_RUN_MANIFEST                JASS_RUN_SCRIPT_LIST
+   JASS_RUN_UNDO_LOG                JASS_RUN_VERSION
+   JASS_SADMIND_OPTIONS             JASS_SAVE_BACKUP
+   JASS_SCRIPT                      JASS_SCRIPT_LIST
+   JASS_SENDMAIL_MODE               JASS_SGID_FILE
+   JASS_SHELLS                      JASS_STANDALONE
+   JASS_SUFFIX                      JASS_SUID_FILE
+   JASS_SUSPEND_PERMS               JASS_SVCS_DISABLE
+   JASS_SVCS_ENABLE                 JASS_TIMESTAMP
+   JASS_TMPFS_SIZE                  JASS_UMASK
+   JASS_UNAME                       JASS_UNOWNED_FILE
+   JASS_USER_DIR                    JASS_VERBOSITY
+   JASS_VERSION                     JASS_WRITABLE_FILE
+   JASS_ZONE_NAME                   JASS_UNDO
+"
+
+for var in ${variableListing}; do
+   value="`eval echo $\"${var}\"`"
+   output="   ${var}
+
+`printPretty \"${value}\"`
+ "
+   logMessage "${output} "
+done
+
+finish_audit

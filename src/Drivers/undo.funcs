@@ -1,0 +1,510 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)undo.funcs	3.38	05/07/18 SMI"
+#
+
+UNDO_NORMAL=0
+UNDO_BACKUP=1
+UNDO_FORCE=2
+UNDO_KEEP=3
+
+
+# ============================================================================
+# Function: logUndoBackupWarning
+#
+# Log general warning about consequences of a undo run.
+# ============================================================================
+logUndoBackupWarning() {
+   logWarning 'Creating backup copies of some files may cause unintended effects.'
+   logWarning 'This is particularly true of /etc/hostname.[interface] files as well
+as crontab files in /var/spool/cron/crontabs.'
+   echo ""
+}
+
+
+# ============================================================================
+# Function: getUserUndoResponse
+#
+# Prompt for, read, and return user response.
+# Called by getUndoResponse.
+#
+# Return values:
+# $UNDO_BACKUP 1	backup file before restoring
+# $UNDO_KEEP   2	keep existing file
+# $UNDO_FORCE  3	restore file with no backup (force)
+# ============================================================================
+getUserUndoResponse() {
+
+   # Default is keep.
+   resp=$UNDO_KEEP
+
+   logMessage '\nSelect your course of action:\n'
+   logMessage '1. Backup - Save the current file, BEFORE restoring original.'
+   logMessage '2. Keep   - Keep the current file, making NO changes.'
+   logMessage '3. Force  - Ignore manual changes, and OVERWRITE current file.'
+   logMessage '\nNOTE: The following additional options are applied to this and ALL subsequent files:\n'
+   logMessage '4. ALWAYS Backup.'
+   logMessage '5. ALWAYS Keep.'
+   logMessage '6. ALWAYS Force.'
+   logMessage '\nEnter 1, 2, 3, 4, 5, or 6:'
+
+   if [ -x /usr/xpg4/bin/egrep ]; then
+      _resp_y=`locale yesstr`
+      _resp_n=`locale nostr`
+      _yes=`locale yesexpr`
+      _grep='/usr/xpg4/bin/egrep'
+   else
+      # This code is not localized. The problem is that if we can't
+      # interpret a localized reponse, we shouldn't ask for it.
+      _resp_y='YES'
+      _resp_n='NO'
+      _yes='^[yY]'
+      _grep='grep'
+   fi
+   _string="(${_resp_y}/${_resp_n}): [${_resp_n}] "
+
+   while read ans ; do
+   
+      # Check if ALWAYS Force chosen
+      if [ "$ans" = 6 ]; then
+         logWarning 'You have chosen to FORCE overwriting this file and'
+         logMessage '       subsequent files even though the file may have been'
+         logMessage '       modified since jass-execute was last run.'
+         logWarning 'This operation is not recoverable if chosen and your'
+         logMessage '       changes will be lost.'
+         logMessage 'Are you SURE you want to do this? ${_string}'
+         
+         # Check user really means it
+         read doit
+
+	 # Use locale to allow localization
+	 echo "${doit}" |  ${_grep} "${_yes}" >/dev/null 2>&1
+
+         # Must respond with YES or it is cancelled.
+         if [ $? -ne 0 ]; then # YES
+            logMessage 'ALWAYS Force operation canceled.'
+            logMessage 'Enter 1, 2, 3, 4, 5, or 6 to select another option:'
+            continue
+         fi
+      fi
+      
+      # Check answer is valid.
+      if [ "$ans" -ge 1 -a "$ans" -le 6 ]; then
+         break
+      fi
+      
+      logMessage '\nThe response provided was not valid, please try again.'
+      logMessage '\nEnter 1, 2, 3, 4, 5, or 6:'
+   done
+
+   # Configure appropriately
+   case "$ans" in
+   1)
+      resp=$UNDO_BACKUP
+      ;;
+   2)
+      resp=$UNDO_KEEP
+      ;;
+   3)
+      resp=$UNDO_FORCE
+      ;;
+   4)
+      resp=$UNDO_BACKUP
+      JASS_UNDO_TYPE="BACKUP"
+      logNotice 'Always do ${JASS_UNDO_TYPE} selected.  Overriding JASS_UNDO_TYPE with ${JASS_UNDO_TYPE}.'
+      export JASS_UNDO_TYPE
+      ;;
+   5)
+      resp=$UNDO_KEEP
+      JASS_UNDO_TYPE="KEEP"
+      logNotice 'Always do ${JASS_UNDO_TYPE} selected.  Overriding JASS_UNDO_TYPE with ${JASS_UNDO_TYPE}.'
+      export JASS_UNDO_TYPE
+      ;;
+   6) 
+      resp=$UNDO_FORCE
+      JASS_UNDO_TYPE="FORCE"
+      logNotice 'Always do ${JASS_UNDO_TYPE} selected.  Overriding JASS_UNDO_TYPE with ${JASS_UNDO_TYPE}.'
+      export JASS_UNDO_TYPE
+      ;;
+   *) ;;
+   esac
+
+   echo ""
+   return $resp
+}
+
+
+# ============================================================================
+# Function: getUndoResponse
+#
+# Get user response or default (non-interactive) response,
+# (based on $JASS_UNDO_TYPE)
+#
+# Note if $respfile is present and contains a valid saved response,
+# use that instead of prompting the user again.
+#
+# Return values:
+# $UNDO_BACKUP 1	backup file before restoring
+# $UNDO_KEEP   2	keep existing file
+# $UNDO_FORCE  3	restore file with no backup (force)
+# ============================================================================
+getUndoResponse() {
+   undofile=$1
+   
+   resp=$UNDO_KEEP
+
+   case "$JASS_UNDO_TYPE" in
+
+   "ASK")
+       gotresp=0
+       
+       # Scan responses cache for prior response for undofile
+       respline=`cat $respfile | egrep ":${undofile}^"`
+       
+       # Found something
+       if [ ! -z "$respline" ]; then
+       
+          # Get response decision.
+          resp=`echo $respline | cut -f1 -d:`
+          
+          # Is the decision valid
+          if [ "$resp" = "$UNDO_KEEP" -o "$resp" = "$UNDO_BACKUP" -o "$resp" = "$UNDO_FORCE" ]; then
+             gotresp=1
+             logNotice 'Using previously specified option for file ${src}.'
+          fi
+       fi
+       
+       # No PREVIOUS decision so add to responses cache.
+       if [ "$gotresp" != "1" ]; then
+          getUserUndoResponse
+          resp=$?
+          echo "${resp}:${undofile}" >>$respfile
+       fi
+      ;;
+
+   "BACKUP")
+      resp=$UNDO_BACKUP
+      ;;
+
+   "FORCE")
+      resp=$UNDO_FORCE
+      ;;
+
+   "KEEP")
+      resp=$UNDO_KEEP
+      ;;
+
+   *)
+      # Use default
+      ;;
+
+   esac
+
+   return $resp
+}
+
+
+# ============================================================================
+# Function: get_checksum
+#
+# Print the MD5 (digest(1)) or (old) CRC (cksum(1)) checksum.
+# The algorithm to use is auto-detected, based on the saved checksum.
+# The CRC checksum has a ":" in it, inserted by checksum_crc().
+# ============================================================================
+get_checksum()
+{
+   currentFile="${1}"
+   oldCksum="${2}"
+
+   if [ -z "${oldCksum}" ] || [ `echo ${oldCksum} | grep -c ":"` = 1 ]; then
+      # Old checksum format detected.
+      checksum_crc "${currentFile}"
+   else
+      # New checksum format detected.
+      checksum_md5 "${currentFile}"
+   fi
+}
+
+
+# ============================================================================
+# Function: log_warning_if_root_password_not_set
+#
+# Warn if the root password is not set or is the same as the default
+# JASS_ROOT_PASSWORD.
+# This can occur when undo undid the /etc/shadow file modified by
+# set-root-password.fin and the passsword was not previously set
+#(usually during a JumpStart install).
+#
+# Note: can't use check_fileContentsNotExist() as the SUNWsst package may
+# have been removed by undo by the time this function is called.
+# ============================================================================
+log_warning_if_root_password_not_set()
+{
+   SHADOW="${JASS_ROOT_DIR}etc/shadow"
+
+   if grep "^root::" ${SHADOW}>/dev/null 2>&1 ; then
+      logWarning 'The root account password is NOT set.
+Anyone can now login or su to root.
+Please set the passwd with the passwd(1) command.'
+   else
+      if grep "^root:${JASS_ROOT_PASSWORD}:" ${SHADOW} >/dev/null 2>&1 ; then
+         logWarning 'The root account password is the same as JASS_ROOT_PASSWORD.'
+      fi
+   fi
+}
+
+
+
+# ============================================================================
+# Function: undo_ops
+#
+# Perform the undo restoration run.
+# ============================================================================
+undo_ops()
+{
+   # Parameters to this function are:
+   # $1	= fully qualified name of the MANIFEST file to be undone
+
+   if [ -z "$1" ] ; then
+      logError 'No JASS_RUN_MANIFEST file specified.'
+      return
+   fi
+
+   reverse_manifest=`dirname $1`/reverse-`basename $1`
+
+   cat /dev/null > ${reverse_manifest} || {
+      logError 'Unable to create temp reversed JASS_RUN_MANIFEST file.'
+      return
+   }
+
+   # Create the reversed manifest file
+   n=`wc -l ${1} | nawk '{print $1}'`
+   while [ ${n} != 0 ]
+   do
+      # this picks off nth line from file, counting down from n to 1
+      sed -e ${n}' q
+		   d' ${1} >> ${reverse_manifest}
+      n=`expr ${n} - 1`
+   done
+
+   # Now step through the reversed manifest file, undoing each operation
+   # Don't redirect stdin to the manifest file since the undo operations
+   # may need to read interactive user input from stdin
+
+   currentScript=""
+   _error=0
+   _warn=0
+   _notice=0
+   _failure=0
+
+   exec 7<${reverse_manifest}
+   
+   respfile=${JASS_REPOSITORY}/respfile.$$
+   rm -fr $respfile
+   touch $respfile
+   
+   while true; do
+
+      read operation module src dest args <&7
+
+      if [ $? != 0 ]; then
+	 exec 7<&-
+	 break
+      fi
+
+      if [ "${currentScript}" != "${module}" ]; then
+	 JASS_SCRIPT="${currentScript}"
+	 logScriptFailure "error"   ${_error}
+	 logScriptFailure "warning"    ${_warn}
+	 logScriptFailure "note"    ${_notice}
+	 logScriptFailure "failure" ${_failure}
+
+         currentScript="${module}"
+         logBanner '${DRV_NAME}: Undoing Finish Script: ${currentScript}'
+
+	 _error=0
+	 _warn=0
+	 _notice=0
+	 _failure=0
+	 
+      fi
+
+      case ${operation} in
+
+      [Jj])
+	 logNotice 'Removing a Sun Security Toolkit: Community Edition-created file.'
+	 # Get the checksum from the manifest checksum file
+	 ck=`grep ${dest} ${JASS_RUN_CHECKSUM} | nawk '{print $2}' | head -1`
+	 # Proceed with undo if current checksum matches the saved one
+         current_ck=`get_checksum ${src} ${ck}`
+         resp=$UNDO_NORMAL
+	 if [ "${current_ck}" != "${ck}" ]; then
+	    logWarning 'Checksum of current file does not match the saved value.'
+            logWarning '   filename = ${src}'
+	    logWarning '   current  = ${current_ck}'
+	    logWarning '   saved    = ${ck}'
+	    
+            getUndoResponse $src
+            resp=$?
+         fi
+
+         if [ $resp != $UNDO_KEEP ] ; then
+            if [ $resp = $UNDO_BACKUP ]; then
+              logUndoBackupWarning
+              logNotice 'BACKUP specified, creating backup copy of ${src}.'
+              backupUndoFile $src
+            elif [ $resp = $UNDO_FORCE ]; then
+              logNotice 'FORCE specified, current ${src} will be overwritten.'
+            fi
+
+	    logMessage 'rm -f $src'
+	    rm -f $src
+	    # Remove the corresponding timestamp placeholder file
+	    rm -f $dest
+         else
+            logNotice 'KEEP specified, no changes were made to ${src}.'
+	 fi
+	 ;;
+
+      [Mm])
+	 logNotice 'Undoing operation MOVE.'
+         resp=$UNDO_NORMAL
+	 if [ -f $src ] ; then
+	    logWarning 'The object ${src} already exists.'
+            getUndoResponse $src
+            resp=$?
+         fi
+
+	 if [ $resp != $UNDO_KEEP ]; then
+            if [ $resp = $UNDO_BACKUP ]; then
+              logUndoBackupWarning
+              logNotice 'BACKUP specified, creating backup copy of ${src}.'
+              backupUndoFile $src
+            elif [ $resp = $UNDO_FORCE ]; then
+              logNotice 'FORCE specified, ${src} will be overwritten.'
+            fi
+
+	    logMessage 'mv $dest $src'
+	    mv $dest $src
+         else
+            logNotice 'KEEP specified, no changes were made to ${src}.'
+	 fi
+	 ;;
+
+      [Cc])
+	 logNotice 'Undoing operation COPY.'
+	 # Get the checksum from the manifest checksum file
+	 ck=`grep ${dest} ${JASS_RUN_CHECKSUM} | nawk '{print $2}' | head -1`
+	 # Proceed with undo if current checksum matches the saved one
+         current_ck=`get_checksum ${src} ${ck}`
+         resp=$UNDO_NORMAL
+	 if [ "${current_ck}" != "${ck}" ]; then
+	    logWarning 'Checksum of current file does not match the saved value.'
+            logWarning '   filename = ${src}'
+	    logWarning '   current  = ${current_ck}'
+	    logWarning '   saved    = ${ck}'
+            getUndoResponse $src
+            resp=$?
+         fi
+
+	 if [ $resp != $UNDO_KEEP ]; then
+            if [ $resp = $UNDO_BACKUP ]; then
+              logUndoBackupWarning
+              logNotice 'BACKUP specified, creating backup copy of ${src}.'
+              backupUndoFile $src
+            elif [ $resp = $UNDO_FORCE ]; then
+              logNotice 'FORCE specified, current ${src} will be overwritten.'
+           fi
+
+	    logMessage 'cp -p $dest $src'
+	    logMessage 'rm -f $dest'
+	    cp -p $dest $src
+	    rm -f $dest
+
+	    # For S10+, register changes to inetd.conf with smf:
+	    if check_os_min_revision 5.10 -a \
+		echo "$src" | grep "etc/inetd/inetd.conf" 2>/dev/null ; then
+		inetconv -i /etc/inet/inetd.conf
+	    fi
+
+         else
+            logNotice 'KEEP specified, no changes were made to ${src}.'
+	 fi
+	 ;;
+
+      [DdNn])
+	 logNotice 'Undoing operation MAKE DIRECTORY.'
+	 logMessage 'rmdir $src'
+	 rmdir $src
+	 ;;
+
+      [Ss])
+	 logNotice 'Undoing operation SYMBOLIC LINK.'
+	 logMessage 'rm -f $dest'
+	 rm -f $dest
+	 ;;
+
+      [Xx])
+	 logNotice 'Undoing operation EXECUTE SCRIPT'
+	 logMessage '   src = $src dest = $dest args = $args'
+         JASS_SCRIPT="${module}"
+	 cmd="$src $dest $args"
+	 logNotice '\nExecuting command: ${cmd}'
+	 eval $cmd
+	 ;;
+
+      [Rr])
+	 logWarning 'REMOVE operation cannot be undone!'
+	 logMessage '   src = $src dest = $dest'
+	 ;;
+
+      *)
+	 logError 'Unknown operation ${operation}, skipping.'
+	 ;;
+      esac
+
+      echo ""
+
+      if [ "${operation}" != "X" -a "${operation}" != "x" ]; then
+         if [ -n "${args}" ] ; then
+	    logWarning 'Operation had extra arguments on the line = ${args}.'
+         fi
+      fi
+   done
+
+   JASS_SCRIPT="${currentScript}"
+   logScriptFailure "error"   ${_error}
+   logScriptFailure "warning"    ${_warn}
+   logScriptFailure "note"    ${_notice}
+   logScriptFailure "failure" ${_failure}
+
+   CURRENT_SCRIPT=""
+   
+   rm -fr $respfile
+
+   # Clear away reverse manifest file
+   #/bin/rm -f ${reverse_manifest}
+}

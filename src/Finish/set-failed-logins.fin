@@ -1,0 +1,137 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-failed-logins.fin	1.4	07/05/18 SMI"
+#
+# Set the SYSLOG_FAILED_LOGINS variable in /etc/default/login to 0,
+# set SLEEPTIME (between failed logins) to 4, and
+# log all failed login attempts to /var/adm/loginlog.
+#
+
+LOGIN=${JASS_ROOT_DIR}etc/default/login
+LOGADM=${JASS_ROOT_DIR}etc/logadm.conf
+
+logMessage "Log all failed login attempts."
+echo ""
+
+if [ ! -f ${LOGIN} ] ; then
+   create_a_file -m 444 -o root:sys ${LOGIN}
+   echo ""
+fi
+
+#
+# Set SYSLOG_FAILED_LOGINS if not set or wrong value
+#
+syslogFailedLogins=`grep "SYSLOG_FAILED_LOGINS=" ${LOGIN} | grep -v "^#" \
+                 | nawk -F= '{ print $2 }'`
+
+if [ "${syslogFailedLogins}" != "0" ] ; then
+   backup_file ${LOGIN}
+   echo ""
+
+   logMessage 'Setting \\\"SYSLOG_FAILED_LOGINS\\\" to 0 in ${LOGIN}.'
+
+   if [ `grep -c "SYSLOG_FAILED_LOGINS=" ${LOGIN}` = 0 ] ; then # append line
+      echo "" >> ${LOGIN}
+      echo "# SYSLOG_FAILED_LOGINS determines the number of failed logins that"\
+           >> ${LOGIN}
+      echo "# are allowed before they are logged." >> ${LOGIN}
+      echo "SYSLOG_FAILED_LOGINS=0" >> ${LOGIN}
+
+   else # modify line
+      nawk \
+        '
+        $1 ~ /^#.*SYSLOG_FAILED_LOGINS=/ \
+            { if (printedFlag == 0) \
+                  {print "SYSLOG_FAILED_LOGINS=0"; printedFlag=1 } \
+              else { print $0} }
+
+        $1 ~ /^" "*SYSLOG_FAILED_LOGINS=/ \
+            { if (printedFlag == 0) \
+                   {print "SYSLOG_FAILED_LOGINS=0"; printedFlag=1 } \
+              else { printf "#%s\n", $0} }
+
+        $1 ~ /^SYSLOG_FAILED_LOGINS=/ \
+            { if (printedFlag == 0) \
+                   {print "SYSLOG_FAILED_LOGINS=0"; printedFlag=1 } \
+               else { printf "#%s\n", $0}  }
+
+        $1 !~ /SYSLOG_FAILED_LOGINS=/ { print $0 }
+        ' \
+         ${LOGIN}.${JASS_SUFFIX} > ${LOGIN}
+   fi
+fi
+
+#
+# Set SLEEPTIME (between failed logins) if not set or wrong value
+#
+sleepTime=`grep "SLEEPTIME=" ${LOGIN} | grep -v "^#" | nawk -F= '{ print $2 }'`
+
+if [ "${sleepTime}" != "4" ] ; then
+   backup_file ${LOGIN}
+   echo ""
+
+   logMessage 'Setting \\\"SLEEPTIME\\\" to 4 in ${LOGIN}.'
+
+   if [ `grep -c "SLEEPTIME=" ${LOGIN}` = 0 ] ; then # append line
+      echo "" >> ${LOGIN}
+      echo \
+"# SLEEPTIME determines the delay, in seconds, between failed login attempts." \
+           >> ${LOGIN}
+      echo "SLEEPTIME=4" >> ${LOGIN}
+
+   else # modify line
+      nawk \
+        '
+        $1 ~ /^#.*SLEEPTIME=/ \
+            { if (printedFlag == 0) \
+                  {print "SLEEPTIME=4"; printedFlag=1 } \
+              else { print $0} }
+
+        $1 ~ /^" "*SLEEPTIME=/ \
+            { if (printedFlag == 0) \
+                   {print "SLEEPTIME=4"; printedFlag=1 } \
+              else { printf "#%s\n", $0} }
+
+        $1 ~ /^SLEEPTIME=/ \
+            { if (printedFlag == 0) \
+                   {print "SLEEPTIME=4"; printedFlag=1 } \
+               else { printf "#%s\n", $0}  }
+
+        $1 !~ /SLEEPTIME=/ { print $0 }
+        ' \
+         ${LOGIN}.${JASS_SUFFIX} > ${LOGIN}
+   fi
+fi
+
+#
+# Add a /var/adm/loginlog entry if there isn't one already:
+#
+if [ `grep -c "^[ 	]*loginlog" ${LOGADM}` = 0 ] ; then
+   backup_file ${LOGADM}
+   logMessage 'Adding loginlog entry to ${LOGADM}'
+   chroot ${JASS_ROOT_DIR} /usr/sbin/logadm -w loginlog -C 13 \
+      /var/adm/loginlog > /dev/null
+fi

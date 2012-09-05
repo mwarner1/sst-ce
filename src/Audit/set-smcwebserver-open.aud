@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-smcwebserver-open.aud		1.2	06/10/23 SMI"
+# 
+
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="SMC Webserver"
+servfil="set-smcwebserver-open.aud"
+
+#-----------------------------------------------------------------------------
+servhdr_txt="
+Description of Service or Function:
+
+   The SMC webserver is the Sun  Web  Console, a browser-based interface that
+   performs systems management. System administrators  can  manage  systems, 
+   devices and services from the console.
+
+Rationale for Verification Check:
+
+   The SMC webserver may need to allow non-local connections for system 
+   operation.  If this functionality is not needed, then it should be disabled.
+
+Determination of Compliance:
+
+   When Secure by Default is available, the webconsole service will
+   checked for whether or not it is listening to external connections.  If
+   it is not, a failure will be indicated.
+
+   If SBD is not available, this script does nothing.
+"
+#-----------------------------------------------------------------------------
+
+svc="
+   svc:/system/webconsole:console
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_sbd_available ; then
+      check_minimized_service "${svc}" 1 LOG
+
+      logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+      if check_serviceInstalled "${svc}" 0; then
+	 check_servicePropEnabled "${svc}" "options/tcp_listen" "true" 1 LOG
+      fi
+
+      logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+      check_serviceEnabled "${svc}" 1 LOG
+
+      logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+      check_serviceRunning "${svc}" 1 LOG
+
+else
+   logNoSBD
+fi
+
+finish_audit

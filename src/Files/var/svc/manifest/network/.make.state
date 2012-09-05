@@ -1,0 +1,8 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../../../proto/SUNWsst/Files/var/svc/manifest/network:
+	[ -d ../../../../../../proto/SUNWsst/Files/var/svc/manifest/network ] || /bin/mkdir -p ../../../../../../proto/SUNWsst/Files/var/svc/manifest/network
+.BUILT_LAST_MAKE_RUN:
+../../../../../../proto/SUNWsst/Files/var/svc/manifest/network/nddconfig.xml:
+	/usr/bin/cp -f nddconfig.xml ../../../../../../proto/SUNWsst/Files/var/svc/manifest/network/nddconfig.xml
+	/usr/bin/chmod 444 ../../../../../../proto/SUNWsst/Files/var/svc/manifest/network/nddconfig.xml

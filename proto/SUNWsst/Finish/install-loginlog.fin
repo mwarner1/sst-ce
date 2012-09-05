@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-loginlog.fin 3.10     05/05/13     SMI"
+#
+# This script is used to enable tracking of failed login attempts.  Without
+# the /var/adm/loginlog file in place, no such logging would be done.  For
+# more information, see the loginlog(4) manual entry.
+#
+
+LOGINLOG=${JASS_ROOT_DIR}var/adm/loginlog
+
+logMessage "Creating log file to track failed login attempts."
+echo ""
+
+# At this point, the file either existed or was just created.
+# Either way, to be sure it has the correct permissions, they
+# will be reset here.
+
+if [ ! -f ${LOGINLOG} ]; then
+   logMessage 'Creating file ${LOGINLOG}.'
+   echo ""
+   create_a_file -m 0600 -o root:sys ${LOGINLOG}
+
+else
+   logNotice 'File ${LOGINLOG} already exists.'
+
+   if check_fileOwnerNoMatch ${LOGINLOG} root 0 ; then
+      logWarning 'File ${LOGINLOG} was not owned by root.'
+      chown root ${LOGINLOG}
+   fi
+
+   if check_fileGroupNoMatch ${LOGINLOG} sys 0 ; then
+      logWarning 'File ${LOGINLOG} did not have group sys.'
+      chgrp sys ${LOGINLOG}
+   fi
+
+   if check_fileModeNoMatch ${LOGINLOG} 600 0; then
+      logWarning 'File ${LOGINLOG} did not have mode 600.'
+      chmod 600 ${LOGINLOG}
+   fi
+
+fi

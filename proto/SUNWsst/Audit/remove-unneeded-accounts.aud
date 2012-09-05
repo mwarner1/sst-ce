@@ -1,0 +1,80 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)remove-unneeded-accounts.aud 1.14     05/04/01 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Remove Unneeded Accounts"
+servfil="remove-unneeded-accounts.aud"
+
+SHADOW="${JASS_ROOT_DIR}etc/shadow"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   Those users declared as 'unnecessary' are listed in the JASS_ACCT_REMOVE
+   parameter.  For each of those users, this script will attempt to determine
+   if the user exists in ${SHADOW}.  If the users are truly not necessary, 
+   then they should be removed from the system.
+
+Determination of Compliance:
+
+   This script will indicate a failure if any of the users listed in the
+   JASS_ACCT_REMOVE parameter are found in the ${SHADOW} file.  The list of
+   users defined by JASS_ACCT_REMOVE is:
+
+`printPretty \"${JASS_ACCT_REMOVE}\"`
+
+   Note that this script does not currently check for the existence
+   of the user in other naming services (NIS, NIS+ or LDAP).
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10 ; then
+   logInvalidOSRevision "5.9-"
+else
+   for user in `echo ${JASS_ACCT_REMOVE} | xargs -n 1 echo | sort -u`; do
+
+      if check_fileContentsNotExist ${SHADOW} "^${user}:" 1 ; then
+         logSuccess 'User ${user} does not exist in ${SHADOW}.'
+      else
+         logFailure 'User ${user} exists in ${SHADOW}.'
+      fi
+
+   done
+fi
+
+finish_audit

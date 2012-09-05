@@ -1,0 +1,130 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-nfs-server.aud 1.13     05/03/30 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Networked File System (NFS) Server Service"
+servfil="disable-nfs-server.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Networked File System (NFS) server service provides the capability for
+   sharing local file systems with remote clients.  This capability is
+   facilitated by the nfsd(1M) and mountd(1M) services that provide NFS
+   request and mount processing services respectively.
+   
+Rationale for Verification Check:
+
+   While the NFS server service can be a useful function, it may not be
+   critical for system operation.  If this service is not needed, then it 
+   should be disabled.
+
+Determination of Compliance:
+
+   This script determines if the NFS server service is configured or running 
+   on the system.  This script will indicate a failure if the software is 
+   configured to run (via a run-control script) or actually running on the
+   system.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWnfssr
+   SUNWnfssu
+   SUNWnfssx
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc3.d/S15nfs.server
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rcS.d/K28nfs.server
+   ${JASS_ROOT_DIR}etc/rc0.d/K28nfs.server
+   ${JASS_ROOT_DIR}etc/rc0.d/K66nfs.server
+   ${JASS_ROOT_DIR}etc/rc1.d/K28nfs.server
+   ${JASS_ROOT_DIR}etc/rc1.d/K65nfs.server
+   ${JASS_ROOT_DIR}etc/rc2.d/K28nfs.server
+   ${JASS_ROOT_DIR}etc/rc2.d/K60nfs.server
+"
+
+#-----------------------------------------------------------------------------
+
+servcfg="
+   ${JASS_ROOT_DIR}etc/dfs/dfstab
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/lib/nfs/nfsd
+   /usr/lib/nfs/mountd
+"
+
+svc="
+   svc:/network/nfs/server:default
+"
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10 ; then
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized_service "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceDisabled "${svc}" 1 LOG  
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceNotRunning "${svc}"  1 LOG
+else
+   if check_os_min_revision 5.9 ; then
+      logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+      check_minimized             "$servpkg" 1 LOG
+   fi
+
+   logMessage "${JASS_MSG_SOFTWARE_CONFIGURED}"
+   check_startScriptNotExists "$servsrc"  1 LOG
+   check_stopScriptNotExists  "$servkrc"  1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists     "$servcmd"  1 LOG
+fi
+finish_audit

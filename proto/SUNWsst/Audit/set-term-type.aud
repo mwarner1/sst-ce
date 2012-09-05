@@ -1,0 +1,80 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-term-type.aud 1.6     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Terminal Type"
+servfil="set-term-type.aud"
+
+PROFILE="${JASS_ROOT_DIR}etc/profile"
+LOGIN="${JASS_ROOT_DIR}etc/.login"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This check is included as a convenience function to verify that the system
+   has been configured to use 'vt100' as its default terminal type.  This is 
+   done by checking both the ${PROFILE} and the ${LOGIN} files.
+
+Determination of Compliance:
+
+   This check will indicate a failure if the ${PROFILE} and the ${LOGIN} files
+   do not set the default terminal type to 'vt100'.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_fileExists ${PROFILE} 1 ; then
+   if check_fileContentsExist ${PROFILE} "^[ 	]*TERM=vt100" 1 ; then
+      logSuccess 'File ${PROFILE} sets TERM variable to \\\"vt100\\\".'
+   else
+      logFailure 'File ${PROFILE} does not set TERM variable to \\\"vt100\\\".'
+   fi
+else
+   logFileNotFound "${PROFILE}" 1
+fi
+
+if check_fileExists ${LOGIN} 1 ; then
+   if check_fileContentsExist ${LOGIN} "^[ 	]*setenv TERM vt100" 1 ; then
+      logSuccess 'File ${LOGIN} sets TERM variable to \\\"vt100\\\".'
+   else
+      logFailure 'File ${LOGIN} does not set TERM variable to \\\"vt100\\\".'
+   fi
+else
+   logFileNotFound "${LOGIN}" 1
+fi
+
+finish_audit

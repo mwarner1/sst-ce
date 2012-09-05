@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-tmpfs-limit.aud 1.7     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="tmpfs Size Limit"
+servfil="set-tmpfs-limit.aud"
+
+VFSTAB="${JASS_ROOT_DIR}etc/vfstab"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script is used to verify that any tmpfs filesystems defined in 
+   ${VFSTAB} have been limited with respect to their size.  This is useful in
+   helping to prevent various resource exhaustion attacks on memory/swap space.
+ 
+Determination of Compliance:
+
+   This script will indicate a failure if any tmpfs filesystem is defined in
+   the ${VFSTAB} file without its size being limited to JASS_TMPFS_SIZE 
+   (${JASS_TMPFS_SIZE}).
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+   if check_fileContentsExist ${VFSTAB} \
+      "tmpfs.*[ 	]*size=${JASS_TMPFS_SIZE}" 1 ; then
+      logSuccess 'tmpfs size is set to \\\"${JASS_TMPFS_SIZE}\\\" in ${VFSTAB}.'
+   else
+      if check_fileContentsExist ${VFSTAB} "tmpfs.*[ 	]*size=" 0 ; then
+         logSuccess 'tmpfs size is not set to \\\"${JASS_TMPFS_SIZE}\\\" in ${VFSTAB}.'
+      else
+         logFailure 'tmpfs size is not defined in ${JASS_TMPFS_SIZE}.'
+      fi
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

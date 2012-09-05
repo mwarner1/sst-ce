@@ -1,0 +1,8 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/Sysidcfg/Solaris_7:
+	[ -d ../../../proto/SUNWsst/Sysidcfg/Solaris_7 ] || /bin/mkdir -p ../../../proto/SUNWsst/Sysidcfg/Solaris_7
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/Sysidcfg/Solaris_7/sysidcfg:
+	/usr/bin/cp -f sysidcfg ../../../proto/SUNWsst/Sysidcfg/Solaris_7/sysidcfg
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Sysidcfg/Solaris_7/sysidcfg

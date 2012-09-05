@@ -1,0 +1,32 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/man/sman7:
+	[ -d ../../../proto/SUNWsst/man/sman7 ] || /bin/mkdir -p ../../../proto/SUNWsst/man/sman7
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/man/sman7/config.driver.7:
+	/usr/bin/cp -f config.driver.7 ../../../proto/SUNWsst/man/sman7/config.driver.7
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/man/sman7/config.driver.7
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/man/sman7/hardening.driver.7:
+	/usr/bin/cp -f hardening.driver.7 ../../../proto/SUNWsst/man/sman7/hardening.driver.7
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/man/sman7/hardening.driver.7
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/man/sman7/secure.driver.7:
+	/usr/bin/cp -f secure.driver.7 ../../../proto/SUNWsst/man/sman7/secure.driver.7
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/man/sman7/secure.driver.7
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/man/sman7/security_drivers.7:
+	/usr/bin/cp -f security_drivers.7 ../../../proto/SUNWsst/man/sman7/security_drivers.7
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/man/sman7/security_drivers.7
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/man/sman7/server-secure.driver.7:
+	/usr/bin/cp -f server-secure.driver.7 ../../../proto/SUNWsst/man/sman7/server-secure.driver.7
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/man/sman7/server-secure.driver.7
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/man/sman7/suncluster3x-secure.driver.7:
+	/usr/bin/cp -f suncluster3x-secure.driver.7 ../../../proto/SUNWsst/man/sman7/suncluster3x-secure.driver.7
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/man/sman7/suncluster3x-secure.driver.7
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/man/sman7/sunfire_15k_sc-secure.driver.7:
+	/usr/bin/cp -f sunfire_15k_sc-secure.driver.7 ../../../proto/SUNWsst/man/sman7/sunfire_15k_sc-secure.driver.7
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/man/sman7/sunfire_15k_sc-secure.driver.7

@@ -1,0 +1,128 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-dtlogin.aud 1.12     05/01/26     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="dtlogin Service"
+servfil="disable-dtlogin.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The dtlogin(1X) client supports the following key tasks: (1) the launch of
+   the dtgreet(1) login screen for explicitly managed local and remote 
+   displays and XDMCP managed remote displays, access to traditional terminal
+   (character) login from GUI login screen, system dependent user 
+   authentication and login, and launching the selected session.
+
+   The dtlogin client provides services similar to those  provided by init(1M),
+   getty(1M) and login(1) on character terminals: prompting for login and 
+   password, authenticating the user, and running a 'session'.
+
+Rationale for Verification Check:
+
+   While the dtlogin service can be a useful function, it may not be critical
+   for system operation.  If this service is not needed, then it should be 
+   disabled.
+
+   Note that for the Solaris OE version 2.6 and later, disabling dtlogin will
+   any graphical environment from starting by default on system boot.  Those
+   graphical environments can typically be started at a later time however
+   if they are needed.
+
+Determination of Compliance:
+
+   This script determines if the dtlogin service is installed, configured or 
+   running on the system.  This script will indicate a failure if the 
+   software is installed, configured to run (via a run-control script) or 
+   actually running on the system.
+"
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWdtlog SUNWdtdte
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S99dtlogin
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rcS.d/K10dtlogin
+   ${JASS_ROOT_DIR}etc/rc0.d/K10dtlogin
+   ${JASS_ROOT_DIR}etc/rc1.d/K10dtlogin
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/dt/bin/dtlogin
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized            "$servpkg" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+
+   if check_os_min_revision 5.10 ; then
+      check_serviceNotInstalled lrc:/etc/rc2_d/S99dtlogin 1 LOG
+   else
+      check_startScriptNotExists "$servsrc" 1 LOG
+   fi
+
+   # This method is commented since the disable-dtlogin.fin Finish script
+   # will attempt to use dtconfig to disable the service.  dtconfig will
+   # not remove the kill scripts and therefore this will always result in
+   # a failure.
+   #
+   # check_stopScriptNotExists  "$servkrc" 1 LOG
+   
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists     "$servcmd" 1 LOG
+
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

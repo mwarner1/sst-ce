@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-lp.fin	3.8	05/04/01 SMI"
+#
+# This script prevents the line printer (LP) service from starting.
+#
+
+logMessage "Disabling the service: Line printer (LP)"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   # Disable remote printing protocols:
+   # LP is the System V lp protocol
+   disable_service_immediate "svc:/application/print/server:default"
+   # RFC 1179 is the BSD lpd protocol:
+   disable_service_immediate "svc:/application/print/rfc1179:default"
+   # IPP is the Internet Printing Protocol
+   disable_service_immediate "svc:/application/print/ipp-listener:default"
+
+   # Disable access by locking user lp in password file
+   logMessage "Locking Line printer (LP) access."
+   lock_user_account "lp"
+
+else
+   if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+      disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K39lp
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K20lp
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K39lp
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K20lp
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K39lp
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d K20lp
+   fi
+   disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S80lp
+
+   # Add 'lp' to the cron.deny if it does not already exist.
+
+   CRONDENY=${JASS_ROOT_DIR}etc/cron.d/cron.deny
+   export CRONDENY
+
+   if [ -f ${CRONDENY} ]; then
+      if [ `grep -c "^lp$" ${CRONDENY}` = 0 ]; then
+         echo ""
+         backup_file ${CRONDENY}
+         echo ""
+         logMessage 'Adding the \\\"lp\\\" account to ${CRONDENY}.'
+         echo "lp" >> ${CRONDENY}
+      fi
+   fi
+
+   # Remove the 'lp' crontab entry.
+
+   CRONTAB=${JASS_ROOT_DIR}var/spool/cron/crontabs/lp
+
+   if [ -f ${CRONTAB} ]; then
+
+      echo ""
+      logMessage 'Disabling the \\\"lp\\\" user crontab entry.'
+      echo ""
+      disable_file ${CRONTAB}
+   fi
+fi

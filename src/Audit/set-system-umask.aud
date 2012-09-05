@@ -1,0 +1,122 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-system-umask.aud 1.7     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="System Default File Creation Mask"
+servfil="set-system-umask.aud"
+
+INIT="${JASS_ROOT_DIR}etc/default/init"
+UMASK="${JASS_ROOT_DIR}etc/init.d/umask.sh"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This check determines if the system's default file creation mask (umask)
+   is set to the value defined by the JASS_UMASK parameter.  Note that the
+   way that this value is set depends on the version of the Solaris OE being 
+   used.
+
+   For the Solaris OE version 8 and higher, the CMASK parameter in the ${INIT}
+   file should be set.  For older versions of the Solaris OE, the value should
+   be set through the creation of a ${UMASK} script with symbolic links to 
+   each run-level.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the system's default file creation
+   mask is not set to the value defined by JASS_UMASK.  The JASS_UMASK
+   parameter is set to:
+
+   ${JASS_UMASK} 
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+umaskSet=0
+
+if check_os_min_revision 5.8 ; then
+   if check_fileExists ${INIT} 0 ; then
+      if check_fileContentsExist ${INIT} "^CMASK=${JASS_UMASK}" 0 ; then
+         logNotice 'Default file creation mask (CMASK) is set to ${JASS_UMASK}.'
+         umaskSet=1
+      else
+         if check_fileContentsExist ${INIT} "^CMASK=" 0 ; then
+            logNotice 'Default file creation mask (CMASK) is not set to ${JASS_UMASK}.'
+         else
+            logNotice 'The CMASK parameter is not defined in ${INIT}.'
+         fi
+      fi
+   else
+      logFileNotFound "${INIT}"
+   fi
+fi
+
+if [ $umaskSet -eq 0 ]; then
+   if check_fileExists ${UMASK} 0 ; then
+      if check_fileContentsExist ${UMASK} "umask[ 	]*${JASS_UMASK}" 0 ; then
+         allSet=1
+         logNotice 'File ${UMASK} exists and sets umask to ${JASS_UMASK}.'
+         for dir in ${JASS_ROOT_DIR}etc/rc?.d; do
+            if check_fileExists ${dir}/S00umask.sh 1 LOG ; then
+               if check_fileTypeMatch ${dir}/S00umask.sh "l" 0 ; then
+                  logFileExists ${dir}/S00umask.sh "" 
+               else
+                  logFileNotFound ${dir}/S00umask.sh
+                  allSet=0
+               fi
+            fi
+         done 
+
+         if [ $allSet -eq 1 ]; then
+            umaskSet=1
+         fi
+      else
+         logNotice 'File ${UMASK} exists, but does not set umask to ${JASS_UMASK}.'
+      fi 
+   else
+      logFileNotFound "${UMASK}" 
+   fi
+fi
+
+if [ $umaskSet -eq 1 ] ; then
+   logSuccess 'System file creation mask is set to ${JASS_UMASK}.'
+else
+   logFailure 'System file creation mask is not set to ${JASS_UMASK}.'
+   adjustScore 1
+fi
+
+finish_audit

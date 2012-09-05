@@ -1,0 +1,74 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)print-unowned-objects.aud	1.7	05/04/28 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Unowned Objects"
+servfil="print-unowned-objects.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script searches local filesystems in order to find filesystem objects
+   that are not assigned to a valid user or group.  Files in this state can
+   later be assigned to another user or application if user identifiers are
+   not unique within an organization.   Further, all filesystem objects should
+   be assigned to a valid owner and group to help ensure accountability.  It
+   is crucial that unowned objects be identified and their ownership corrected
+   (if possible) to avoid ownership or accountability problems.
+
+Determination of Compliance:
+
+   This script will return any matching objects (those that are not assigned
+   to a valid user and group) long with a full (long) listing for further
+   review.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+FIND_COMMAND="
+find ${JASS_ROOT_DIR} ! -local -prune -o ( -nouser -o -nogroup ) -print
+"
+
+logMessage "# Searching for all filesystem objects that are unowned.\n "
+
+for filename in `${FIND_COMMAND}`; do
+   related="\n`gettext 'Object Listing for ${filename}:'`\n------------------------------\n"
+   related="${related}`ls -ld ${filename}`\n"
+   logFileExists ${filename} "" "${related}"
+done
+
+finish_audit

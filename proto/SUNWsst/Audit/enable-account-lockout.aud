@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-account-lockout.aud	1.5	05/04/12 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Account Lockout"
+servfil="enable-account-lockout.aud"
+
+#-----------------------------------------------------------------------------
+
+POLICY=${JASS_ROOT_DIR}etc/security/policy.conf
+
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   The /etc/security/policy.conf(4) LOCK_AFTER_RETRIES parameter sets the
+   number failed logins that can be made to a local user account before the
+   account is disabled.  This script will check the ${POLICY} file to
+   determine if the LOCK_AFTER_RETRIES  parameter is set, or if it is set for
+   every user in /etc/user_attr.
+
+Determination of Compliance:
+
+   This script will return a failure if the policy.conf LOCK_AFTER_RETRIES
+   parameter is not set to yes and there is a user without a lock_after_retries
+   entry in /etc/user_attr.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10; then
+   if check_fileExists ${POLICY} 1 ; then
+      if check_fileContentsExist ${POLICY} \
+	 "^[ 	]*LOCK_AFTER_RETRIES=YES" 1; then
+	 logSuccess 'LOCK_AFTER_RETRIES parameter is set to \\\"YES\\\" in ${POLICY}.'
+      else
+	 if check_fileContentsExist ${POLICY} \
+	    "^[ 	]*LOCK_AFTER_RETRIES=" 0 ; then
+	    logFailure 'LOCK_AFTER_RETRIES parameter is not set to \\\"YES\\\" in ${POLICY}.'
+	 else
+	    logFailure 'LOCK_AFTER_RETRIES parameter is not defined in ${POLICY}.'
+	 fi
+      fi
+   else
+      logFileNotFound ${POLICY} 1
+   fi
+
+   WARN_LIST="`get_users_with_retries_set \"root\"`"
+   _unset_users=`echo $WARN_LIST | wc -w | nawk '{print $1}'`
+
+   if [ "${_unset_users}" != "0" ]; then
+      # We will only log one failure for entries in user_attr
+      adjustScore 1
+      if [ "${_unset_users}" = "1" ]; then
+	 logFailure 'There is ${_unset_users} account with lock_after_retries set.'
+	 logNotice 'Account: ${WARN_LIST}.'
+      else
+	 logFailure 'There are ${_unset_users} accounts with lock_after_retries set.'
+	 logNotice 'Accounts: ${WARN_LIST}.'
+      fi
+   fi
+
+else
+   logInvalidOSRevision "5.10+"
+fi
+finish_audit

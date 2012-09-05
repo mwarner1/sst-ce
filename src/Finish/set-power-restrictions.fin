@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-power-restrictions.fin	3.7	05/04/12 SMI"
+#
+# This script alters the configuration of /etc/default/power
+# to restrict access to power management functions.
+#
+
+logMessage "Restricting access to power management functions."
+echo ""
+
+if check_os_min_revision 5.6 ; then
+
+   POWER=${JASS_ROOT_DIR}etc/default/power
+
+   if [ ! -f ${POWER} ]; then
+      create_a_file -m 0444 -o root:sys ${POWER}
+      echo ""
+   fi
+
+   updateNeeded="0"
+
+   # Determine the values to be used.  If values are
+   # already in place, then use them.  Otherwise, use the
+   # defaults that are included below.
+
+   powerMgtUser=`grep '^PMCHANGEPERM' ${POWER} | nawk -F= '{ print $2 }'`
+
+   if [ ! -z "${JASS_POWER_MGT_USER}" ]; then
+
+      if [ "${JASS_POWER_MGT_USER}" != "${powerMgtUser}" ]; then
+         if [ -z "${powerMgtUser}" ]; then
+            powerMgtUser="NONE"
+         fi
+         logMessage 'Changing PMCHANGEPERM   setting from ${powerMgtUser} to ${JASS_POWER_MGT_USER}.'
+         updateNeeded="1"
+      fi
+
+      powerMgtUser="${JASS_POWER_MGT_USER}"
+   fi
+
+   cprMgtUser=`grep '^CPRCHANGEPERM' ${POWER} | nawk -F= '{ print $2 }'`
+
+   if [ ! -z "${JASS_CPR_MGT_USER}" ]; then
+
+      if [ "${JASS_CPR_MGT_USER}" != "${cprMgtUser}" ]; then
+         if [ -z "${cprMgtUser}" ]; then
+            cprMgtUser="NONE"
+         fi
+         logMessage 'Changing CPRCHANGEPERM  setting from ${cprMgtUser} to ${JASS_CPR_MGT_USER}.'
+         updateNeeded="1"
+      fi
+
+      cprMgtUser="${JASS_CPR_MGT_USER}"
+   fi
+
+   if [ "${updateNeeded}" = "1" ]; then
+
+      echo ""
+      backup_file ${POWER}
+
+      # Remove the old entries and insert the new ones.
+
+      cat ${POWER}.${JASS_SUFFIX} |\
+         egrep -v '^PMCHANGEPERM=|^CPRCHANGEPERM=' > ${POWER}
+
+      echo "PMCHANGEPERM=${powerMgtUser}" >> ${POWER}
+      echo "CPRCHANGEPERM=${cprMgtUser}"  >> ${POWER}
+
+      chown root:sys ${POWER}
+      chmod 0444     ${POWER}
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

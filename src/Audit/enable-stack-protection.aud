@@ -1,0 +1,146 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-stack-protection.aud	1.12	05/03/30 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Stack Execution"
+servfil="enable-stack-protection.aud"
+
+SYSTEM="${JASS_ROOT_DIR}etc/system"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   The purpose of this script is to determine if the system has been
+   configured to attempt to prevent code from being executed from the stack.
+   This script will also check to verify that such events will be logged to
+   the SYSLOG facility.  These changes are implemented by setting both the
+   'noexec_user_stack' and 'noexec_user_stack_log' parameters to '1' in the
+   ${SYSTEM} file.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the above parameter are not
+   properly set in the ${SYSTEM} file.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+UNAME_P="`uname -p`"		# sparc or i386
+ISAINFO_B="`isainfo -b`"	# 32 or 64
+
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+   if [ "${UNAME_P}" = "sparc" ]; then
+
+      if check_os_min_revision 5.6 ; then
+	 if check_fileExists ${SYSTEM} 1; then
+
+	    if check_fileContentsExist ${SYSTEM} "set noexec_user_stack=1" 1 ; then
+	       logSuccess 'noexec_user_stack is set to \\\"1\\\" in ${SYSTEM}.'
+	    else
+	       if check_fileContentsExist ${SYSTEM} "set noexec_user_stack=" 0 ; then
+		  logFailure 'noexec_user_stack is not set to \\\"1\\\" in ${SYSTEM}.'
+	       else
+		  logFailure 'noexec_user_stack is not defined in ${SYSTEM}.'
+	       fi
+	    fi
+
+	    if check_fileContentsExist ${SYSTEM} \
+	       "set noexec_user_stack_log=1" 1 ; then
+	       logSuccess 'noexec_user_stack_log is set to \\\"1\\\" in ${SYSTEM}.'
+	    else
+	       if check_fileContentsExist ${SYSTEM} \
+		  "set noexec_user_stack_log=" 0 ; then
+		  logFailure 'noexec_user_stack_log is not set to \\\"1\\\" in ${SYSTEM}.'
+	       else
+		  logFailure 'noexec_user_stack_log is not defined in ${SYSTEM}.'
+	       fi
+	    fi
+
+	 else
+	    logFileNotFound "${SYSTEM}" 1
+	 fi
+      else
+	 logInvalidOSRevision "5.6+"
+      fi
+
+   elif [ "${UNAME_P}" = "i386" ]; then # x86 Architecture (32 or 64 bit)
+
+      if [ "${ISAINFO_B}" -eq 64 ] ; then # x86 64 bit (x64)
+         if check_os_min_revision 5.10 ; then
+	    if check_fileExists ${SYSTEM} 1; then
+
+	       if check_fileContentsExist ${SYSTEM} "set noexec_user_stack=1" 1 ; then
+	          logSuccess 'noexec_user_stack is set to \\\"1\\\" in ${SYSTEM}.'
+	       else
+	          if check_fileContentsExist ${SYSTEM} "set noexec_user_stack=" 0 ; then
+		     logFailure 'noexec_user_stack is not set to \\\"1\\\" in ${SYSTEM}.'
+	          else
+		     logFailure 'noexec_user_stack is not defined in ${SYSTEM}.'
+	          fi
+	       fi
+
+	       if check_fileContentsExist ${SYSTEM} \
+	          "set noexec_user_stack_log=1" 1 ; then
+	          logSuccess 'noexec_user_stack_log is set to \\\"1\\\" in ${SYSTEM}.'
+	       else
+	          if check_fileContentsExist ${SYSTEM} \
+		     "set noexec_user_stack_log=" 0 ; then
+		     logFailure 'noexec_user_stack_log is not set to \\\"1\\\" in ${SYSTEM}.'
+	          else
+		     logFailure 'noexec_user_stack_log is not defined in ${SYSTEM}.'
+	          fi
+	       fi
+
+	    else
+	       logFileNotFound "${SYSTEM}" 1
+	    fi
+         else # must be S10 for x64
+	    logInvalidOSRevision "5.10+"
+         fi
+      else
+         logNotice 'This script is not supported on this architecture, ${UNAME_P} ${ISAINFO_B}-bit.'
+      fi
+
+   else
+      logNotice 'This script is not supported on this architecture, ${UNAME_P} ${ISAINFO_B}-bit.'
+   fi
+
+else
+   logNotGlobalZone
+fi
+
+finish_audit

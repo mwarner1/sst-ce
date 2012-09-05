@@ -1,0 +1,117 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-system-accounts.aud	1.17	05/04/01 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="disabling system accounts"
+servfil="disable-system-accounts.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   Those system accounts that do not need to be enabled are listed in the
+   JASS_ACCT_DISABLE parameter.  For each of those users, this script will 
+   attempt to determine if the user exists and if the account associated with
+   that is locked.
+
+Determination of Compliance:
+
+   This script will indicate a failure if any of the users listed in the
+   JASS_ACCT_DISABLE parameter are found having an enabled account - one
+   with either a no password or an invalid password assigned.  The list of
+   users defined by JASS_ACCT_DISABLE is:
+
+`printPretty \"${JASS_ACCT_DISABLE}\"`
+
+   Note that this script does not currently check for the existence
+   of the user in other naming services (NIS, NIS+ or LDAP). 
+"
+#-----------------------------------------------------------------------------
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+JASS_SHADOW=${JASS_ROOT_DIR}etc/shadow
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "\n# Checking if system accounts are disabled.\n "
+
+for ACCT in `echo ${JASS_ACCT_DISABLE} | xargs -n 1 echo | sort -u`; do
+   if check_os_min_revision 5.10 ; then
+      if [ "${ACCT}" != "root" ]; then
+         if is_user_account_extant "${ACCT}" ; then
+            if is_user_account_locked "${ACCT}" ; then
+               logSuccess '${ACCT} is already locked.'
+            elif is_user_account_login_not_set "${ACCT}" ; then
+               logFailure '${ACCT} has no login set.'
+               adjustScore 1
+            else 
+               logFailure '${ACCT} has not locked.'
+               adjustScore 1
+            fi
+         else
+            logNotice 'User ${ACCT} does not exist.'
+         fi
+      else
+         logNotice 'User ${ACCT} is exempt from this check.'
+      fi
+      continue
+   fi
+   if [ "${ACCT}" != "root" ]; then
+      if check_fileContentsExist "${JASS_SHADOW}" "^${ACCT}:" 0 ; then
+      
+        acctline=`egrep "^${ACCT}:" ${JASS_SHADOW} 2>/dev/null`
+        locked=`echo ${acctline} | egrep "^${ACCT}:\*LK\*:" 2>/dev/null`
+        nologin=`echo ${acctline} | egrep "^${ACCT}:NP:" 2>/dev/null`
+        passlen=`echo ${acctline} | egrep "^${ACCT}:" 2>/dev/null | cut -f 2 -d: | cut -b13-`
+
+        if [ ! -z "${locked}" ]; then
+          logSuccess '${ACCT} is already locked.'
+        elif [ ! -z "$nologin" ]; then
+          logFailure '${ACCT} has no login set.'
+          adjustScore 1
+      elif [ -z "$passlen" ]; then
+        logFailure '${ACCT} has an illegal password length.'
+        adjustScore 1
+      fi
+
+      else
+         logNotice 'User ${ACCT} does not exist in ${JASS_SHADOW}.'
+      fi
+   else
+      logNotice 'User ${ACCT} is exempt from this check.'
+   fi
+done
+
+finish_audit

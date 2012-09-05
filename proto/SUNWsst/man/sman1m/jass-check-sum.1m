@@ -1,0 +1,117 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<?Fm: Validation Off>
+
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY man1m CDATA "System Administration">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.2">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY exam-tt CDATA "EXAMPLES">
+<!ENTITY exit-tt CDATA "EXIT STATUS">
+<!ENTITY exitstatuslead CDATA "The following exit values are returned:">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry lang = "en" os = "solaris"><refmeta><refentrytitle lang = "en">jass-check-sum</refentrytitle>
+<manvolnum>1m</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man1m;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>unalias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>pseudonym, create
+or remove</primary></indexterm></refmeta>
+<refnamediv>
+<refname>jass-check-sum</refname><refpurpose>identify file changes
+made since the last Solaris Security Toolkit hardening run</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<cmdsynopsis os = "solaris"><command>jass-check-sum</command></cmdsynopsis></refsynopsisdiv>
+<refsect1 lang = "en"><title>&desc-tt;</title>
+<para>This Solaris Security Toolkit script identifies those files that have been modified since their checksums were last saved in the JASS_REPOSITORY (<filename>/var/opt/SUNWsst/run/*/jass-checksums.txt</filename>).</para>
+<para>Only the most recent checksum of a file is compared to the current file. This aids in determining if a file has been changed after being configured by the Solaris Security Toolkit. If a given configuration has already been undone, this script skips it. </para></refsect1>
+<refsect1 lang = "en"><title>EXTENDED DESCRIPTION</title>
+<refsect2 lang = "en"><title>Group Privileges Required</title>
+<para>You should have superuser privileges to run this command. </para></refsect2></refsect1>
+<refsect1 lang = "en"><title>OPTIONS</title>
+<para>None.</para></refsect1>
+<refsect1 lang = "en"><title>&exam-tt;</title>
+<example width = "100" os = "solaris"><title>Checking the Solaris Security Toolkit Files</title><screen width = "100" format = "linespecific">
+sc0: #:> <userinput>/opt/SUNWsst/bin/jass-check-sum</userinput>
+
+Checking for file signature conflicts associated with Toolkit run: 20040621172054
+
+File Name                      Saved CkSum                      Current CkSum                   
+------------------------------------------------------------------
+/etc/passwd&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;685593234:456&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1703916610:489                  
+/etc/shadow&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3216256103:185&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;3154547236:190
+
+sc0:#:> 
+</screen></example></refsect1>
+<refsect1 lang = "en"><title>&exit-tt;</title>
+<para>&exitstatuslead;</para><variablelist termlength = "narrow"
+    os = "solaris">
+<varlistentry>
+<term os = "solaris"><returnvalue>0</returnvalue></term>
+<listitem os = "solaris"><para>Successful completion.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">1</term>
+<listitem os = "solaris"><para>Error occurred.</para></listitem>
+</varlistentry>
+</variablelist></refsect1>
+<refsect1 lang = "en"><title>FILES</title>
+<para>The following JASS_REPOSITORY file is used by this command.<variablelist
+    os = "solaris">
+<varlistentry>
+<term os = "solaris"><filename>/var/opt/SUNWsst/run/<replaceable>run-id</replaceable>/jass-checksums.txt</filename></term>
+<listitem os = "solaris"><para>Contains list of files which are compared to files being tested. </para></listitem>
+</varlistentry>
+</variablelist></para></refsect1>
+<refsect1 lang = "en"><title>&attr-tt;</title>
+<para>See <citerefentry><refentrytitle lang = "en">attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" os = "solaris">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" valign = "top" os = "solaris"><para>Attribute Types</para></entry>
+<entry colname = "2" align = "center" valign = "top" os = "solaris"><para>Attribute Values</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Availability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>SUNWsst</para></entry>
+</row>
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Interface Stability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>Evolving</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 lang = "en"><title>&also-tt;</title>
+<para><citerefentry><refentrytitle lang = "en">add-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">audit_public_funcs </refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">common_log_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">common_misc_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">driver_public_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-execute</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">make-jass-pkg</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">rm-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para></refsect1></refentry>

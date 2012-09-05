@@ -1,0 +1,6 @@
+.MAKE_VERSION:	VERSION-1.0
+../../../../proto/SUNWsst/Files/var/svc:
+	[ -d ../../../../proto/SUNWsst/Files/var/svc ] || /bin/mkdir -p ../../../../proto/SUNWsst/Files/var/svc
+.BUILT_LAST_MAKE_RUN:
+manifest:
+	cd manifest; pwd; make install

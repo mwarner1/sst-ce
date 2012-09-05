@@ -1,0 +1,103 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-banner-telnetd.aud	1.12	05/05/09 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="TELNET Service Banner"
+servfil="set-banner-telnetd.aud"
+
+TELNETD="${JASS_ROOT_DIR}etc/default/telnetd"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The in.telnetd(1M) service implements the DARPA standard TELNET virtual
+   terminal protocol.  in.telnetd is normally invoked in the internet server
+   (see inetd(1M)), for requests to connect to the TELNET port as indicated
+   by the /etc/services file (see services(4)).
+
+Rationale for Verification Check:
+
+   This script is designed to verify that the TELNET service has a service
+   banner installed that matches the value defined by the JASS_BANNER_TELNETD
+   parameter.  It is recommended that the service banner be modified from its
+   default value to include a disclaimer or warning message.
+
+Determination of Compliance:
+
+   This script checks that the TELNET service banner matches the value
+   defined by the JASS_BANNER_TELNETD parameter.  This script will indicate
+   a failure if the service banner does not match.  The value of the
+   JASS_BANNER_TELNETD parameter is:
+
+`printPretty \"${JASS_BANNER_TELNETD}\"`
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+pkgExists=0
+if check_os_min_revision 5.6 ; then
+   if check_os_min_revision 5.10 ; then
+      if check_serviceInstalled svc:/network/telnet:default 1 LOG ; then
+         pkgExists=1
+      else
+         logNotice "Telnet service (svc:/network/telnet:default) does not appear to be installed."
+      fi
+   else
+      pkgExists=1
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi
+if [ $pkgExists -eq 1 ] ;  then
+
+   if check_fileExists ${TELNETD} 1 ; then
+      if check_fileContentsExist ${TELNETD} \
+         "^BANNER=${JASS_BANNER_TELNETD}" 1 ; then
+         logSuccess "TELNET service banner matches value of JASS_BANNER_TELNETD."
+      else
+         if check_fileContentsExist ${TELNETD} "^BANNER=" 0 ; then
+            logFailure "TELNET service banner does not match value of JASS_BANNER_TELNETD."
+         else
+            logFailure 'TELNET service banner is not defined in ${TELNETD}.'
+         fi
+      fi
+   else
+      logFileNotFound "${TELNETD}" 1
+   fi
+fi
+
+finish_audit

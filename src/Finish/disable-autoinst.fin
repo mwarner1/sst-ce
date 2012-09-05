@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-autoinst.fin 3.10     04/12/20     SMI"
+#
+# This script prevents the system from being re-installed by disabling the 
+# run-control scripts associated with automatic configuration.  These scripts
+# are only used if the /etc/.UNCONFIGURED or /AUTOINSTALL files are created.
+# After initial installation/configuration, there is generally little
+# reason for these scripts to remain available.
+#
+# Do not use this script if there may be a need to use the functionality 
+# provided by the 'sys-unconfig' (1M) program.
+#
+
+logMessage "Disabling the function: Automatic system reconfiguration"
+echo ""
+
+logWarning "This script will prevent the successful use of the 'sys-unconfig'
+program to restore a system's configuration to an 'as-manufactured' state."
+echo ""
+
+if check_os_revision 5.11 ; then
+   disable_service_immediate lrc:/etc/rc2_d/S72autoinstall
+elif check_os_revision 5.10 ; then
+   disable_service_immediate lrc:/etc/rc2_d/S72autoinstall
+else
+   disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S72autoinstall
+fi
+disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S71sysid.sys
+disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S30sysid.net

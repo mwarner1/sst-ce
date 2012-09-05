@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-ssh-config.fin 1.3     07/01/02 SMI"
+#
+# This programs sets values in the /etc/ssh/ssh_config and sshd_config files.
+#
+
+logMessage "Setting SSH configuration in /etc/ssh/ssh_config and sshd_config."
+echo ""
+SSH_CONFIG="${JASS_ROOT_DIR}etc/ssh/ssh_config"
+SSHD_CONFIG="${JASS_ROOT_DIR}etc/ssh/sshd_config"
+sshd_config_backup=0
+SSHD_CONFIG_TMP="${JASS_REPOSITORY}/sshd_config.$$"
+
+if check_os_min_revision 5.9 ; then
+   # Check SSH client configuration if installed
+   if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsshr ; then
+      if [ `egrep -c "[ 	]*Host[ 	]*\*$" ${SSH_CONFIG}` = 0 -o \
+           `egrep -c "[ 	]*Protocol[ 	]*2$" ${SSH_CONFIG}` = 0 ]
+      then
+           logMessage 'Setting SSH client protocol to 2 in ${SSH_CONFIG}.'
+           backup_file ${SSH_CONFIG}
+           cat >>${SSH_CONFIG} <<-EOF
+		Host *
+		  Protocol 2
+EOF
+      fi
+      
+   else
+      logNotice "SSH (package SUNWsshr) does not appear to be installed."
+      logNotice "Skipping the setting of /etc/ssh/ssh_config."
+   fi
+
+   # Check SSH server configuration if installed
+   if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsshdr ; then
+      for i in Protocol/2 X11Forwarding/yes MaxAuthTries/5 MaxAuthTriesLog/0 \
+               IgnoreRhosts/yes RhostsAuthentication/no \
+               RhostsRSAAuthentication/no PermitRootLogin/no \
+               PermitEmptyPasswords/no ; do
+         name=`dirname $i`
+         value=`basename $i`
+
+         if [ `grep -c "^[^ 	]*${name}[ 	]*${value}$" $SSHD_CONFIG` = 0 ]
+         then
+
+            if [ "${sshd_config_backup}" = "0" ] ; then
+               backup_file ${SSHD_CONFIG}
+               sshd_config_backup=1
+            fi
+
+            logMessage \
+               'Setting \\\"${name}\\\" to \\\"${value}\\\" in ${SSHD_CONFIG}.'
+
+            # Modify name value pair:
+            rm -f ${SSHD_CONFIG_TMP}
+            cp ${SSHD_CONFIG} ${SSHD_CONFIG_TMP}
+            sed "s/^${name}[ 	].*/${name} ${value}/g" <${SSHD_CONFIG_TMP} \
+               > ${SSHD_CONFIG}
+            rm -f ${SSHD_CONFIG_TMP}
+      
+            # Append "name value" to sshd_config if not already there:
+            if [ `grep -cw "${name}" ${SSHD_CONFIG}` = 0 ] ; then
+               echo "${name} ${value}" >> ${SSHD_CONFIG}
+            fi
+         fi
+      done
+
+   else
+      logNotice "SSH (package SUNWsshdr) does not appear to be installed."
+      logNotice "Skipping the setting of /etc/ssh/sshd_config."
+   fi
+
+else
+   logInvalidOSRevision "5.9+"
+fi

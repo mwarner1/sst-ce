@@ -1,0 +1,6 @@
+.MAKE_VERSION:	VERSION-1.0
+../../../../proto/SUNWsst/Files/lib/svc:
+	[ -d ../../../../proto/SUNWsst/Files/lib/svc ] || /bin/mkdir -p ../../../../proto/SUNWsst/Files/lib/svc
+.BUILT_LAST_MAKE_RUN:
+method:
+	cd method; pwd; make install

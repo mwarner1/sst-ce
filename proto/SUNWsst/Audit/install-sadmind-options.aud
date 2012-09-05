@@ -1,0 +1,107 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)install-sadmind-options.aud	1.15	05/04/28 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="sadmind"
+servfil="install-sadmind-options.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The sadmind(1M) daemon is used by Solstice AdminSuite applications to
+   perform distributed system administration operations.
+
+Rationale for Verification Check:
+
+   By default, the sadmind service is configured for a security level of 1.
+   This level is considered weak since it accepts AUTH_SYS client credentials
+   that can be easily forged.
+
+   For this reason, it is recommended that the security level of this service
+   be set to 2.  This level requires stronger AUTH_DES client credentials.
+   This setting is enabled by using the '-S 2' option.  This check uses the
+   JASS_SADMIND_OPTIONS parameter for its testing.
+
+Determination of Compliance:
+
+   This script will determine if the sadmind service exists in the
+   /etc/inet/inetd.conf file.  If it exists, this script will check to
+   see if its options are set to those defined by the JASS_SADMIND_OPTIONS
+   parameter.  The JASS_SADMIND_OPTIONS parameter is currently set to:
+
+`printPretty \"${JASS_SADMIND_OPTIONS}\"`
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="/usr/sbin/sadmind"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+INETD="${JASS_ROOT_DIR}etc/inet/inetd.conf"
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10 ; then
+   logInvalidOSRevision "5.9-"
+else
+   if check_fileExists ${INETD} 0 ; then
+
+      if check_fileContentsExist "${INETD}" \
+         "100232\/10.*\/usr\/sbin\/sadmind.*sadmind[ 	]*.*${JASS_SADMIND_OPTIONS}" 0 ; then
+         logSuccess 'Service sadmind is configured for \\\"${JASS_SADMIND_OPTIONS}\\\".'
+      else
+         if check_fileContentsNotExist "${INETD}" "100232\/10.*\/usr\/sbin\/sadmind" 1 ; then
+            logNotice 'Service sadmind does not exist in ${INETD}.'
+         else
+            logFailure 'Service sadmind is not configured for \\\"${JASS_SADMIND_OPTIONS}\\\".'
+         fi
+      fi
+
+      if check_processExists "${servcmd}" 0 ; then
+         if check_processArgsMatch \
+            "${servcmd}[ 	]*.*[ 	]*${JASS_SADMIND_OPTIONS}" 1; then
+            logSuccess 'Service sadmind is running with options \\\"${JASS_SADMIND_OPTIONS}\\\".'
+         else
+            logFailure 'Service sadmind is not running with options \\\"${JASS_SADMIND_OPTIONS}\\\".'
+         fi
+      else
+         logNotice "Service sadmind is not running on the system."
+      fi
+   else
+      logFileNotFound "${INETD}"
+   fi
+fi
+finish_audit

@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-root-group.aud 1.7     05/07/12     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Separate Root Group"
+servfil="set-root-group.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script is used to verify that the root account has a primary group
+   set to the value defined by JASS_ROOT_GROUP ($JASS_ROOT_GROUP).  The 
+   Solaris OE default value of '1' (other) should be changed to prevent
+   the root account from sharing, by default, a common group with 
+   unprivileged users.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the root account's primary group
+   is not set to the value defined by JASS_ROOT_GROUP ($JASS_ROOT_GROUP).
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_fileContentsExist ${JASS_ROOT_DIR}etc/passwd \
+   "^root:x:0:${JASS_ROOT_GROUP}:" 1; then
+   logSuccess 'The root account primary group is set to ${JASS_ROOT_GROUP}.'
+else
+   logFailure 'The root account primary group is not set to ${JASS_ROOT_GROUP}.'
+fi
+
+finish_audit

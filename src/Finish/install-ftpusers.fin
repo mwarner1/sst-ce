@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)install-ftpusers.fin 3.14     05/03/31 SMI"
+#
+# This script creates the 'ftpusers' file that is used to restrict 
+# access to the FTP service.  Note that this script will only add the 
+# user to the file if the user does not already exist in the file.
+#
+# Note that actual path to the 'ftpusers' file varies.  For Solaris 8
+# and earlier releases, the file exists in /etc.  For Solaris 9 and
+# above, the file is in /etc/ftpd.
+#
+
+logMessage "Restricting access to the File Transfer Protocol (FTP) service."
+echo ""
+
+# Assign a default location for the 'ftpusers' file.
+
+FTPUSERS=${JASS_ROOT_DIR}etc/ftpusers
+
+# Determine if the SUNWftpr package exists (Solaris 8+).  If the
+# package does not exist, then the FTP service is not installed and
+# therefore the 'ftpusers' file will not be created.  The file is
+# always created for Solaris 7 and earlier.
+
+if check_os_min_revision 5.8 ; then
+   pkgExists=0
+   if check_os_min_revision 5.10 ; then
+      pkgExists=`is_service_installed svc:/network/ftp:default`
+
+   else
+      pkgExists=`pkginfo -q -R ${JASS_ROOT_DIR} SUNWftpr` 
+   fi
+   if $pkgExists ; then
+      if check_os_min_revision 5.9 ; then
+         FTPUSERS=${JASS_ROOT_DIR}etc/ftpd/
+
+         if [ ! -d ${FTPUSERS} ];  then
+            mkdir ${FTPUSERS}
+         fi 
+         FTPUSERS=${FTPUSERS}ftpusers
+      fi
+   else  
+      logNotice "The FTP service is not installed on this system, so the \\\"ftpusers\\\" file will not be created."
+      FTPUSERS=""
+   fi
+fi
+
+if [ ! -z "${FTPUSERS}" ]; then
+  if [ ! -f ${FTPUSERS} ]; then
+     create_a_file -m 644 -o root:sys ${FTPUSERS}
+     echo ""
+  fi
+
+  backupPerformed="0"
+
+  for ACCT in `echo ${JASS_FTPUSERS} | xargs -n 1 echo | sort -u`; do
+     if [ `grep -c "^${ACCT}$" ${FTPUSERS}` = 0 ]; then
+        if [ "${backupPerformed}" = "0" ]; then
+           backup_file ${FTPUSERS}
+           backupPerformed="1"
+           echo ""
+        fi
+        logMessage 'Adding ${ACCT} to ${FTPUSERS}.'
+        echo "${ACCT}" >> ${FTPUSERS}
+     fi
+  done
+
+   if [ "${backupPerformed}" = "1" ]; then
+      chown root:sys ${FTPUSERS}
+      chmod 644      ${FTPUSERS}
+   fi
+fi

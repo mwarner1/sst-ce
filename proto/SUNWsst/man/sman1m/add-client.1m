@@ -1,0 +1,169 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<?Fm: Validation Off>
+
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY man1m CDATA "System Administration">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.2">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY opts-tt CDATA "OPTIONS">
+<!ENTITY exam-tt CDATA "EXAMPLES">
+<!ENTITY exit-tt CDATA "EXIT STATUS">
+<!ENTITY exitstatuslead CDATA "The following exit values are returned:">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry lang = "en" os = "solaris"><refmeta><refentrytitle lang = "en">add-client</refentrytitle>
+<manvolnum>1m</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man1m;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo></refmeta>
+<refnamediv>
+<refname>add-client</refname><refpurpose>install JumpStart client
+for the Solaris Security Toolkit</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<cmdsynopsis os = "solaris"><command>add-client</command><arg
+    choice = "plain" rep = "norepeat"> <option>c</option> <replaceable>client-host-name</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>i</option> <replaceable>install-server</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>m</option><replaceable> client-mach-class</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>o</option><replaceable> solaris-os-instance</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>s</option><replaceable> sysidcfg-dir</replaceable></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>add-client </command><arg
+    choice = "plain" rep = "norepeat"><option>?</option>|<option>h</option></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>add-client </command><arg
+    choice = "plain" rep = "norepeat"><option>v</option></arg></cmdsynopsis></refsynopsisdiv>
+<refsect1 lang = "en"><title>&desc-tt;</title>
+<para>add-client is a wrapper around the add_install_client script, which simplifies adding JumpStart clients to a JumpStart server that has Solaris Security Toolkit installed. The command is located in the bin directory of the Solaris Security Toolkit distribution package.</para></refsect1>
+<refsect1 lang = "en"><title>EXTENDED DESCRIPTION</title>
+<para>For SPARC-based systems, the <command>add-client</command> command installs the JumpStart client and configuration information needed by the Solaris Security Toolkit. The command is executed from the JumpStart server.</para>
+<para>For x86 systems, which use Dynamic Host Configuration Protocol (DHCP) clients, you need to use the add_install_client script provided with the Solaris (Install) Media. This also applies to JumpStart configurations that need to use advanced JumpStart features not included in the add-install-client script, such as performing the necessary JumpStart configuration for clients.</para>
+<refsect2 lang = "en"><title>Group Privileges Required</title>
+<para>You must have superuser privileges to run this command. </para></refsect2></refsect1>
+<refsect1 lang = "en"><title>&opts-tt;</title>
+<para>The following options are supported:</para><variablelist
+    termlength = "narrow" os = "solaris">
+<varlistentry>
+<term os = "solaris"><option>c</option><replaceable> client-host-name</replaceable></term>
+<listitem os = "solaris"><para>Specifies the name of the JumpStart client to be installed. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>h</option> |<option>?</option></term>
+<listitem os = "solaris"><para>Displays usage descriptions.</para>
+<para>Use alone. Any option specified in addition to <option>h </option>or <option>?</option> is ignored.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>i</option><replaceable> install-server</replaceable></term>
+<listitem os = "solaris"><para>Specifies the name of the JumpStart install server. If no value is given, a list of available options is provided. If the system has only one network interface then <command>add-client</command> uses it by default. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>m </option><replaceable>client-mach-class</replaceable></term>
+<listitem os = "solaris"><para>Specifies the machine class of the JumpStart client. This value must be in the same format as the output of the <command>uname
+-n</command> command. If not specified, the default of sun4u is used.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>o </option><replaceable>solaris-os-instance</replaceable></term>
+<listitem os = "solaris"><para>Specifies the version of the Solaris Operating System to be installed on the client. If no value is given, a list of available options is provided. If only one instance is available, <command>add-client</command> uses it by default. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>s </option><replaceable>sysidcfg-dir</replaceable></term>
+<listitem os = "solaris"><para>Specifies the path name to an alternate directory in which a system identification and configuration (<filename>sysidcfg</filename>) file is stored. By default, the value is set to the directory, <filename>JASS_HOME/Sysidcfg/Solaris-ver/</filename>. If this option is used, this path name should be specified relative to the <filename>JASS_HOME/Sysidcfg</filename> directory. For example, <filename>Hosts/alpha</filename> where J<filename>ASS_HOME/Sysidcfg/Hosts/alpha</filename> exists and contains a <filename>sysidcfg</filename> file.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>v </option></term>
+<listitem os = "solaris"><para>Displays the version information for this program.</para></listitem>
+</varlistentry>
+</variablelist></refsect1>
+<refsect1 lang = "en"><title>&exam-tt;</title>
+<example width = "100" os = "solaris"><title>Adding a Client to a System Using Defaults</title><screen width = "100" format = "linespecific">
+sc0:#:> /opt/SUNWsst/bin/<userinput>add-client -c eng1 -m sun4u </userinput>
+Selecting default operating system, <replaceable>Solaris_ver</replaceable>.
+Selecting default system interface, <replaceable>IP_address</replaceable>.
+cleaning up preexisting install client "eng1"
+removing eng1 from bootparams
+updating <filename>/etc/bootparams</filename>
+sc0:#:> 
+</screen>
+<para>where:<variablelist os = "solaris">
+<varlistentry>
+<term os = "solaris"><replaceable>Solaris_ver</replaceable></term>
+<listitem os = "solaris"><para>Only version of the Solaris OS installed in JASS_HOME_DIR/OS.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><replaceable>IP_address</replaceable></term>
+<listitem os = "solaris"><para>Only network interface of the system on which the command was run. Written as four sets of numbers separated by periods; for example, 172.16.0.59. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">eng1</term>
+<listitem os = "solaris"><para>Host name of the JumpStart client.</para></listitem>
+</varlistentry>
+</variablelist></para></example>
+<example width = "100" os = "solaris"><title>Add a Client to a System Using Full Options</title><screen width = "100" format = "linespecific">
+sc0:#:> <userinput>/opt/SUNWsst/bin/add-client -c eng1 -i jumpserve1 -m sun4u -o Solaris_9_2003-12 -s Hosts/alpha</userinput>
+cleaning up preexisting install client "eng1"
+removing eng1 from bootparams
+updating <filename>/etc/bootparams</filename>
+sc0:#:> 
+</screen>
+<para>where:<variablelist termlength = "wide" os = "solaris">
+<varlistentry>
+<term os = "solaris">eng1</term>
+<listitem os = "solaris"><para>Host name of the JumpStart client.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">jumpserve1</term>
+<listitem os = "solaris"><para>Name of the local interface on sc0, through which the JumpStart client is installed.</para></listitem>
+</varlistentry>
+</variablelist></para></example></refsect1>
+<refsect1 lang = "en"><title>&exit-tt;</title>
+<para>&exitstatuslead;</para><variablelist termlength = "narrow"
+    os = "solaris">
+<varlistentry>
+<term os = "solaris"><returnvalue>0</returnvalue></term>
+<listitem os = "solaris"><para>Successful completion.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">1</term>
+<listitem os = "solaris"><para>Error occurred.</para></listitem>
+</varlistentry>
+</variablelist></refsect1>
+<refsect1 lang = "en"><title>&attr-tt;</title>
+<para>See <citerefentry><refentrytitle lang = "en">attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" os = "solaris">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" valign = "top" os = "solaris"><para>Attribute Types</para></entry>
+<entry colname = "2" align = "center" valign = "top" os = "solaris"><para>Attribute Values</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Availability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>SUNWsst</para></entry>
+</row>
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Interface Stability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>Unstable</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 lang = "en"><title>&also-tt;</title>
+<para><citerefentry><refentrytitle lang = "en">jass-check-sum</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-execute</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">make-jass-pkg</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">rm-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para></refsect1></refentry>

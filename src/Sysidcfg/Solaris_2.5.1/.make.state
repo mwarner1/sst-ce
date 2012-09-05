@@ -1,0 +1,10 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/Sysidcfg/Solaris_2.5.1:
+	[ -d ../../../proto/SUNWsst/Sysidcfg/Solaris_2.5.1 ] || /bin/mkdir -p ../../../proto/SUNWsst/Sysidcfg/Solaris_2.5.1
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/Sysidcfg/Solaris_2.5.1/sysidcfg:
+	/usr/bin/cp -f sysidcfg ../../../proto/SUNWsst/Sysidcfg/Solaris_2.5.1/sysidcfg
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Sysidcfg/Solaris_2.5.1/sysidcfg
+	( cd ../../../proto/SUNWsst/Sysidcfg/Solaris_2.5.1/../.. ; /usr/bin/rm -f sysidcfg ; \
+	/usr/bin/ln -s Sysidcfg/Solaris_2.5.1/sysidcfg sysidcfg )

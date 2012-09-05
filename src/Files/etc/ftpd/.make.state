@@ -1,0 +1,8 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/ftpd:
+	[ -d ../../../../proto/SUNWsst/Files/etc/ftpd ] || /bin/mkdir -p ../../../../proto/SUNWsst/Files/etc/ftpd
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/ftpd/banner.msg:
+	/usr/bin/cp -f banner.msg ../../../../proto/SUNWsst/Files/etc/ftpd/banner.msg
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/ftpd/banner.msg

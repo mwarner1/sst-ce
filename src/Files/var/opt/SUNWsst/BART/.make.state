@@ -1,0 +1,12 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART:
+	[ -d ../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART ] || /bin/mkdir -p ../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART
+.BUILT_LAST_MAKE_RUN:
+../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART/rules:
+	/usr/bin/cp -f rules ../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART/rules
+	/usr/bin/chmod 444 ../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART/rules
+.BUILT_LAST_MAKE_RUN:
+../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART/rules-secure:
+	/usr/bin/cp -f rules-secure ../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART/rules-secure
+	/usr/bin/chmod 444 ../../../../../../proto/SUNWsst/Files/var/opt/SUNWsst/BART/rules-secure

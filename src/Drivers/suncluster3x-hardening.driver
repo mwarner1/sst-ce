@@ -1,0 +1,172 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)suncluster3x-hardening.driver	1.29	05/06/13 SMI"
+#
+# This script is described in the February, 2003 BluePrint article called:
+#
+#      Securing the Sun Cluster 3.x Software
+#
+# and should be used to harden Sun Cluster 3.x nodes when deploying agents in
+# secured environments.
+#
+# The article may be found online at:
+#
+#     http://www.sun.com/security/blueprints
+#        or
+#     http://www.sun.com/blueprints/browsesubject.html#security
+#
+# The purpose of this driver is to implement the Solaris Operating System
+# hardening recommendations that are documented in the Sun BluePrints OnLine
+# articles (Solaris Operating Environment Security and Solaris OE Network
+# Settings for Security).
+#
+
+DIR="`/bin/dirname $0`"
+export DIR
+
+. ${DIR}/driver.init
+
+JASS_FILES="
+		/etc/dt/config/Xsession.d/0050.warning
+		/etc/dt/config/Xaccess
+		/etc/init.d/set-tmp-permissions
+		/etc/issue
+		/etc/motd
+		/etc/rc2.d/S00set-tmp-permissions
+		/etc/rc2.d/S07set-tmp-permissions
+		/etc/syslog.conf
+"
+
+# Note: install-strong-permissions.fin, install-fix-modes.fin, and
+# enable-bart.fin are generally always the last Finish scripts to run
+# as their effects could be undone by Finish scripts that would follow them.
+# The install-fix-modes.fin script is generally run first.  If additional
+# tightening is required, install-strong-permissions.fin can be used.  The
+# enable-bart.fin script captures the state of the filesystem in a manifest.
+#
+# Note: install-security-mode.fin is not included in the script list
+# since it requires manual intervention.  For more information, refer
+# to the script source code.
+#
+# Note: print-rhosts.fin is not included in the script list as it takes
+# several seconds to complete.  Enable to detect .rhosts or hosts.equiv
+# files.
+#
+# Note: enable-ipfilter.fin is not included in the script list
+# since Sun Cluster configurations do not support filtering with
+# Solaris IP Filter. (Source: "Solaris IP Filter" chapter of the
+# Solaris "System Administration Guide")
+#
+
+JASS_SCRIPTS="
+		disable-apache.fin
+		disable-asppp.fin
+#		disable-autoinst.fin
+		disable-automount.fin
+		disable-dhcpd.fin
+		disable-dmi.fin
+		disable-dtlogin.fin
+		disable-face-log.fin
+		disable-ipv6.fin
+#		disable-keyboard-abort.fin
+                disable-keyserv-uid-nobody.fin
+		disable-ldap-client.fin
+		disable-lp.fin
+		disable-mipagent.fin
+		disable-nfs-client.fin
+		disable-nfs-server.fin
+                disable-nscd-caching.fin
+#		disable-picld.fin
+		disable-preserve.fin
+		disable-power-mgmt.fin
+                disable-remote-root-login.fin
+		disable-rhosts.fin
+                disable-routing.fin
+		disable-sendmail.fin
+		disable-slp.fin
+		disable-snmp.fin
+		disable-spc.fin
+		disable-ssh-root-login.fin
+		disable-syslogd-listen.fin
+                disable-system-accounts.fin
+		disable-uucp.fin
+		disable-wbem.fin
+		disable-xfs.fin
+		enable-account-lockout.fin
+		enable-coreadm.fin
+		enable-ftp-syslog.fin
+		enable-inetd-syslog.fin
+#		enable-ipfilter.fin
+		enable-password-history.fin
+                enable-priv-nfs-ports.fin
+		enable-process-accounting.fin
+		enable-rfc1948.fin
+		enable-stack-protection.fin
+                enable-tcpwrappers.fin
+		install-at-allow.fin
+		install-ftpusers.fin
+		install-loginlog.fin
+		install-md5.fin
+		install-nddconfig.fin
+		install-newaliases.fin
+		install-sadmind-options.fin
+		install-security-mode.fin
+		install-shells.fin
+		install-sulog.fin
+#		print-rhosts.fin
+		remove-unneeded-accounts.fin
+		set-banner-dtlogin.fin
+		set-banner-ftpd.fin
+		set-banner-sendmail.fin
+		set-banner-sshd.fin
+		set-banner-telnetd.fin
+		set-flexible-crypt.fin
+		set-ftpd-umask.fin
+		set-login-retries.fin
+		set-power-restrictions.fin
+		set-rmmount-nosuid.fin
+		set-strict-password-checks.fin
+		set-sys-suspend-restrictions.fin
+		set-system-umask.fin
+		set-tmpfs-limit.fin
+                set-user-password-reqs.fin
+		set-user-umask.fin
+		update-at-deny.fin
+		update-cron-allow.fin
+		update-cron-deny.fin
+		update-cron-log-size.fin
+                update-inetd-conf.fin
+		install-fix-modes.fin
+		enable-bart.fin
+"
+# Following entries have been removed from the
+# stock hardening.driver:
+#		enable-bsm.fin
+#		disable-rpc.fin
+#		install-strong-permissions.fin
+
+. ${DIR}/driver.run
+

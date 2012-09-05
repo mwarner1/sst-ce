@@ -1,0 +1,172 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)add-client.po 1.9     04/09/26     SMI"
+#
+domain "add-client"
+#
+msgid "\n"
+"Usage: add-client -c client-host-name [-i install-server]\n"
+"                  [-m client-mach-class] [-o solaris-os-instance]\n"
+"                  [-s sysidcfg-dir]\n"
+"   or: add-client -v\n"
+"   or: add-client -? | -h\n"
+"\n"
+"Where the options are as follows:\n"
+"\n"
+"   [-c client-host-name]     The name of the JumpStart client to be installed.\n"
+"\n"
+"   [-h | -?]                 This help message.\n"
+"\n"
+"   [-i install-server]       The name of the JumpStart install server.  If this\n"
+"                             flag is not specified then a list of available\n"
+"                             install servers will be provided unless the system\n"
+"                             has only one network interface - in which case it \n"
+"                             will be used.\n"
+"\n"
+"   [-m client-mach-class]    The machine class of the JumpStart client.  This\n"
+"                             value is the same format as the output of the\n"
+"                             'uname -m' command.\n"
+"\n"
+"   [-o solaris-os-instance]  The revision of the Solaris Operating Environment\n"
+"                             that is to be installed on the client.  If this\n"
+"                             flag is not specified, a list of available options\n"
+"                             will be provided unless only one instance is\n"
+"                             available - in which case it will be used.\n"
+"\n"
+"   [-s sysidcfg-dir]         A pathname to an alternate directory in which a\n"
+"                             system identification and configuration (sysidcfg)\n"
+"                             file is stored.  By default the value set to the\n"
+"                             directory, JASS_HOME/Sysidcfg/Solaris_VERSION/.\n"
+"                             If used, this path name should be specified to be\n"
+"                             relative to the JASS_HOME/Sysidcfg directory (such\n"
+"                             as Hosts/alpha where JASS_HOME/Sysidcfg/Hosts/alpha\n"
+"                             exists and contains a sysidcfg file.)\n"
+"\n"
+"   [-v]                      The version information for this program.\n"
+"\n"
+msgstr "\n"
+"Usage: add-client -c client-host-name [-i install-server]\n"
+"                  [-m client-mach-class] [-o solaris-os-instance]\n"
+"                  [-s sysidcfg-dir]\n"
+"   or: add-client -v\n"
+"   or: add-client -? | -h\n"
+"\n"
+"Where the options are as follows:\n"
+"\n"
+"   [-c client-host-name]     The name of the JumpStart client to be installed.\n"
+"\n"
+"   [-h | -?]                 This help message.\n"
+"\n"
+"   [-i install-server]       The name of the JumpStart install server.  If this\n"
+"                             flag is not specified then a list of available\n"
+"                             install servers will be provided unless the system\n"
+"                             has only one network interface - in which case it\n"
+"                             will be used.\n"
+"\n"
+"   [-m client-mach-class]    The machine class of the JumpStart client.  This\n"
+"                             value is the same format as the output of the\n"
+"                             'uname -m' command.\n"
+"\n"
+"   [-o solaris-os-instance]  The revision of the Solaris Operating Environment\n"
+"                             that is to be installed on the client.  If this\n"
+"                             flag is not specified, a list of available options\n"
+"                             will be provided unless only one instance is\n"
+"                             available - in which case it will be used.\n"
+"\n"
+"   [-s sysidcfg-dir]         A pathname to an alternate directory in which a\n"
+"                             system identification and configuration (sysidcfg)\n"
+"                             file is stored.  By default the value set to the\n"
+"                             directory, JASS_HOME/Sysidcfg/Solaris_VERSION/.\n"
+"                             If used, this path name should be specified to be\n"
+"                             relative to the JASS_HOME/Sysidcfg directory (such\n"
+"                             as Hosts/alpha where JASS_HOME/Sysidcfg/Hosts/alpha\n"
+"                             exists and contains a sysidcfg file.)\n"
+"\n"
+"   [-v]                      The version information for this program.\n"
+"\n"
+#
+msgid  "Error: The OS directory was not found: ${jass_os_dir}\n"
+msgstr "Error: The OS directory was not found: ${jass_os_dir}\n"
+#
+msgid  "Error: A client host name was not specified.\n"
+msgstr "Error: A client host name was not specified.\n"
+#
+msgid  "Error: The OS was not found: \"${jass_os}\".\n"
+msgstr "Error: The OS was not found: \"${jass_os}\".\n"
+#
+msgid  "Error: A client operating system was not selected or found.\n"
+msgstr "Error: A client operating system was not selected or found.\n"
+#
+msgid  "Error: No Solaris OE revisions have been installed.\n"
+msgstr "Error: No Solaris OE revisions have been installed.\n"
+#
+msgid  "Selecting default operating system, \"${jass_os_revs}\".\n"
+msgstr "Selecting default operating system, \"${jass_os_revs}\".\n"
+#
+msgid  "Select one of the following Solaris OE revisions to install:\n"
+msgstr "Select one of the following Solaris OE revisions to install:\n"
+#
+msgid  "Selecting default machine class, \"${DEFAULT_MACH_CLASS}\".\n"
+msgstr "Selecting default machine class, \"${DEFAULT_MACH_CLASS}\".\n"
+#
+msgid  "Selecting default system interface, \"${jass_ifs_list}\".\n"
+msgstr "Selecting default system interface, \"${jass_ifs_list}\".\n"
+#
+msgid  "Select the interface from which the client will be installed:\n"
+msgstr "Select the interface from which the client will be installed:\n"
+#
+msgid  "Error: The Tools directory was not found: ${jass_tools_dir}\n"
+msgstr "Error: The Tools directory was not found: ${jass_tools_dir}\n"
+#
+msgid  "\n"
+"Alternate 'sysidcfg' files are not support on this version of"
+"\n"
+"the Solaris OE.  The default file for this version will be used."
+"\n"
+"\n"
+msgstr "\n"
+"Alternate 'sysidcfg' files are not support on this version of"
+"\n"
+"the Solaris OE.  The default file for this version will be used."
+"\n"
+"\n"
+#
+msgid  "\nThe alternate sysidcfg file was not found:\n"
+msgstr "\nThe alternate sysidcfg file was not found:\n"
+#
+msgid  "\nPlease verify the file name and re-run this program.\n"
+msgstr "\nPlease verify the file name and re-run this program.\n"
+#
+msgid  "The directory was not found: ${jass_sysid_dir}\n"
+msgstr "The directory was not found: ${jass_sysid_dir}\n"
+#
+msgid  "The directory was not found: ${jass_base_dir}/Sysidcfg\n"
+msgstr "The directory was not found: ${jass_base_dir}/Sysidcfg\n"
+#
+msgid  "Trying default system configuration directory.\n"
+msgstr "Trying default system configuration directory.\n"
+#
+msgid  "The installation will not be fully automated.\n"
+msgstr "The installation will not be fully automated.\n"

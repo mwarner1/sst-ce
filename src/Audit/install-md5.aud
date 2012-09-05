@@ -1,0 +1,131 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-md5.aud 1.13     05/04/05     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="MD5"
+servfil="install-md5.aud"
+
+MD5TAR="`clean_path ${JASS_ROOT_DIR}${JASS_MD5_DIR}/md5`"
+MD5PKG="`clean_path ${JASS_ROOT_DIR}${JASS_MD5_DIR}/SUNBEmd5`"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   The MD5 program can be used to create digital fingerprints of filesystem
+   objects and to provide a rudimentary mechanism for validating object
+   integrity.  The purpose of this script is to determine if the MD5 
+   software is installed on the system.  The software is available from:
+
+      http://www.sun.com/blueprints/tools/
+
+   This script expects the software to be installed into either the 
+   ${MD5TAR} or ${MD5PKG} directory in accordance with the Finish
+   script, install-md5.fin, or have MD5 available as part of Solaris
+
+Determination of Compliance:
+
+   This script determines if the MD5 software has been installed on the
+   system.  This script will indicate a failure if the software is not 
+   installed in either the ${MD5TAR} or ${MD5PKG} directory, or as part
+   of the Solaris Distribution.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+md5Installed=0
+
+DIGEST=/usr/bin/digest
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+
+if check_os_min_revision 5.10 ; then
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   
+   if [ -x "${JASS_ROOT_DIR}/${DIGEST}" ]; then
+      # Since the installed crypto packages can affect this behavior, 
+      # we should chroot to be safer here.
+      md5installed=`chroot ${JASS_ROOT_DIR} ${DIGEST} -l | egrep -c '^md5$'`
+      if [ "$md5installed" = "1" ]; then	
+	 logSuccess 'MD5 is provided by digest(1) command'
+      else
+	 adjustScore 1
+	 logFailure 'MD5 was not provided by digest(1) command'
+      fi
+   else
+      adjustScore 1
+      logFailure 'digest(1) command was not available'
+   fi
+elif check_os_revision 5.5.1 5.9 ; then
+
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+   if check_fileExists ${MD5TAR} 0 ; then
+      if check_fileTypeMatch ${MD5TAR} "d" 0 ; then
+         logSuccess 'The MD5 software exists in ${MD5TAR}.'
+         md5Installed=1
+         MD5=$MD5TAR
+      else
+         logWarning '${MD5TAR} is not a directory.'
+      fi
+   else
+      logNotice 'The MD5 software does not exist in ${MD5TAR}.'
+   fi
+
+   if check_fileExists ${MD5PKG} 0 ; then
+      if check_fileTypeMatch ${MD5PKG} "d" 0 ; then
+         logSuccess 'The MD5 software exists in ${MD5PKG}.'
+         md5Installed=1
+         MD5=$MD5PKG
+      else
+         logWarning '${MD5PKG} is not a directory.'
+      fi
+   else
+      logNotice 'The MD5 software does not exist in ${MD5PKG}.'
+   fi
+
+   if [ $md5Installed -lt 1 ]; then
+      adjustScore 1
+      logFailure 'MD5 software is not installed on system.'
+   else
+      check_fileExists "${MD5}/md5-sparc" 1 LOG
+      check_fileExists "${MD5}/md5-x86"   1 LOG
+   fi
+
+else
+   logInvalidOSRevision "5.5.1-5.10"
+fi
+
+finish_audit

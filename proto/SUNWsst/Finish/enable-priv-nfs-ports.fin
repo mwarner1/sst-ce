@@ -1,0 +1,89 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-priv-nfs-ports.fin	3.7	05/04/12 SMI"
+#
+# This script will modify /etc/system to enable restricted NFS port access.
+# When this is enable the NFS server will only accept connections from ports
+# less then 1024 will be accepted. Note that if these parameters are defined
+# in /etc/system, they will be re-written (in place) to verify that they are
+# set properly.  Otherwise, they are appended to the file.
+
+SYSTEM=${JASS_ROOT_DIR}etc/system
+
+# 16 December 2011, Matt Warner
+# nfs_portmon is no longer in the kernel as of Solaris 11, so skip this script
+# One Oracle doc notes:
+# "However, the reserved port notion is not universally supported. Thus, the security aspects of the check are very weak. 
+# Also, not all NFS client implementations bind their transport endpoints to a port number in the reserved range. Thus, 
+# interoperability problems might result if the security checking is enabled."
+#
+if check_os_min_revision 5.11 ; then
+ logMessage "nfs_portmon is not available in Solaris 11. Skipping."
+
+else
+
+logMessage "Configuring the NFS server service to accept connections/requests originating
+from privileged ports only."
+echo ""
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+   if [ ! -f ${SYSTEM} ]; then
+      create_a_file -m 644 -o root:sys ${SYSTEM}
+      echo ""
+   fi
+
+   if [ `grep "set nfssrv:nfs_portmon=1" ${SYSTEM} |\
+      grep -v '*' | wc -l` = 0 ]; then
+
+      backup_file ${SYSTEM}
+      echo ""
+
+      logMessage 'Adding \\\"set nfssrv:nfs_portmon=1\\\" to ${SYSTEM}.'
+
+      cat ${SYSTEM}.${JASS_SUFFIX} |\
+      nawk ' $1 ~ /set/ {
+
+      n = split($0, a);
+
+      if (a[2] ~ /nfssrv:nfs_portmon/) {
+	 printf("set nfssrv:nfs_portmon=1\n");
+      } else {
+	   printf("%s\n", $0);
+      }
+      continue;
+      } { print $0; }' > ${SYSTEM}
+	
+      if [ `grep "set nfssrv:nfs_portmon=1" ${SYSTEM} |\
+	 grep -v '*' | wc -l` = 0 ]; then
+	 echo "set nfssrv:nfs_portmon=1" >> ${SYSTEM}
+      fi
+
+      chmod 644      ${SYSTEM}
+      chown root:sys ${SYSTEM}
+   fi
+else
+   logNotGlobalZone
+fi
+fi

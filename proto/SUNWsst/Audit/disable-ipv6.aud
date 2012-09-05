@@ -1,0 +1,111 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-ipv6.aud	1.16	05/06/09 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="IPv6 Service"
+servfil="disable-ipv6.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The IPv6 service provides network access to IPv6 networks.  This service
+   is configured through the use of /etc/hostname6.* files.  If configured,
+   the in.ndpd(1M) daemon will be started to provide both the host and router
+   autoconfiguration components of neighbor discovery for IPv6 and stateless
+   address autoconfiguration for IPv6.
+
+Rationale for Verification Check:
+
+   While the IPv6 service can be a useful function, it may not be critical
+   for system operation, especially if the network is currently not using
+   the IPv6 protocol.  If this service is not needed, then it should be
+   disabled.
+
+Determination of Compliance:
+
+   This script will check for the absence of the IPv6 hostname files,
+   /etc/hostname6.*, that cause IPv6 interfaces to be plumbed.  This script
+   will also check if the in.ndpd service is started.  This script will
+   indicate a failure if any IPv6 interfaces are configured, plumbed or
+   if the in.ndpd service is running.
+"
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/sbin/in.ndpd
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.8 ; then
+
+   logMessage "# Checking for configured IPv6 interfaces.\n "
+
+   ipv6Configured=0
+   for file in `ls -d ${JASS_ROOT_DIR}etc/hostname6.* 2>/dev/null`; do
+      interface=`echo ${file} | nawk -F\. '{ print $2 }'`
+      logFailure 'IPv6 enabled on interface, $interface'
+      adjustScore 1
+      ipv6Configured=1
+   done
+
+   if [ $ipv6Configured -eq 0 ]; then
+      logSuccess 'No IPv6 interfaces were found to be configured.'
+   fi
+
+   logMessage "\n# Checking for plumbed IPv6 interfaces.\n "
+
+   ipv6Plumbed=0
+   for interface in `ifconfig -a6 | grep "^[a-z]" | nawk -F: '{ print $1 }'`
+   do
+      logFailure 'IPv6 interface ${interface} plumbed.'
+      adjustScore 1
+      ipv6Plumbed=1
+   done
+
+   if [ $ipv6Plumbed -eq 0 ]; then
+      logSuccess "No IPv6 interfaces were found to be plumbed."
+   fi
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists "$servcmd" 1 LOG
+
+else
+   logInvalidOSRevision "5.8+"
+fi
+
+finish_audit

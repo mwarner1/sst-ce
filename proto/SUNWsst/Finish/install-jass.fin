@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-jass.fin 3.11     05/07/07     SMI"
+#
+# The purpose of this script is to install the JASS software onto a JumpStart
+# client.  This is accomplished by installing the JASS distribution in
+# package stream format.
+#
+
+logMessage "Installing Software: Sun Security Toolkit: Community Edition"
+echo ""
+
+if [ "${JASS_STANDALONE}" = "1" ]; then
+   logNotice "This script cannot be used in standalone mode due to the potential
+for overwriting the local Sun Security Toolkit: Community Edition installation."
+
+else
+   pkg_possibilities="${JASS_PKG}-${JASS_VERSION}.pkg \
+      ${JASS_PKG}-${JASS_VERSION} ${JASS_PKG}.pkg ${JASS_PKG}"
+   JASS_PKG_DIR="`clean_path ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}/`"
+
+   for JASS_PKG_SRC in ${pkg_possibilities}; do
+      JASS_PKG_SRC_DIR="`clean_path ${JASS_PKG_DIR}/${JASS_PKG_SRC}`"
+
+      # A package can be either a directory, or a datastream.
+      if [ -f ${JASS_PKG_SRC_DIR} ]; then
+	 logNotice 'Installing ${JASS_PKG} from the path ${JASS_PKG_SRC_DIR}'
+	 echo ""
+	 
+	 add_pkg -d ${JASS_PKG_SRC_DIR} ${JASS_PKG}
+
+	 # add appropriate entry to manifest to remove JASS
+	 add_to_manifest X "rm_pkg ${JASS_PKG}"
+	 break
+      elif [ -d ${JASS_PKG_SRC_DIR} ]; then
+	 # For directories, we need to not use the final directory name.
+	 # But their name must match JASS_PKG
+	 if [ "${JASS_PKG}" = "${JASS_PKG_SRC}" ]; then
+	    logNotice 'Installing ${JASS_PKG} from the path ${JASS_PKG_DIR}'
+	    echo ""
+	    
+	    add_pkg -d ${JASS_PKG_DIR} ${JASS_PKG}
+	    
+	    # add appropriate entry to manifest to remove JASS
+	    add_to_manifest X "rm_pkg ${JASS_PKG}"
+	    break
+	 else
+	    logNotice "Directory ${JASS_PKG_SRC_DIR} skipped, name is not ${JASS_PKG}"
+	 fi
+      else
+	 logFileNotFound "${JASS_PKG_SRC_DIR}"
+      fi
+   done
+fi

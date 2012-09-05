@@ -1,0 +1,57 @@
+.MAKE_VERSION:	VERSION-1.0
+../../../proto/SUNWsst/Files/etc:
+	[ -d ../../../proto/SUNWsst/Files/etc ] || /bin/mkdir -p ../../../proto/SUNWsst/Files/etc
+../../../proto/SUNWsst/Files/etc/hosts.allow:
+	/usr/bin/cp -f hosts.allow ../../../proto/SUNWsst/Files/etc/hosts.allow
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/hosts.allow
+../../../proto/SUNWsst/Files/etc/hosts.allow-15k_sc:
+	/usr/bin/cp -f hosts.allow-15k_sc ../../../proto/SUNWsst/Files/etc/hosts.allow-15k_sc
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/hosts.allow-15k_sc
+../../../proto/SUNWsst/Files/etc/hosts.allow-ldm_control:
+	/usr/bin/cp -f hosts.allow-ldm_control ../../../proto/SUNWsst/Files/etc/hosts.allow-ldm_control
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/hosts.allow-ldm_control
+../../../proto/SUNWsst/Files/etc/hosts.allow-server:
+	/usr/bin/cp -f hosts.allow-server ../../../proto/SUNWsst/Files/etc/hosts.allow-server
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/hosts.allow-server
+../../../proto/SUNWsst/Files/etc/hosts.allow-suncluster:
+	/usr/bin/cp -f hosts.allow-suncluster ../../../proto/SUNWsst/Files/etc/hosts.allow-suncluster
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/hosts.allow-suncluster
+../../../proto/SUNWsst/Files/etc/hosts.deny:
+	/usr/bin/cp -f hosts.deny ../../../proto/SUNWsst/Files/etc/hosts.deny
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/hosts.deny
+../../../proto/SUNWsst/Files/etc/issue:
+	/usr/bin/cp -f issue ../../../proto/SUNWsst/Files/etc/issue
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/issue
+../../../proto/SUNWsst/Files/etc/motd:
+	/usr/bin/cp -f motd ../../../proto/SUNWsst/Files/etc/motd
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/motd
+../../../proto/SUNWsst/Files/etc/sms_domain_arp:
+	/usr/bin/cp -f sms_domain_arp ../../../proto/SUNWsst/Files/etc/sms_domain_arp
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/sms_domain_arp
+../../../proto/SUNWsst/Files/etc/sms_sc_arp:
+	/usr/bin/cp -f sms_sc_arp ../../../proto/SUNWsst/Files/etc/sms_sc_arp
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/sms_sc_arp
+../../../proto/SUNWsst/Files/etc/syslog.conf:
+	/usr/bin/cp -f syslog.conf ../../../proto/SUNWsst/Files/etc/syslog.conf
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/etc/syslog.conf
+.BUILT_LAST_MAKE_RUN:
+default:
+	cd default; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+dt:
+	cd dt; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+ftpd:
+	cd ftpd; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+init.d:
+	cd init.d; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+ipf:
+	cd ipf; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+rc2.d:
+	cd rc2.d; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+security:
+	cd security; pwd; make install

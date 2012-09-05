@@ -1,0 +1,93 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-rmmount-nosuid.aud 1.6     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Restrict Set-UID Removable Media"
+servfil="set-rmmount-nosuid.aud"
+
+RMMOUNT=${JASS_ROOT_DIR}etc/rmmount.conf
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Removable media is mounted using parameters defined in the ${RMMOUNT} file.
+   Prior to the Solaris 8 OE, removable media was mounted, by default, without
+   the 'nosuid' parameter.  As a result, removable media could be used to 
+   subvert the security of a system by introducing arbitrary programs that had
+   the set-uid or set-gid bit set.
+     
+Rationale for Verification Check:
+
+   This script checks the ${RMMOUNT} file to determine if it has been 
+   configured to mount UFS and HSFS filesystems using the 'nosuid' parameter.  
+
+Determination of Compliance:
+
+   This script will indicate a failure if the ${RMMOUNT} file does not 
+   restrict the mounting of removable UFS or HSFS filesystems by enforcing the
+   'nosuid' parameter.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+
+   if check_fileExists ${RMMOUNT} 0 ; then
+
+      if check_fileContentsExist ${RMMOUNT} \
+         "mount.*hsfs.*-o.*nosuid" 1 ; then
+         logSuccess 'Removable HSFS filesystems are mounted \\\"nosuid\\\".'
+      else
+         logFailure 'Removable HSFS filesystems are not mounted \\\"nosuid\\\".'
+      fi
+
+      if check_fileContentsExist ${RMMOUNT} \
+         "mount.*ufs.*-o.*nosuid" 1 ; then 
+         logSuccess 'Removable UFS filesystems are mounted \\\"nosuid\\\".'
+      else
+         logFailure 'Removable UFS filesystems are not mounted \\\"nosuid\\\".'
+      fi
+
+   else
+      logFileNotFound ${RMMOUNT}
+   fi
+
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

@@ -1,0 +1,154 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-nscd-caching.fin	3.11	05/04/12 SMI"
+#
+# This script disables caching of passwords, groups, hosts and ipnodes entries
+# by the name service cache daemon (NSCD).
+#
+
+NSCD=${JASS_ROOT_DIR}etc/nscd.conf
+
+logMessage "Disabling the function: Name Service Cache Daemon (NSCD)"
+echo ""
+
+# check whether a property group exists and add it if it doesn't
+# $1 = service
+# $2 = prop_group
+check_and_add_app_propgroup() {
+ if ! svcprop -q -p $2 $1 ; then
+  echo svccfg -s $1 addpg $2 application
+  svccfg -s $1 addpg $2 application
+ else
+  echo "Property group $2 already exists. Skipping."
+ fi
+}
+
+# check whether a property group exists and add it if it doesn't
+# $1 = service
+# $2 = prop_group
+# $3 = object type (integer, astring, etc)
+# $4 = value
+check_and_add_propval() {
+ if ! svcprop -q -p $2 $1 ; then
+  echo svccfg -s $1 addpropvalue $2 $3 $4
+  svccfg -s $1 addpropvalue $2 $3 $4
+ else
+  echo "Property value already exists. Replacing."
+  echo svccfg -s $1 delcust $2
+  svccfg -s $1 delcust $2
+  echo svccfg -s $1 addpropvalue $2 $3 $4
+  svccfg -s $1 addpropvalue $2 $3 $4
+ fi
+}
+
+
+# 17 December 2011 Matt Warner
+# Solaris 11 moves nscd configuration into SMF
+if check_os_revision 5.11 ; then
+  logMessage 'Changing the positive-time-to-live and negative-time-to-live entries'
+  if [ "${JASS_STANDALONE}" = "1" ]; then
+    # Set the positive and negative TTLs to zero in keeping
+    # with previous SST/JASS settings
+    # Personally, I think this is a mistake and would not
+    # run with nscd caching nothing at all, but would use
+    # at least a small value
+    check_and_add_app_propgroup name-service/cache password
+    check_and_add_app_propgroup name-service/cache group
+    check_and_add_app_propgroup name-service/cache host
+    #check_and_add_app_propgroup name-service/cache ipnode
+
+    check_and_add_propval name-service/cache password/positive_time_to_live integer: 0
+    check_and_add_propval name-service/cache password/negative_time_to_live integer: 0
+    check_and_add_propval name-service/cache group/positive_time_to_live integer: 0
+    check_and_add_propval name-service/cache group/negative_time_to_live integer: 0
+    check_and_add_propval name-service/cache host/positive_time_to_live integer: 0
+    check_and_add_propval name-service/cache host/negative_time_to_live integer: 0
+    # ipnodes is strangely absent from the options to configure
+    # yet nscd -g shows it. A bug?
+    # the closest we can do is to disable the ipnodes cache altogether, 
+    # in keeping with previous SST/JASS methodologies...
+    nscd -e ipnodes,no
+    #check_and_add_propval name-service/cache ipnodes/positive_time_to_live integer: 0
+    #check_and_add_propval name-service/cache ipnodes/negative_time_to_live integer: 0
+
+    svccfg -s name-service/cache:default refresh
+    svcadm refresh name-service/cache
+    svcadm restart name-service/cache
+
+  else 
+   logMessage "Copying over startup script since we're not in standalone mode"
+    cp -p ${JASS_HOME_DIR}/etc/rc2.d/S99solaris11-nscd-tune ${JASS_ROOT_DIR}etc/rc2.d/
+  fi
+else
+if [ -f ${NSCD} ]; then
+
+   error=0
+   maxEntries=6
+   if check_os_min_revision 5.8 ; then
+      # "ipnodes" is only available in Solaris 8+.
+      maxEntries=8
+      if check_os_revision 5.8 ; then
+         if [ "`uname -p`" = "sparc" ]; then
+            nscdPatch="110386-02"
+         else
+            nscdPatch="110400-01"
+         fi
+         if is_patch_not_applied ${nscdPatch} ; then
+            logError 'Patch ${nscdPatch} or later should be installed.  This script will
+make no changes to the system until this patch is applied.'
+            error=1
+         fi
+      fi
+   fi
+
+   if [ $error -eq 0 ]; then
+      if [ `grep "[ 	]*time-to-live.*[ 	]*0" ${NSCD} |\
+         nawk '{ print $2 }' |\
+         egrep -c "passwd|group|hosts|ipnodes"` != ${maxEntries} ]; then
+
+         logMessage 'Changing the positive-time-to-live and negative-time-to-live entries
+to \\\"0\\\" for the \\\"passwd\\\", \\\"group\\\", \\\"hosts\\\" and \\\"ipnodes\\\" entries
+in ${NSCD}.'
+         echo ""
+
+         backup_file ${NSCD}
+
+         cat ${NSCD}.${JASS_SUFFIX} |\
+            nawk ' $1 ~ /time-to-live/ {
+               if (($2 == "passwd") || ($2 == "group") || ($2 == "hosts") || ($2 == "ipnodes")) {
+                  printf("\t%s\t%s\t\t%s\n", $1, $2, "0");
+               }
+               next;
+            } { print $0; }' > ${NSCD}
+
+         chmod 644      ${NSCD}
+         chown root:sys ${NSCD}
+      fi
+   fi
+else
+   logFileNotFound "${NSCD}"
+fi
+fi

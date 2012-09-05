@@ -1,0 +1,86 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-uucp.fin 3.13     05/06/16 SMI"
+#
+# This script prevents the Unix-to-Unix Copy (UUCP) service from starting.
+#
+
+logMessage "Disabling the service: Unix-to-Unix Copy (UUCP)"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   disable_service_immediate lrc:/etc/rc2_d/S70uucp
+   logMessage "Disabling the service: svc:/network/uucp:default"
+   disable_service_immediate svc:/network/uucp:default
+else
+   disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S70uucp
+fi
+
+#
+# Disable or remove the 'nuucp' system account.
+#
+
+if check_os_min_revision 5.10 ; then # disable nuucp
+   if is_user_account_locked "nuucp" ; then
+      logNotice "Account 'nuucp' is already locked."
+   else
+      logNotice "Locking account 'nuucp'."
+      lock_user_account "nuucp"
+   fi
+
+else # Solaris 9 or earlier: remove nuucp
+   SHADOW=${JASS_ROOT_DIR}etc/shadow
+
+   if [ `grep -c '^nuucp:' ${JASS_PASSWD}` = 1 ]; then
+      backup_file ${JASS_PASSWD}
+      backup_file ${SHADOW}
+
+      echo ""
+      logMessage "Removing account 'nuucp' from the system."
+
+      chroot ${JASS_ROOT_DIR} /usr/bin/passmgmt -d nuucp
+
+      chmod 0444 ${JASS_PASSWD}
+      chmod 0400 ${SHADOW}
+
+      chown root:sys ${JASS_PASSWD}
+      chown root:sys ${SHADOW}
+   fi
+fi
+
+#
+# Remove the 'uucp' crontab entry.
+#
+
+CRONTAB=${JASS_ROOT_DIR}var/spool/cron/crontabs/uucp
+
+if [ -f ${CRONTAB} ]; then
+   echo ""
+   logMessage 'Removing the \\\"uucp\\\" user crontab entry.'
+   echo ""
+   disable_file ${CRONTAB}
+fi
+

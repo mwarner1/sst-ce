@@ -1,0 +1,4103 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)jass.po 1.115     05/07/18     SMI"
+#
+domain "jass"
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: audit_private.funcs
+# =============================================================================
+# =============================================================================
+#
+msgid  "${funcName}: is_invalid_argument_list: actualCount must not be NULL."
+msgstr "${funcName}: is_invalid_argument_list: actualCount must not be NULL."
+#
+msgid  "${funcName}: No arguments passed to function."
+msgstr "${funcName}: No arguments passed to function."
+#
+msgid  "${funcName}: Too few arguments passed to function."
+msgstr "${funcName}: Too few arguments passed to function."
+#
+msgid  "${funcName}: is_invalid_argument_list: minCount must not be NULL."
+msgstr "${funcName}: is_invalid_argument_list: minCount must not be NULL."
+#
+msgid  "${funcName}: Too many arguments passed to function."
+msgstr "${funcName}: Too many arguments passed to function."
+#
+msgid  "${funcName}: is_invalid_argument_list: maxCount must not be NULL."
+msgstr "${funcName}: is_invalid_argument_list: maxCount must not be NULL."
+#
+msgid  "${funcName}: is_invalid_argument_list requires 4 arguments."
+msgstr "${funcName}: is_invalid_argument_list requires 4 arguments."
+#
+msgid  "Template ${tmpFile} matches target on system."
+msgstr "Template ${tmpFile} matches target on system."
+#
+msgid  "Template ${tmpFile} does not match target on system."
+msgstr "Template ${tmpFile} does not match target on system."
+#
+msgid  "Template ${tmpFile} does not exist on the system."
+msgstr "Template ${tmpFile} does not exist on the system."
+#
+msgid  "$mac is not a valid mac format"
+msgstr "$mac is not a valid mac format"
+#
+msgid  "$mac contains invalid characters"
+msgstr "$mac contains invalid characters"
+#
+msgid  "Service ${svcName} is a legacy service."
+msgstr "Service ${svcName} is a legacy service."
+#
+msgid  "Service ${_check_svc} is a legacy service."
+msgstr "Service ${_check_svc} is a legacy service."
+#
+msgid  "Service ${svcName} is not installed."
+msgstr "Service ${svcName} is not installed."
+#
+msgid  "Service ${_check_svc} is not installed."
+msgstr "Service ${_check_svc} is not installed."
+#
+msgid  "User ${user} does not exist in password file."
+msgstr "User ${user} does not exist in password file."
+
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: audit_public.funcs
+# =============================================================================
+# =============================================================================
+#
+msgid  "NOT SPECIFIED"
+msgstr "NOT SPECIFIED"
+#
+msgid  "Script Total:"
+msgstr "Script Total:"
+#
+msgid  "Minimization checks are disabled by JASS_CHECK_MINIMIZED."
+msgstr "Minimization checks are disabled by JASS_CHECK_MINIMIZED."
+#
+#
+msgid  "${_audit_keyword} parameter is set to \\\"${_audit_value}\\\" in ${_audit_fileName}."
+msgstr "${_audit_keyword} parameter is set to \\\"${_audit_value}\\\" in ${_audit_fileName}."
+#
+msgid  "${_audit_keyword} parameter is not set to \\\"${_audit_value}\\\" in ${_audit_fileName}."
+msgstr "${_audit_keyword} parameter is not set to \\\"${_audit_value}\\\" in ${_audit_fileName}."
+#
+msgid  "${_audit_keyword} parameter is not defined in ${_audit_fileName}."
+msgstr "${_audit_keyword} parameter is not defined in ${_audit_fileName}."
+#
+msgid  "Crontab entry for ${CRONTAB_PROGRAM} was found in file ${CRONTAB_FILE}."
+msgstr "Crontab entry for ${CRONTAB_PROGRAM} was found in file ${CRONTAB_FILE}."
+#
+msgid  "Crontab entry for ${CRONTAB_PROGRAM} in ${CRONTAB_FILE} is missing."
+msgstr "Crontab entry for ${CRONTAB_PROGRAM} in ${CRONTAB_FILE} is missing."
+#
+# Already in file audit_public.funcs:
+#msgid  "Minimization checks are disabled by JASS_CHECK_MINIMIZED."
+#msgstr "Minimization checks are disabled by JASS_CHECK_MINIMIZED."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: common_log.funcs
+# =============================================================================
+# =============================================================================
+#
+msgid  "Results Summary for ${JASS_MODE} run of ${_driver}"
+msgstr "Results Summary for ${JASS_MODE} run of ${_driver}"
+#
+msgid  "The run completed with a total of ${_count}"
+msgstr "The run completed with a total of ${_count}"
+#
+msgid  "scripts run."
+msgstr "scripts run."
+#
+msgid  "script run."
+msgstr "script run."
+#
+msgid  "There were  Errors   in ${_eScoreP} Scripts"
+msgstr "There were  Errors   in ${_eScoreP} Scripts"
+#
+msgid  "Error Scripts listed in:"
+msgstr "Error Scripts listed in:"
+#
+msgid  "There was an Error   in ${_eScoreP} Script"
+msgstr "There was an Error   in ${_eScoreP} Script"
+#
+msgid  "There were  Warnings in ${_wScoreP} Scripts"
+msgstr "There were  Warnings in ${_wScoreP} Scripts"
+#
+msgid  "Warning Scripts listed in:"
+msgstr "Warning Scripts listed in:"
+#
+msgid  "There were  Notes    in ${_nScoreP} Scripts"
+msgstr "There were  Notes    in ${_nScoreP} Scripts"
+#
+msgid  "Notes Scripts listed in:"
+msgstr "Notes Scripts listed in:"
+#
+msgid  "There was a Note     in ${_nScoreP} Script"
+msgstr "There was a Note     in ${_nScoreP} Script"
+#
+msgid  "There were  Failures in ${_fScoreP} Scripts"
+msgstr "There were  Failures in ${_fScoreP} Scripts"
+#
+msgid  "Failure Scripts listed in:"
+msgstr "Failure Scripts listed in:"
+#
+msgid  "There was a Failure  in ${_fScoreP} Script"
+msgstr "There was a Failure  in ${_fScoreP} Script"
+#
+msgid  "Invalid Failure mode in logScriptFailure - ${_type}."
+msgstr "Invalid Failure mode in logScriptFailure - ${_type}."
+#
+msgid  "# The following checks are used to determine if the software is installed."
+"\n "
+msgstr "# The following checks are used to determine if the software is installed."
+"\n "
+#
+msgid  "# The following checks are used to determine if the software is patched."
+"\n "
+msgstr "# The following checks are used to determine if the software is patched."
+"\n "
+#
+msgid  "# The following checks are used to determine if the software is configured."
+"\n "
+msgstr "# The following checks are used to determine if the software is configured."
+"\n "
+#
+msgid  "# The following checks are used to determine if the software is running."
+"\n "
+msgstr "# The following checks are used to determine if the software is running."
+"\n "
+#
+msgid  "\n"
+"# The following is the vulnerability total for this audit script."
+"\n "
+msgstr "\n"
+"# The following is the vulnerability total for this audit script."
+"\n "
+msgid  "\n"
+"# The following is the vulnerability total for this driver profile."
+"\n "
+msgstr "\n"
+"# The following is the vulnerability total for this driver profile."
+"\n "
+#
+msgid  "# The following is the vulnerability grand total for this run."
+"\n "
+msgstr "# The following is the vulnerability grand total for this run."
+"\n "
+#
+msgid  "Error"
+msgstr "Error"
+#
+msgid  "Errors"
+msgstr "Errors"
+#
+msgid  "Patch ID ${_logPatchID} or higher is installed."
+msgstr "Patch ID ${_logPatchID} or higher is installed."
+#
+msgid  "Patch ID ${_logPatchID} or higher is not installed."
+msgstr "Patch ID ${_logPatchID} or higher is not installed."
+#
+msgid  "Package ${_logPackageName} is installed."
+msgstr "Package ${_logPackageName} is installed."
+#
+msgid  "Package ${_logPackageName} is not installed."
+msgstr "Package ${_logPackageName} is not installed."
+#
+msgid  "Start Script ${_logStartScriptName} was found."
+msgstr "Start Script ${_logStartScriptName} was found."
+#
+msgid  "Start Script ${_logStartScriptName} was not found."
+msgstr "Start Script ${_logStartScriptName} was not found."
+#
+msgid  "Stop Script ${_logStopScriptName} was found."
+msgstr "Stop Script ${_logStopScriptName} was found."
+#
+msgid  "Stop Script ${_logStopScriptName} was not found."
+msgstr "Stop Script ${_logStopScriptName} was not found."
+#
+msgid  "Process ${_logProcessName} was found."
+msgstr "Process ${_logProcessName} was found."
+#
+msgid  "Process ${_logProcessName} was not found."
+msgstr "Process ${_logProcessName} was not found."
+#
+msgid  "File ${_logFileName} was found."
+msgstr "File ${_logFileName} was found."
+#
+msgid  "File ${_logFileName} was not found."
+msgstr "File ${_logFileName} was not found."
+#
+msgid  "File ${_logFileName} has content matching ${_logRexExp}."
+msgstr "File ${_logFileName} has content matching ${_logRexExp}."
+#
+msgid  "File ${_logFileName} does not have content matching ${_logRexExp}."
+msgstr "File ${_logFileName} does not have content matching ${_logRexExp}."
+#
+msgid  "File ${_logFileName} has mode ${_logFileMode}."
+msgstr "File ${_logFileName} has mode ${_logFileMode}."
+#
+msgid  "File ${_logFileName} does not have mode ${_logFileMode}."
+msgstr "File ${_logFileName} does not have mode ${_logFileMode}."
+#
+msgid  "File ${_logFileName} is a ${fileTypeName}."
+msgstr "File ${_logFileName} is a ${fileTypeName}."
+#
+msgid  "File ${_logFileName} is not a ${fileTypeName}."
+msgstr "File ${_logFileName} is not a ${fileTypeName}."
+#
+msgid  "Process ${_logProcessName} found with argument ${_logArgValue}."
+msgstr "Process ${_logProcessName} found with argument ${_logArgValue}."
+#
+msgid  "Process ${_logProcessName} not found with argument ${_logArgValue}."
+msgstr "Process ${_logProcessName} not found with argument ${_logArgValue}."
+#
+msgid  "Service Config File ${_logServiceConfig} was found."
+msgstr "Service Config File ${_logServiceConfig} was found."
+#
+msgid  "Service Config File ${_logServiceConfig} was not found."
+msgstr "Service Config File ${_logServiceConfig} was not found."
+#
+msgid  "File ${_logFileName} has owner ${_logFileOwner}."
+msgstr "File ${_logFileName} has owner ${_logFileOwner}."
+#
+msgid  "File ${_logFileName} does not have owner ${_logFileOwner}."
+msgstr "File ${_logFileName} does not have owner ${_logFileOwner}."
+#
+msgid  "File ${_logFileName} has group ${_logFileGroup}."
+msgstr "File ${_logFileName} has group ${_logFileGroup}."
+#
+msgid  "File ${_logFileName} does not have group ${_logFileGroup}."
+msgstr "File ${_logFileName} does not have group ${_logFileGroup}."
+#
+msgid  "This script is only applicable for Solaris version ${_logValidRange}."
+msgstr "This script is only applicable for Solaris version ${_logValidRange}."
+#
+msgid  "This script is only applicable for Solaris version ${_logValidRange} and prior."
+msgstr "This script is only applicable for Solaris version ${_logValidRange} and prior."
+#
+msgid  "This script is only applicable for Solaris version ${_logValidRange} and later."
+msgstr "This script is only applicable for Solaris version ${_logValidRange} and later."
+#
+msgid  "The JASS_DISABLE_MODE parameter has an invalid value: ${JASS_DISABLE_MODE}."
+msgstr "The JASS_DISABLE_MODE parameter has an invalid value: ${JASS_DISABLE_MODE}."
+#
+msgid  "The value must be either \"script\" or \"conf\"."
+msgstr "The value must be either \"script\" or \"conf\"."
+#
+msgid  "This script cannot be used outside of the global zone."
+msgstr "This script cannot be used outside of the global zone."
+#
+msgid  "Service ${_logServiceName} was found running"
+"\n"
+"(pid ${pid}, user ${processName}, command ${comm})."
+msgstr "Service ${_logServiceName} was found running"
+"\n"
+"(pid ${pid}, user ${processName}, command ${comm})."
+#
+msgid  "Service  ${_logServiceName} was running."
+msgstr "Service  ${_logServiceName} was running."
+#
+msgid  "Service  ${_logServiceName} was not running."
+msgstr "Service  ${_logServiceName} was not running."
+#
+msgid  "Service  ${_logServiceName} was enabled."
+msgstr "Service  ${_logServiceName} was enabled."
+#
+msgid  "Service  ${_logServiceName} was not enabled."
+msgstr "Service  ${_logServiceName} was not enabled."
+#
+msgid  "Service  ${_logServiceName} was installed."
+msgstr "Service  ${_logServiceName} was installed."
+#
+msgid  "Service  ${_logServiceName} was not installed."
+msgstr "Service  ${_logServiceName} was not installed."
+#
+msgid  "Service ${_logSvc} property ${_logProp} was not ${_logPropOpt}."
+msgstr "Service ${_logSvc} property ${_logProp} was not ${_logPropOpt}."
+#
+msgid  "Service ${_logSvc} property ${_logProp} was ${_logPropOpt}."
+msgstr "Service ${_logSvc} property ${_logProp} was ${_logPropOpt}."
+#
+msgid  "Service ${_logPropSvc} of ${_logSvc} property ${_logProp} has option ${_logPropOpt}."
+msgstr "Service ${_logPropSvc} of ${_logSvc} property ${_logProp} has option ${_logPropOpt}."
+#
+msgid  "User ${_logUserName} was not locked."
+msgstr "User ${_logUserName} was not locked."
+#
+msgid  "User ${_logUserName} was locked."
+msgstr "User ${_logUserName} was locked."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: common_misc.funcs
+# =============================================================================
+# =============================================================================
+#
+msgid  "invalidVulnValue: Vulnerability value \"${_miscVulnVal}\" is not >= 1."
+msgstr "invalidVulnValue: Vulnerability value \"${_miscVulnVal}\" is not >= 1."
+#
+msgid  "adjustScore: Score value \"${_miscScoreVal}\" is not >= 1."
+msgstr "adjustScore: Score value \"${_miscScoreVal}\" is not >= 1."
+#
+msgid  "<No Value>"
+msgstr "<No Value>"
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: driver.init
+# =============================================================================
+# =============================================================================
+#
+msgid  "JASS_HOME_DIR is not be defined, exiting."
+msgstr "JASS_HOME_DIR is not be defined, exiting."
+#
+msgid  "JASS_OS_REVISION is not defined, exiting."
+msgstr "JASS_OS_REVISION is not defined, exiting."
+#
+msgid  "JASS_OS_TYPE is not defined, exiting."
+msgstr "JASS_OS_TYPE is not defined, exiting."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: driver_private.funcs and driver_public.funcs
+# =============================================================================
+# =============================================================================
+#
+msgid  "The patch identifier was not specified to is_patch_applied."
+msgstr "The patch identifier was not specified to is_patch_applied."
+#
+msgid  "An invalid argument, ${v}, was supplied to add_patch."
+msgstr "An invalid argument, ${v}, was supplied to add_patch."
+#
+msgid  "The list of patches to be installed was not specified."
+msgstr "The list of patches to be installed was not specified."
+#
+msgid  "Directory, ${add_patch_dir}/${patch}, was not found."
+msgstr "Directory, ${add_patch_dir}/${patch}, was not found."
+#
+msgid  "No installation programs were found for patch ${patch}."
+msgstr "No installation programs were found for patch ${patch}."
+#
+msgid  "An invalid argument, ${v}, was supplied to add_pkg."
+msgstr "An invalid argument, ${v}, was supplied to add_pkg."
+#
+msgid  "The package to be installed was not specified."
+msgstr "The package to be installed was not specified."
+#
+msgid  "An invalid argument, ${v}, was supplied to rm_pkg."
+msgstr "An invalid argument, ${v}, was supplied to rm_pkg."
+#
+msgid  "The package to be removed was not specified."
+msgstr "The package to be removed was not specified."
+#
+msgid  "The server and path to be mounted were not specified."
+msgstr "The server and path to be mounted were not specified."
+#
+msgid  "The mount point was not specified."
+msgstr "The mount point was not specified."
+#
+msgid  "Mounting ${mount_src} on ${mount_dst}."
+msgstr "Mounting ${mount_src} on ${mount_dst}."
+#
+msgid  "The mount point to unmount was not specified."
+msgstr "The mount point to unmount was not specified."
+#
+msgid  "Unmounting ${umount_dst}."
+msgstr "Unmounting ${umount_dst}."
+#
+msgid  "Copying ${cp_dest} from ${cp_src}."
+msgstr "Copying ${cp_dest} from ${cp_src}."
+#
+msgid  "Unexpected destination file type for ${cp_dest}."
+msgstr "Unexpected destination file type for ${cp_dest}."
+#
+msgid  "Linking ${sym_dest} from ${sym_src}."
+msgstr "Linking ${sym_dest} from ${sym_src}."
+#
+msgid  "Unexpected destination file type for ${sym_dest}."
+msgstr "Unexpected destination file type for ${sym_dest}."
+#
+msgid  "The source file list was not provided."
+msgstr "The source file list was not provided."
+#
+msgid  "The source file was not provided."
+msgstr "The source file was not provided."
+#
+msgid  "The source file (${originalFile}) was not found."
+msgstr "The source file (${originalFile}) was not found."
+#
+msgid  "File ${srcFile} was not found and is not installed."
+msgstr "File ${srcFile} was not found and is not installed."
+#
+msgid  "File to be backed up is from an undo operation."
+msgstr "File to be backed up is from an undo operation."
+#
+msgid  "Moving ${originalFile} to ${back_file}"
+msgstr "Moving ${originalFile} to ${back_file}"
+#
+msgid  "Copying ${originalFile} to ${back_file}"
+msgstr "Copying ${originalFile} to ${back_file}"
+#
+msgid  "Directory ${originalFile} cannot be saved by backup_file"
+msgstr "Directory ${originalFile} cannot be saved by backup_file"
+#
+msgid  "Removing saved file, ${srcFile}"
+msgstr "Removing saved file, ${srcFile}"
+#
+msgid  "Removing saved directory, ${srcFile}"
+msgstr "Removing saved directory, ${srcFile}"
+#
+msgid  "The source directory was not provided."
+msgstr "The source directory was not provided."
+#
+msgid  "The source file (${srcFile}) was not found."
+msgstr "The source file (${srcFile}) was not found."
+#
+msgid  "Renaming ${srcFile} to ${dstFile}.${JASS_SUFFIX}"
+msgstr "Renaming ${srcFile} to ${dstFile}.${JASS_SUFFIX}"
+#
+msgid  "Removing ${srcFile}"
+msgstr "Removing ${srcFile}"
+#
+msgid  "The source file (${file_src}) was not found."
+msgstr "The source file (${file_src}) was not found."
+#
+msgid  "Creating backup directory, ${dir_new}"
+msgstr "Creating backup directory, ${dir_new}"
+#
+msgid  "FATAL: Directory, ${dir_new} could not be created."
+msgstr "FATAL: Directory, ${dir_new} could not be created."
+#
+msgid  "Moving ${file_src} to ${dir_new}/${fil_old}.${JASS_SUFFIX}"
+msgstr "Moving ${file_src} to ${dir_new}/${fil_old}.${JASS_SUFFIX}"
+#
+msgid  "Argument 1 (src) is missing for manifest operator, ${man_op}."
+msgstr "Argument 1 (src) is missing for manifest operator, ${man_op}."
+#
+msgid  "Argument 2 (dest) is missing for manifest operator, ${man_op}."
+msgstr "Argument 2 (dest) is missing for manifest operator, ${man_op}."
+#
+msgid  "Argument 1 (object) is missing for manifest operator, ${man_op}."
+msgstr "Argument 1 (object) is missing for manifest operator, ${man_op}."
+#
+msgid  "Argument 1 (command) is missing for manifest operator, ${man_op}."
+msgstr "Argument 1 (command) is missing for manifest operator, ${man_op}."
+#
+msgid  "Invalid manifest operator: ${man_op}"
+msgstr "Invalid manifest operator: ${man_op}"
+#
+msgid  "Creating a new directory, ${new_dir}."
+msgstr "Creating a new directory, ${new_dir}."
+#
+msgid  "Could not create directory ${new_dir}."
+msgstr "Could not create directory ${new_dir}."
+#
+msgid  "No file arguments to create_a_file."
+msgstr "No file arguments to create_a_file."
+#
+msgid  "Owner/group missing for create_a_file."
+msgstr "Owner/group missing for create_a_file."
+#
+msgid  "Permissions missing for create_a_file."
+msgstr "Permissions missing for create_a_file."
+#
+msgid  "Unknown option ${logOption} to create_a_file."
+msgstr "Unknown option ${logOption} to create_a_file."
+#
+msgid  "Creating a new file, ${srcFile}."
+msgstr "Creating a new file, ${srcFile}."
+#
+msgid  "No minimum OS version was specified to check_os_min_revision."
+msgstr "No minimum OS version was specified to check_os_min_revision."
+#
+msgid  "No minimum OS version was specified to check_os_revision."
+msgstr "No minimum OS version was specified to check_os_revision."
+#
+msgid  "The argument order is reversed to check_os_revision."
+msgstr "The argument order is reversed to check_os_revision."
+#
+msgid  "File ${pushfile} is being installed to ${file}."
+msgstr "File ${pushfile} is being installed to ${file}."
+#
+msgid  "You need to review the ${file} file to ensure it"
+"\n"
+"meets your specific access requirements for this system."
+msgstr "You need to review the ${file} file to ensure it"
+"\n"
+"meets your specific access requirements for this system."
+#
+msgid  "Missing file in check_and_log_change_needed, ${_keyword}"
+msgstr "Missing file in check_and_log_change_needed, ${_keyword}"
+#
+msgid  "Changing ${_keyword} setting from unset to ${_new_val}."
+msgstr "Changing ${_keyword} setting from unset to ${_new_val}."
+#
+msgid  "Changing ${_keyword} setting from ${_old_val} to ${_new_val}."
+msgstr "Changing ${_keyword} setting from ${_old_val} to ${_new_val}."
+#
+msgid  "Adding crontab entry for ${crontab_program} to ${crontab_file}."
+msgstr "Adding crontab entry for ${crontab_program} to ${crontab_file}."
+#
+msgid  "Crontab entry for ${crontab_program} in ${crontab_file} already exists."
+msgstr "Crontab entry for ${crontab_program} in ${crontab_file} already exists."
+#
+msgid  "The Repository ${_rep_file} was not readable."
+msgstr "The Repository ${_rep_file} was not readable."
+#
+msgid  "The Repository ${_rep_file} was not writable."
+msgstr "The Repository ${_rep_file} was not writable."
+#
+msgid  "Option -${opt} for in.ftpd is already enabled."
+msgstr "Option -${opt} for in.ftpd is already enabled."
+#
+msgid  "Parameter Error: FMRI to function $_func: parameter ${1}."
+msgstr "Parameter Error: FMRI to function $_func: parameter ${1}."
+#
+msgid  "Parameter error: get_service_property_value: expected value 0 or 1, actual value ${_delayed}."
+msgstr "Parameter error: get_service_property_value: expected value 0 or 1, actual value ${_delayed}."
+#
+msgid  "Parameter Error: set_service_property_value: Service ${svcName} is a legacy service."
+msgstr "Parameter Error: set_service_property_value: Service ${svcName} is a legacy service."
+#
+msgid  "Property ${svcProp} value is already {$svcVal}."
+msgstr "Property ${svcProp} value is already {$svcVal}."
+#
+msgid  "Service ${svcName} does not exist on the system."
+msgstr "Service ${svcName} does not exist on the system."
+#
+# Already in file audit_private.funcs:
+#msgid  "Service ${svcName} is not installed."
+#msgstr "Service ${svcName} is not installed."
+#
+msgid  "Service ${svcName} is already disabled."
+msgstr "Service ${svcName} is already disabled."
+#
+msgid  "Service ${svcName} is already enabled."
+msgstr "Service ${svcName} is already enabled."
+#
+msgid  "SMF is not functional yet in JumpStart mode. Therefore service ${svcName} cannot be identified by using SMF commands. We assume it is a legacy service."
+msgstr "SMF is not functional yet in JumpStart mode. Therefore service ${svcName} cannot be identified by using SMF commands. We assume it is a legacy service."
+#
+msgid  "SMF is not loaded in JumpStart mode. Service ${svcName} cannot be identified by use SMF. Assume it is not configured."
+msgstr "SMF is not loaded in JumpStart mode. Service ${svcName} cannot be identified by use SMF. Assume it is not configured."
+#
+# Already in file audit_private.funcs:
+#msgid  "User ${user} does not exist in password file."
+#msgstr "User ${user} does not exist in password file."
+#
+msgid  "User ${user} is already locked."
+msgstr "User ${user} is already locked."
+#
+msgid  "User ${user} is already unlocked."
+msgstr "User ${user} is already unlocked."
+#
+msgid  "Unable to create temp jass SMF manifest file."
+msgstr "Unable to create temp jass SMF manifest file."
+#
+msgid  "Path ${1} not found or is not a regular or special file or directory."
+msgstr "Path ${1} not found or is not a regular or special file or directory."
+#
+msgid  "Setting path ${1} permissions to ${desiredPermissions}."
+msgstr "Setting path ${1} permissions to ${desiredPermissions}."
+#
+msgid  "Setting path ${1} permissions to ${desiredPermissions} failed."
+msgstr "Setting path ${1} permissions to ${desiredPermissions} failed."
+#
+msgid  "Permissions for ${1} already set to ${desiredPermissions}."
+msgstr "Permissions for ${1} already set to ${desiredPermissions}."
+#
+msgid  "Setting path ${1} owner to ${desiredOwner}."
+msgstr "Setting path ${1} owner to ${desiredOwner}."
+#
+msgid  "Setting path ${1} owner to ${desiredOwner} failed."
+msgstr "Setting path ${1} owner to ${desiredOwner} failed."
+#
+msgid  "Owner for ${1} already set to ${desiredOwner}."
+msgstr "Owner for ${1} already set to ${desiredOwner}."
+#
+msgid  "Setting path ${1} group to ${desiredGroup}."
+msgstr "Setting path ${1} group to ${desiredGroup}."
+#
+msgid  "Setting path ${1} group to ${desiredGroup} failed."
+msgstr "Setting path ${1} group to ${desiredGroup} failed."
+#
+msgid  "Group for ${1} already set to ${desiredGroup}."
+msgstr "Group for ${1} already set to ${desiredGroup}."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: driver.run (some shared with user.run, jass-execute)
+# =============================================================================
+# =============================================================================
+#
+msgid  "The initialization scripts have not been executed."
+msgstr "The initialization scripts have not been executed."
+#
+msgid  "FATAL: JASS_PACKAGE_MOUNT has not been defined in user.init."
+msgstr "FATAL: JASS_PACKAGE_MOUNT has not been defined in user.init."
+#
+msgid  "FATAL: JASS_PATCH_MOUNT has not been defined in user.init."
+msgstr "FATAL: JASS_PATCH_MOUNT has not been defined in user.init."
+#
+msgid  "FATAL: Could not create ${JASS_REPOSITORY}."
+msgstr "FATAL: Could not create ${JASS_REPOSITORY}."
+#
+msgid  "Operating system version ${JASS_OS_REVISION} is not supported."
+msgstr "Operating system version ${JASS_OS_REVISION} is not supported."
+#
+msgid  "${DRV_NAME}: Driver started."
+msgstr "${DRV_NAME}: Driver started."
+#
+msgid  "${DRV_NAME}: Finish script: ${script}"
+msgstr "${DRV_NAME}: Finish script: ${script}"
+#
+msgid  "${DRV_NAME}: Audit script: ${ascript}"
+msgstr "${DRV_NAME}: Audit script: ${ascript}"
+#
+msgid  "Driver Total:"
+msgstr "Driver Total:"
+#
+msgid  "${DRV_NAME}: Driver finished."
+msgstr "${DRV_NAME}: Driver finished."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: jass-execute
+# =============================================================================
+# =============================================================================
+#
+msgid  "\n"
+"usage:"
+"\n"
+"\n"
+"To apply this Toolkit to a system, using the syntax:"
+"\n"
+"   jass-execute [-r root_directory -p os_version ] [ -q | -o output_file ]"
+"\n"
+"      [ -m e-mail_address ] [ -V [3|4] ] [ -d ] driver"
+"\n"
+"\n"
+"To undo a previous application of the Toolkit from a system:"
+"\n"
+"   jass-execute -u [ -b | -f | -k ] [ -q | -o output_file ]"
+"\n"
+"      [ -m e-mail_address ] [ -V [3|4] ]"
+"\n"
+"\n"
+"To audit a system against a pre-defined profile:"
+"\n"
+"   jass-execute -a driver [ -V [0-4] ] [ -q | -o output_file ]"
+"\n"
+"      [ -m e-mail_address ]"
+"\n"
+"\n"
+"To remove saved files from a previous run of the Toolkit:"
+"\n"
+"   jass-execute -c [ -q | -o output_file ]"
+"\n"
+"      [ -m e-mail_address ]  [ -V [3|4] ]"
+"\n"
+"\n"
+"To display the history of Toolkit applications on a system:"
+"\n"
+"   jass-execute -H"
+"\n"
+"\n"
+"To display the last application of the Toolkit on a system:"
+"\n"
+"   jass-execute -l"
+"\n"
+"\n"
+"To display this help message:"
+"\n"
+"   jass-execute -h"
+"\n"
+"   jass-execute -?"
+"\n"
+"\n"
+"To display version information for this program."
+"\n"
+"   jass-execute -v"
+"\n"
+"\n"
+msgstr "\n"
+"usage:"
+"\n"
+"\n"
+"To apply this Toolkit to a system, using the syntax:"
+"\n"
+"   jass-execute [-r root_directory -p os_version ] [ -q | -o output_file ]"
+"\n"
+"      [ -m e-mail_address ] [ -V [3|4] ] [ -d ] driver"
+"\n"
+"\n"
+"To undo a previous application of the Toolkit from a system:"
+"\n"
+"   jass-execute -u [ -b | -f | -k ] [ -q | -o output_file ]"
+"\n"
+"      [ -m e-mail_address ] [ -V [3|4] ]"
+"\n"
+"\n"
+"To audit a system against a pre-defined profile:"
+"\n"
+"   jass-execute -a driver [ -V [0-4] ] [ -q | -o output_file ]"
+"\n"
+"      [ -m e-mail_address ]"
+"\n"
+"\n"
+"To remove saved files from a previous run of the Toolkit:"
+"\n"
+"   jass-execute -c [ -q | -o output_file ]"
+"\n"
+"      [ -m e-mail_address ]  [ -V [3|4] ]"
+"\n"
+"\n"
+"To display the history of Toolkit applications on a system:"
+"\n"
+"   jass-execute -H"
+"\n"
+"\n"
+"To display the last application of the Toolkit on a system:"
+"\n"
+"   jass-execute -l"
+"\n"
+"\n"
+"To display this help message:"
+"\n"
+"   jass-execute -h"
+"\n"
+"   jass-execute -?"
+"\n"
+"\n"
+"To display version information for this program."
+"\n"
+"   jass-execute -v"
+"\n"
+"\n"
+#
+msgid  "\n"
+"Note that just the driver name should be specified when using"
+"\n"
+"the '-d' or '-a' options.  A path need not be specified as the"
+"\n"
+"script is assumed to exist in the Drivers directory."
+"\n"
+"\n"
+"The '-u' undo, '-c' cleanup, '-a' audit, and '-d' driver options"
+"\n"
+"are all mutually exclusive."
+"\n"
+"\n"
+"The default undo behavior is to ask the user what to do if"
+"\n"
+"a file to be restored has been modified as the checksum is"
+"\n"
+"incorrect."
+"\n"
+"\n"
+"The -u option can be combined with the '-k', '-b', or '-f'"
+"\n"
+"to override the default interactive behavior.  The use of one"
+"\n"
+"of these options is required when run in quiet mode ('-q')."
+"\n"
+"\n"
+"The '-k' option can be used to always keep the current file and"
+"\n"
+"backup if checksum is incorrect.  The 'b' can be used to"
+"\n"
+"backup the current file and restore original if the checksum is"
+"\n"
+"incorrect.  The 'f' option will always overwrite the original"
+"\n"
+"if the checksum is incorrect, without saving the modified original."
+"\n"
+"\n"
+"The '-c' option is used to remove backup files created by a"
+"\n"
+"previous run of the toolkit."
+"\n"
+"\n"
+msgstr "\n"
+"Note that just the driver name should be specified when using"
+"\n"
+"the '-d' or '-a' options.  A path need not be specified as the"
+"\n"
+"script is assumed to exist in the Drivers directory."
+"\n"
+"\n"
+"The '-u' undo, '-c' cleanup, '-a' audit, and '-d' driver options"
+"\n"
+"are all mutually exclusive."
+"\n"
+"\n"
+"The default undo behavior is to ask the user what to do if"
+"\n"
+"a file to be restored has been modified as the checksum is"
+"\n"
+"incorrect."
+"\n"
+"\n"
+"The -u option can be combined with the '-k', '-b', or '-f'"
+"\n"
+"to override the default interactive behavior.  The use of one"
+"\n"
+"of these options is required when run in quiet mode ('-q')."
+"\n"
+"\n"
+"The '-k' option can be used to always keep the current file and"
+"\n"
+"backup if checksum is incorrect.  The 'b' can be used to"
+"\n"
+"backup the current file and restore original if the checksum is"
+"\n"
+"incorrect.  The 'f' option will always overwrite the original"
+"\n"
+"if the checksum is incorrect, without saving the modified original."
+"\n"
+"\n"
+"The '-c' option is used to remove backup files created by a"
+"\n"
+"previous run of the toolkit."
+"\n"
+"\n"
+
+#
+msgid  "Terminating this Sun Security Toolkit: Community Edition run due to user request."
+msgstr "Terminating this Sun Security Toolkit: Community Edition run due to user request."
+#
+msgid  "Could not find root directory, ${JASS_ROOT_DIR}"
+msgstr "Could not find root directory, ${JASS_ROOT_DIR}"
+#
+msgid  "check_user_variables called without jass_base_dir set."
+msgstr "check_user_variables called without jass_base_dir set."
+#
+msgid  "January"
+msgstr "January"
+#
+msgid  "February"
+msgstr "February"
+#
+msgid  "March"
+msgstr "March"
+#
+msgid  "April"
+msgstr "April"
+#
+msgid  "May"
+msgstr "May"
+#
+msgid  "June"
+msgstr "June"
+#
+msgid  "July"
+msgstr "July"
+#
+msgid  "August"
+msgstr "August"
+#
+msgid  "September"
+msgstr "September"
+#
+msgid  "October"
+msgstr "October"
+#
+msgid  "November"
+msgstr "November"
+#
+msgid  "December"
+msgstr "December"
+#
+msgid  "${month} ${dy}, ${yr} at ${hr}:${mn}:${sc}"
+msgstr "${month} ${dy}, ${yr} at ${hr}:${mn}:${sc}"
+#
+msgid  "There are no Sun Security Toolkit: Community Edition runs available to undo."
+msgstr "There are no Sun Security Toolkit: Community Edition runs available to undo."
+#
+msgid  "Please select a Sun Security Toolkit: Community Edition run to restore through:\n"
+msgstr "Please select a Sun Security Toolkit: Community Edition run to restore through:\n"
+#
+msgid  "Choice ('q' to exit)?  "
+msgstr "Choice ('q' to exit)?  "
+#
+msgid  "Please select a number between 1 and ${n}."
+msgstr "Please select a number between 1 and ${n}."
+#
+msgid  "You have requested to Undo a Toolkit run performed prior to a Cleaned Toolkit run."
+msgstr "You have requested to Undo a Toolkit run performed prior to a Cleaned Toolkit run."
+#
+msgid  "Typically, this will produce many files with incorrect checksums."
+msgstr "Typically, this will produce many files with incorrect checksums."
+#
+msgid  "Running with the \\\"-f\\\" option may place the system in an inconsistent state."
+msgstr "Running with the \\\"-f\\\" option may place the system in an inconsistent state."
+#
+msgid  "There are no Sun Security Toolkit: Community Edition runs available to clean."
+msgstr "There are no Sun Security Toolkit: Community Edition runs available to clean."
+#
+msgid  "Please select Sun Security Toolkit: Community Edition runs to clean:\n"
+msgstr "Please select Sun Security Toolkit: Community Edition runs to clean:\n"
+#
+msgid  "Please select runs between 1 and ${n} ( - and , are permitted)."
+msgstr "Please select runs between 1 and ${n} ( - and , are permitted)."
+#
+msgid  "Grand Total:"
+msgstr "Grand Total:"
+#
+msgid  "This information is only applicable for applications of the"
+"\n"
+"Sun Security Toolkit: Community Edition starting with version 0.3.\n"
+msgstr "This information is only applicable for applications of the"
+"\n"
+"Sun Security Toolkit: Community Edition starting with version 0.3.\n"
+#
+msgid  "\nThe last application of the Sun Security Toolkit: Community Edition was:\n\n"
+msgstr "\nThe last application of the Sun Security Toolkit: Community Edition was:\n\n"
+#
+msgid  "\n"
+"The following is a listing of the applications of the Solaris"
+"\n"
+"Security Toolkit on this system.  This list is provided in"
+"\n"
+"reverse chronological order:"
+"\n"
+"\n"
+msgstr "\n"
+"The following is a listing of the applications of the Solaris"
+"\n"
+"Security Toolkit on this system.  This list is provided in"
+"\n"
+"reverse chronological order:"
+"\n"
+"\n"
+#
+msgid  "Executing driver, ${jass_driver}"
+msgstr "Executing driver, ${jass_driver}"
+#
+msgid  "There is no manifest file to back out of run ${undo_run}"
+msgstr "There is no manifest file to back out of run ${undo_run}"
+#
+msgid  "Run ${undo_run} has already been backed out, skipping."
+msgstr "Run ${undo_run} has already been backed out, skipping."
+#
+msgid  "Run ${undo_run} has already been cleaned up, skipping."
+msgstr "Run ${undo_run} has already been cleaned up, skipping."
+#
+msgid  "Restoring to previous run from ${undo_run}"
+msgstr "Restoring to previous run from ${undo_run}"
+#
+msgid  "Recording output to ${jass_output_file}"
+msgstr "Recording output to ${jass_output_file}"
+#
+msgid  "Sun Security Toolkit: Community Edition Log: ${JASS_MODE} at ${JASS_TIMESTAMP}"
+msgstr "Sun Security Toolkit: Community Edition Log: ${JASS_MODE} at ${JASS_TIMESTAMP}"
+#
+msgid  "There is no manifest file to clean run ${clean_run}"
+msgstr "There is no manifest file to clean run ${clean_run}"
+#
+msgid  "Run ${clean_run} has already been backed out, skipping."
+msgstr "Run ${clean_run} has already been backed out, skipping."
+#
+msgid  "Run ${clean_run} has already been cleaned up, skipping."
+msgstr "Run ${clean_run} has already been cleaned up, skipping."
+#
+msgid  "Cleaning previous run from ${clean_run}"
+msgstr "Cleaning previous run from ${clean_run}"
+#
+msgid  "Could not find a readable driver called, ${jass_driver}."
+msgstr "Could not find a readable driver called, ${jass_driver}."
+#
+msgid  "Could not find the Drivers directory."
+msgstr "Could not find the Drivers directory."
+#
+msgid  "The \\\"b\\\" option cannot be combined with options \\\"f\\\" or \\\"k\\\"."
+msgstr "The \\\"b\\\" option cannot be combined with options \\\"f\\\" or \\\"k\\\"."
+#
+msgid  "The \\\"f\\\" option cannot be combined with options \\\"b\\\" or \\\"k\\\"."
+msgstr "The \\\"f\\\" option cannot be combined with options \\\"b\\\" or \\\"k\\\"."
+#
+msgid  "The \\\"k\\\" option cannot be combined with options \\\"b\\\" or \\\"f\\\"."
+msgstr "The \\\"k\\\" option cannot be combined with options \\\"b\\\" or \\\"f\\\"."
+#
+msgid  "The \\\"b\\\", \\\"f\\\", or \\\"k\\\" option can only be used with the \\\"u\\\" option."
+msgstr "The \\\"b\\\", \\\"f\\\", or \\\"k\\\" option can only be used with the \\\"u\\\" option."
+#
+msgid  "Verbosity values must be between 0 and 4."
+msgstr "Verbosity values must be between 0 and 4."
+#
+#
+msgid  "The \\\"q\\\" option must be used with either \\\"b\\\", \\\"f\\\", or \\\"k\\\" in undo mode."
+msgstr "The \\\"q\\\" option must be used with either \\\"b\\\", \\\"f\\\", or \\\"k\\\" in undo mode."
+#
+msgid  "The \\\"b\\\", \\\"f\\\", or \\\"k\\\" option must be used with the \\\"o\\\" option in undo mode."
+msgstr "The \\\"b\\\", \\\"f\\\", or \\\"k\\\" option must be used with the \\\"o\\\" option in undo mode."
+#
+msgid  "The verbosity parameter must be either 3 or 4 in this mode."
+msgstr "The verbosity parameter must be either 3 or 4 in this mode."
+#
+msgid  "Setting verbosity parameter to 3."
+msgstr "Setting verbosity parameter to 3."
+#
+msgid  "A Solaris OS version must be specified when calling this program with"
+"\n"
+"the \\\"-r\\\" option.  The format of the version string is the same as \\\"uname -r\\\"."
+msgstr "A Solaris OS version must be specified when calling this program with"
+"\n"
+"the \\\"-r\\\" option.  The format of the version string is the same as \\\"uname -r\\\"."
+#
+msgid  "Extraneous command line arguments were detected."
+msgstr "Extraneous command line arguments were detected."
+#
+msgid  "Execution mode not specified. One of the following options must be used: a, c, d, H, l, u, h, ?, or v."
+msgstr "Execution mode not specified. One of the following options must be used: a, c, d, H, l, u, h, ?, or v."
+#
+msgid  "Only the name of the driver to be applied should be supplied."
+msgstr "Only the name of the driver to be applied should be supplied."
+#
+msgid  "File ${jass_base_dir}/Drivers/${common_funcs} was not found."
+msgstr "File ${jass_base_dir}/Drivers/${common_funcs} was not found."
+#
+msgid  "This script can only be executed by \\\"root\\\"."
+msgstr "This script can only be executed by \\\"root\\\"."
+#
+msgid  "A jass-execute command, with PID ${lockPid}, is already running."
+msgstr "A jass-execute command, with PID ${lockPid}, is already running."
+#
+msgid  "Exclusive lock failed with status ${lockStatus}."
+msgstr "Exclusive lock failed with status ${lockStatus}."
+#
+msgid  "Terminating this Sun Security Toolkit: Community Edition run due to an"
+"\n"
+"external interrupt."
+msgstr "Terminating this Sun Security Toolkit: Community Edition run due to an"
+"\n"
+"external interrupt."
+#
+msgid  "The following prompt can be disabled by setting JASS_NOVICE_USER to 0."
+msgstr "The following prompt can be disabled by setting JASS_NOVICE_USER to 0."
+#
+msgid  "Depending on how the Sun Security Toolkit: Community Edition is configured, it"
+"\n"
+"is both possible and likely that by default all remote shell and file transfer"
+"\n"
+"access to this system will be disabled upon reboot effectively locking out any"
+"\n"
+"user without console access to the system."
+msgstr  "Depending on how the Sun Security Toolkit: Community Edition is configured, it"
+"\n"
+"is both possible and likely that by default all remote shell and file transfer"
+"\n"
+"access to this system will be disabled upon reboot effectively locking out any"
+"\n"
+"user without console access to the system."
+#
+msgid  "\nAre you sure that you want to continue? ${_string}"
+msgstr "\nAre you sure that you want to continue? ${_string}"
+#
+msgid  "\nThe response provided was not valid, please try again."
+msgstr "\nThe response provided was not valid, please try again."
+#
+msgid  "JASS_PASSWD must be defined before use."
+msgstr "JASS_PASSWD must be defined before use."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: undo.funcs (some shared with jass-execute)
+# =============================================================================
+# =============================================================================
+#
+msgid  "Creating backup copies of some files may cause unintended effects."
+msgstr "Creating backup copies of some files may cause unintended effects."
+#
+msgid  "This is particularly true of /etc/hostname.[interface] files as well"
+"\n"
+"as crontab files in /var/spool/cron/crontabs."
+msgstr "This is particularly true of /etc/hostname.[interface] files as well"
+"\n"
+"as crontab files in /var/spool/cron/crontabs."
+#
+msgid  "\nSelect your course of action:\n"
+msgstr "\nSelect your course of action:\n"
+#
+msgid  "1. Backup - Save the current file, BEFORE restoring original."
+msgstr "1. Backup - Save the current file, BEFORE restoring original."
+#
+msgid  "2. Keep   - Keep the current file, making NO changes."
+msgstr "2. Keep   - Keep the current file, making NO changes."
+#
+msgid  "3. Force  - Ignore manual changes, and OVERWRITE current file."
+msgstr "3. Force  - Ignore manual changes, and OVERWRITE current file."
+#
+msgid  "\nNOTE: The following additional options are applied to this and ALL subsequent files:\n"
+msgstr "\nNOTE: The following additional options are applied to this and ALL subsequent files:\n"
+#
+msgid  "4. ALWAYS Backup."
+msgstr "4. ALWAYS Backup."
+#
+msgid  "5. ALWAYS Keep."
+msgstr "5. ALWAYS Keep."
+#
+msgid  "6. ALWAYS Force."
+msgstr "6. ALWAYS Force."
+#
+msgid  "\nEnter 1, 2, 3, 4, 5, or 6:"
+msgstr "\nEnter 1, 2, 3, 4, 5, or 6:"
+#
+msgid  "You have chosen to FORCE overwriting this file and"
+msgstr "You have chosen to FORCE overwriting this file and"
+#
+msgid  "       subsequent files even though the file may have been"
+msgstr "       subsequent files even though the file may have been"
+#
+msgid  "       modified since jass-execute was last run."
+msgstr "       modified since jass-execute was last run."
+#
+msgid  "This operation is not recoverable if chosen and your"
+msgstr "This operation is not recoverable if chosen and your"
+#
+msgid  "       changes will be lost."
+msgstr "       changes will be lost."
+#
+msgid  "Are you SURE you want to do this? ${_string}"
+msgstr "Are you SURE you want to do this? ${_string}"
+#
+msgid  "ALWAYS Force operation canceled."
+msgstr "ALWAYS Force operation canceled."
+#
+msgid  "Enter 1, 2, 3, 4, 5, or 6 to select another option:"
+msgstr "Enter 1, 2, 3, 4, 5, or 6 to select another option:"
+#
+msgid  "Always do ${JASS_UNDO_TYPE} selected.  Overriding JASS_UNDO_TYPE with ${JASS_UNDO_TYPE}."
+msgstr "Always do ${JASS_UNDO_TYPE} selected.  Overriding JASS_UNDO_TYPE with ${JASS_UNDO_TYPE}."
+#
+msgid  "Using previously specified option for file ${src}."
+msgstr "Using previously specified option for file ${src}."
+#
+# duplicate of entry in jass-execute
+# msgid  "\nThe response provided was not valid, please try again."
+# msgstr "\nThe response provided was not valid, please try again."
+#
+msgid  "The root account password is NOT set."
+"\n"
+"Anyone can now login or su to root."
+"\n"
+"Please set the passwd with the passwd(1) command."
+msgstr "The root account password is NOT set."
+"\n"
+"Anyone can now login or su to root."
+"\n"
+"Please set the passwd with the passwd(1) command."
+#
+# duplicate of entry in set-root-password.aud:
+# msgid  "The root account password is the same as JASS_ROOT_PASSWORD."
+# msgstr "The root account password is the same as JASS_ROOT_PASSWORD."
+#
+msgid  "No JASS_RUN_MANIFEST file specified."
+msgstr "No JASS_RUN_MANIFEST file specified."
+#
+msgid  "Unable to create temp reversed JASS_RUN_MANIFEST file."
+msgstr "Unable to create temp reversed JASS_RUN_MANIFEST file."
+#
+msgid  "${DRV_NAME}: Undoing Finish Script: ${currentScript}"
+msgstr "${DRV_NAME}: Undoing Finish Script: ${currentScript}"
+#
+msgid  "Removing a Sun Security Toolkit: Community Edition-created file."
+msgstr "Removing a Sun Security Toolkit: Community Edition-created file."
+#
+msgid  "Checksum of current file does not match the saved value."
+msgstr "Checksum of current file does not match the saved value."
+#
+msgid  "   filename = ${src}"
+msgstr "   filename = ${src}"
+#
+msgid  "   current  = ${current_ck}"
+msgstr "   current  = ${current_ck}"
+#
+msgid  "   saved    = ${ck}"
+msgstr "   saved    = ${ck}"
+#
+msgid  "BACKUP specified, creating backup copy of ${src}."
+msgstr "BACKUP specified, creating backup copy of ${src}."
+#
+msgid  "FORCE specified, current ${src} will be overwritten."
+msgstr "FORCE specified, current ${src} will be overwritten."
+#
+msgid  "KEEP specified, no changes were made to ${src}."
+msgstr "KEEP specified, no changes were made to ${src}."
+#
+msgid  "Undoing operation MOVE."
+msgstr "Undoing operation MOVE."
+#
+msgid  "The object ${src} already exists."
+msgstr "The object ${src} already exists."
+#
+msgid  "FORCE specified, ${src} will be overwritten."
+msgstr "FORCE specified, ${src} will be overwritten."
+#
+msgid  "Undoing operation COPY."
+msgstr "Undoing operation COPY."
+#
+msgid  "Undoing operation MAKE DIRECTORY."
+msgstr "Undoing operation MAKE DIRECTORY."
+#
+msgid  "Undoing operation SYMBOLIC LINK."
+msgstr "Undoing operation SYMBOLIC LINK."
+#
+msgid  "Undoing operation EXECUTE SCRIPT"
+msgstr "Undoing operation EXECUTE SCRIPT"
+#
+msgid  "   src = $src dest = $dest args = $args"
+msgstr "   src = $src dest = $dest args = $args"
+#
+msgid  "\nExecuting command: ${cmd}"
+msgstr "\nExecuting command: ${cmd}"
+#
+msgid  "REMOVE operation cannot be undone!"
+msgstr "REMOVE operation cannot be undone!"
+#
+msgid  "   src = $src dest = $dest"
+msgstr "   src = $src dest = $dest"
+#
+msgid  "Unknown operation ${operation}, skipping."
+msgstr "Unknown operation ${operation}, skipping."
+#
+msgid  "Operation had extra arguments on the line = ${args}."
+msgstr "Operation had extra arguments on the line = ${args}."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: clean.funcs (some shared with jass-execute and undo.funcs)
+# =============================================================================
+# =============================================================================
+#
+msgid  "File: ${dest}"
+msgstr "File: ${dest}"
+#
+msgid  "Cleaning operation MOVE."
+msgstr "Cleaning operation MOVE."
+#
+msgid  "Cleaning operation COPY."
+msgstr "Cleaning operation COPY."
+#
+# Duplicate
+#msgid  "Undoing operation MAKE DIRECTORY."
+#msgstr "Undoing operation MAKE DIRECTORY."
+#
+msgid  "rmdir $src"
+msgstr "rmdir $src"
+#
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: undo.run (some shared with driver.run)
+# =============================================================================
+# =============================================================================
+#
+msgid  "${DRV_NAME}: Performing UNDO of ${JASS_REPOSITORY}."
+msgstr "${DRV_NAME}: Performing UNDO of ${JASS_REPOSITORY}."
+
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FILE: clean.run (some shared with driver.run)
+# =============================================================================
+# =============================================================================
+#
+msgid  "${DRV_NAME}: Performing CLEANUP of ${JASS_REPOSITORY}."
+msgstr "${DRV_NAME}: Performing CLEANUP of ${JASS_REPOSITORY}."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR FINISH SCRIPTS
+# =============================================================================
+# =============================================================================
+#
+# Finish/disable-ab2.fin
+#
+msgid  "Disabling the service: AnswerBook 2"
+msgstr "Disabling the service: AnswerBook 2"
+#
+# Finish/disable-apache.fin
+#
+msgid  "Disabling the service: Apache"
+msgstr "Disabling the service: Apache"
+#
+# Finish/disable-asppp.fin
+#
+msgid  "Disabling the service: Asynchronous Point-to-Point Protocol (ASPPP)"
+msgstr "Disabling the service: Asynchronous Point-to-Point Protocol (ASPPP)"
+#
+# Finish/disable-autoinst.fin
+#
+msgid  "Disabling the function: Automatic system reconfiguration"
+msgstr "Disabling the function: Automatic system reconfiguration"
+#
+msgid  "This script will prevent the successful use of the 'sys-unconfig'"
+"\n"
+"program to restore a system's configuration to an 'as-manufactured' state."
+msgstr "This script will prevent the successful use of the 'sys-unconfig'"
+"\n"
+"program to restore a system's configuration to an 'as-manufactured' state."
+#
+# Finish/disable-automount.fin
+#
+msgid  "Disabling the service: Automount"
+msgstr "Disabling the service: Automount"
+#
+# Finish/disable-dhcpd.fin
+#
+msgid  "Disabling the service: Dynamic Host Configuration Protocol (DHCP)"
+msgstr "Disabling the service: Dynamic Host Configuration Protocol (DHCP)"
+#
+msgid  "This script only prevents a system from being a DHCP server.  DHCP"
+"\n"
+"client services are not impacted by this script."
+msgstr "This script only prevents a system from being a DHCP server.  DHCP"
+"\n"
+"client services are not impacted by this script."
+#
+# Finish/disable-directory.fin
+#
+msgid  "Disabling the service: Sun ONE Directory Server"
+msgstr "Disabling the service: Sun ONE Directory Server"
+#
+# Finish/disable-dmi.fin
+#
+msgid  "Disabling the service: Desktop Management Interface (DMI)"
+msgstr "Disabling the service: Desktop Management Interface (DMI)"
+#
+# Finish/disable-face-log.fin
+#
+msgid  "Disabling global write permissions for ${TERRLOG}"
+msgstr "Disabling global write permissions for ${TERRLOG}"
+#
+msgid  "File ${TERRLOG} is on a read-only filesystem, file permissions not changed."
+msgstr "File ${TERRLOG} is on a read-only filesystem, file permissions not changed."
+#
+msgid  "Removing group and other write permissions from file ${TERRLOG}."
+msgstr "Removing group and other write permissions from file ${TERRLOG}."
+
+#
+# Finish/distable-dtlogin.fin
+#
+msgid  "Disabling the service: Common Desktop Environment (CDE)"
+msgstr "Disabling the service: Common Desktop Environment (CDE)"
+#
+# Finish/disable-ipv6.fin
+#
+msgid  "Disabling the function: IPv6 (via hostname interface files)"
+msgstr "Disabling the function: IPv6 (via hostname interface files)"
+#
+msgid  "Disabling the IPv6 interface, ${interface}"
+msgstr "Disabling the IPv6 interface, ${interface}"
+#
+# Finish/disable-kdc.fin
+#
+msgid  "Disabling the service: Kerberos Key Distribution Center (KDC)"
+msgstr "Disabling the service: Kerberos Key Distribution Center (KDC)"
+#
+msgid  "This script will prevent a system from being a Kerberos KDC as"
+"\n"
+"well as a Kerberos client (only if JASS_DISABLE_MODE = 'conf')."
+msgstr "This script will prevent a system from being a Kerberos KDC as"
+"\n"
+"well as a Kerberos client (only if JASS_DISABLE_MODE = 'conf')."
+#
+# Finish/disable-keyboard-abort.fin
+#
+msgid  "Disabling the function: Keyboard abort (L1-A, Stop-A)"
+msgstr "Disabling the function: Keyboard abort (L1-A, Stop-A)"
+#
+msgid  "Setting the \\\"KEYBOARD_ABORT\\\" parameter to \\\"disable\\\" in ${KBD}."
+msgstr "Setting the \\\"KEYBOARD_ABORT\\\" parameter to \\\"disable\\\" in ${KBD}."
+#
+# Finish/disable-keyserv-uid-nobody.fin
+#
+msgid  "Disabling the function: Default nobody SecureRPC keys"
+msgstr "Disabling the function: Default nobody SecureRPC keys"
+#
+msgid  "Setting the \\\"ENABLE_NOBODY_KEYS\\\" parameter to \\\"NO\\\" in ${KEYSERV}."
+msgstr "Setting the \\\"ENABLE_NOBODY_KEYS\\\" parameter to \\\"NO\\\" in ${KEYSERV}."
+#
+msgid  "Adding the \\\"-d\\\" option to /usr/sbin/keyserv in ${RPC}."
+msgstr "Adding the \\\"-d\\\" option to /usr/sbin/keyserv in ${RPC}."
+#
+# Finish/disable-ldap-client.fin
+#
+msgid  "Disabling the function: Lightweight Directory Access Protocol (LDAP) client"
+msgstr "Disabling the function: Lightweight Directory Access Protocol (LDAP) client"
+#
+# Finish/disable-lp.fin
+#
+msgid  "Disabling the service: Line printer (LP)"
+msgstr "Disabling the service: Line printer (LP)"
+#
+msgid  "Adding the \\\"lp\\\" account to ${CRONDENY}."
+msgstr "Adding the \\\"lp\\\" account to ${CRONDENY}."
+#
+msgid  "Disabling the \\\"lp\\\" user crontab entry."
+msgstr "Disabling the \\\"lp\\\" user crontab entry."
+#
+# Finish/disable-mipagent.fin
+#
+msgid  "Disabling the service: Mobile IP (MIP) Agent"
+msgstr "Disabling the service: Mobile IP (MIP) Agent"
+#
+# Finish/disable-named.fin
+#
+msgid  "Disabling the service: named (BIND/DNS)"
+msgstr "Disabling the service: named (BIND/DNS)"
+#
+# Finish/disable-nfs-client.fin
+#
+msgid  "Disabling the service: Networked File System (NFS) Client"
+msgstr "Disabling the service: Networked File System (NFS) Client"
+#
+# Finish/disable-nfs-server.fin
+#
+msgid  "Disabling the service: Networked File System (NFS) Server"
+msgstr "Disabling the service: Networked File System (NFS) Server"
+#
+# Finish/disable-nscd-caching.fin
+#
+msgid  "Disabling the function: Name Service Cache Daemon (NSCD)"
+msgstr "Disabling the function: Name Service Cache Daemon (NSCD)"
+#
+msgid  "Patch ${nscdPatch} or later should be installed.  This script will"
+"\n"
+"make no changes to the system until this patch is applied."
+msgstr "Patch ${nscdPatch} or later should be installed.  This script will"
+"\n"
+"make no changes to the system until this patch is applied."
+#
+msgid  "Changing the positive-time-to-live and negative-time-to-live entries"
+"\n"
+"to \\\"0\\\" for the \\\"passwd\\\", \\\"group\\\", \\\"hosts\\\" and \\\"ipnodes\\\" entries"
+"\n"
+"in ${NSCD}."
+msgstr "Changing the positive-time-to-live and negative-time-to-live entries"
+"\n"
+"to \\\"0\\\" for the \\\"passwd\\\", \\\"group\\\", \\\"hosts\\\" and \\\"ipnodes\\\" entries"
+"\n"
+"in ${NSCD}."
+#
+# Finish/disable-routing.fin
+#
+msgid  "Disabling IP routing."
+msgstr "Disabling IP routing."
+#
+msgid  "Disabling ${i} persistently."
+msgstr "Disabling ${i} persistently."
+#
+msgid  "Disabling current ${i}."
+msgstr "Disabling current ${i}."
+#
+# Finish/disable-picld.fin
+#
+msgid  "Disabling the service: Platform Information and Control Library (PICL)"
+msgstr "Disabling the service: Platform Information and Control Library (PICL)"
+#
+# Finish/disable-power-mgmt.fin
+#
+msgid  "Disabling the service: Power Management"
+msgstr "Disabling the service: Power Management"
+#
+msgid  "Creating the ${JASS_ROOT_DIR}noautoshutdown file to prevent the system prompting the"
+"\n"
+"user to determine power management status at the first system boot after"
+"\n"
+"installation."
+msgstr "Creating the ${JASS_ROOT_DIR}noautoshutdown file to prevent the system prompting the"
+"\n"
+"user to determine power management status at the first system boot after"
+"\n"
+"installation."
+#
+# Finish/disable-pppd.fin
+#
+msgid  "Disabling the service: Point-to-Point Protocol (PPP)"
+msgstr "Disabling the service: Point-to-Point Protocol (PPP)"
+#
+# Finish/disable-preserve.fin
+#
+msgid  "Disabling the function: Preserve Edited Files (PRESERVE)"
+msgstr "Disabling the function: Preserve Edited Files (PRESERVE)"
+#
+# Finish/disable-remote-root-login.fin
+#
+msgid  "Disabling the function: Direct, remote login as the \\\"root\\\" account"
+msgstr "Disabling the function: Direct, remote login as the \\\"root\\\" account"
+#
+msgid  "Setting the \\\"CONSOLE\\\" parameter in ${LOGIN}."
+msgstr "Setting the \\\"CONSOLE\\\" parameter in ${LOGIN}."
+#
+# Finish/disable-rhosts.fin
+#
+msgid  "Disabling the function: \\\"rhosts\\\" Authentication"
+msgstr "Disabling the function: \\\"rhosts\\\" Authentication"
+#
+msgid  "Commenting the \\\"pam_rhosts_auth\\\" entries in ${PAM}."
+msgstr "Commenting the \\\"pam_rhosts_auth\\\" entries in ${PAM}."
+#
+# Finish/disable-rpc.fin
+#
+msgid  "Disabling the service: Remote Procedure Call (RPC) Portmapper"
+msgstr "Disabling the service: Remote Procedure Call (RPC) Portmapper"
+#
+# Finish/disable-samba.fin
+#
+msgid  "Disabling the service: Samba"
+msgstr "Disabling the service: Samba"
+#
+# Finish/disable-sendmail.fin
+#
+msgid  "Please verify that \\\"/usr/lib/sendmail\\\" is not being started from \\\"cron\\\""
+"\n"
+"to perform queuing functions.  The sendmail operational mode is now configured"
+"\n"
+"using the \\\"MODE\\\" parameter in ${SENDMAIL}."
+msgstr "Please verify that \\\"/usr/lib/sendmail\\\" is not being started from \\\"cron\\\""
+"\n"
+"to perform queuing functions.  The sendmail operational mode is now configured"
+"\n"
+"using the \\\"MODE\\\" parameter in ${SENDMAIL}."
+#
+msgid  "Please check your sendmail installation (packages SUNWsndmr and SUNWsndmu)."
+msgstr "Please check your sendmail installation (packages SUNWsndmr and SUNWsndmu)."
+#
+msgid  "Skipping disabling of sendmail."
+msgstr "Skipping disabling of sendmail."
+#
+msgid  "Disabling the service: sendmail (for mail receipt)"
+msgstr "Disabling the service: sendmail (for mail receipt)"
+#
+msgid  "Sendmail (package SUNWsndmr) does not appear to be installed."
+msgstr "Sendmail (package SUNWsndmr) does not appear to be installed."
+#
+msgid  "Sendmail (package SUNWsndmu) does not appear to be installed."
+msgstr "Sendmail (package SUNWsndmu) does not appear to be installed."
+#
+msgid  "Creating sendmail configuration file, ${conf}.cf."
+msgstr "Creating sendmail configuration file, ${conf}.cf."
+#
+msgid  "Setting \\\"MODE\\\" parameter to \\\"${JASS_SENDMAIL_MODE}\\\" in  ${SENDMAIL}."
+msgstr "Setting \\\"MODE\\\" parameter to \\\"${JASS_SENDMAIL_MODE}\\\" in  ${SENDMAIL}."
+#
+msgid  "Adding \\\"/usr/lib/sendmail -q\\\" to ${CRONTAB}."
+msgstr "Adding \\\"/usr/lib/sendmail -q\\\" to ${CRONTAB}."
+#
+# Finish/disable-slp.fin
+#
+msgid  "Disabling the service: Service Location Protocol (SLP)"
+msgstr "Disabling the service: Service Location Protocol (SLP)"
+#
+# Finish/disable-sma.fin
+#
+msgid  "Disabling the service: SMA (NET-SNMP)"
+msgstr "Disabling the service: SMA (NET-SNMP)"
+#
+msgid  "Setting \\\"#DISABLE\\\" to \\\"YES\\\" in ${SNMPCONF}"
+msgstr "Setting \\\"#DISABLE\\\" to \\\"YES\\\" in ${SNMPCONF}"
+#
+# Finish/disable-snmp.fin
+#
+msgid  "Disabling the service: Simple Network Management Protocol (SNMP)"
+msgstr "Disabling the service: Simple Network Management Protocol (SNMP)"
+#
+# Finish/disable-spc.fin
+#
+msgid  "Disabling the service: SunSoft Print Service (SPC)"
+msgstr "Disabling the service: SunSoft Print Service (SPC)"
+#
+# Finish/disable-ssh-root-login.fin
+#
+msgid  "Disabling the function: SSH direct, remote login as the \\\"root\\\" account"
+msgstr "Disabling the function: SSH direct, remote login as the \\\"root\\\" account"
+#
+msgid  "Setting the \\\"${PARAM}\\\" parameter to \\\"no\\\" in ${LOGIN}."
+msgstr "Setting the \\\"${PARAM}\\\" parameter to \\\"no\\\" in ${LOGIN}."
+#
+msgid  "SSH (package SUNWsshdr) does not appear to be installed."
+msgstr "SSH (package SUNWsshdr) does not appear to be installed."
+#
+msgid  "Skipping disabling ssh remote root login to the system."
+msgstr "Skipping disabling ssh remote root login to the system."
+#
+# Finish/disable-syslogd-listen.fin
+#
+msgid  "Disabling the function: SYSLOG (for external log receipt)"
+msgstr "Disabling the function: SYSLOG (for external log receipt)"
+#
+msgid  "Preventing the SYSLOG service from logging remote connections."
+msgstr "Preventing the SYSLOG service from logging remote connections."
+#
+msgid  "The service will no longer accept log messages from other systems."
+msgstr "The service will no longer accept log messages from other systems."
+#
+msgid  "Setting the \\\"LOG_FROM_REMOTE\\\" parameter to \\\"NO\\\" in ${SYSLOG}."
+msgstr "Setting the \\\"LOG_FROM_REMOTE\\\" parameter to \\\"NO\\\" in ${SYSLOG}."
+#
+msgid  "Adding the \\\"-t\\\" option to /usr/sbin/syslogd in ${SYSLOG}."
+msgstr "Adding the \\\"-t\\\" option to /usr/sbin/syslogd in ${SYSLOG}."
+#
+# Finish/disable-system-accounts.fin
+#
+msgid  "Configuring the system to disable system accounts."
+msgstr "Configuring the system to disable system accounts."
+#
+msgid  "Installing the ${JASS_SHELL_DISABLE} shell in ${SH_FILE}."
+msgstr "Installing the ${JASS_SHELL_DISABLE} shell in ${SH_FILE}."
+#
+msgid  "The shell, ${SH_FILE}, already exists."
+msgstr "The shell, ${SH_FILE}, already exists."
+#
+msgid  "Disabling accounts by changing their shell to ${JASS_SHELL_DISABLE}."
+msgstr "Disabling accounts by changing their shell to ${JASS_SHELL_DISABLE}."
+#
+msgid  "Disabling the account, ${ACCT}."
+msgstr "Disabling the account, ${ACCT}."
+#
+msgid  "This function will not be performed for the user, ${ACCT}."
+msgstr "This function will not be performed for the user, ${ACCT}."
+#
+# Finish/disable-uucp.fin
+#
+msgid  "Disabling the service: Unix-to-Unix Copy (UUCP)"
+msgstr "Disabling the service: Unix-to-Unix Copy (UUCP)"
+#
+msgid  "Account 'nuucp' is already locked."
+msgstr "Account 'nuucp' is already locked."
+#
+msgid  "Locking account 'nuucp'."
+msgstr "Locking account 'nuucp'."
+#
+msgid  "Removing account 'nuucp' from the system."
+msgstr "Removing account 'nuucp' from the system."
+#
+msgid  "Removing the \\\"uucp\\\" user crontab entry."
+msgstr "Removing the \\\"uucp\\\" user crontab entry."
+#
+# Finish/disable-vold.fin
+#
+msgid  "Disabling the service: Volume Management (VOLD)"
+msgstr "Disabling the service: Volume Management (VOLD)"
+#
+# Finish/disable-wbem.fin
+#
+msgid  "Disabling the service: Web-based Enterprise Management (WBEM)"
+msgstr "Disabling the service: Web-based Enterprise Management (WBEM)"
+#
+# Finish/disable-xfs.fin
+#
+msgid  "Disabling the service: X Font Server (xfs)"
+msgstr "Disabling the service: X Font Server (xfs)"
+#
+# Finish/disable-xserver-listen.fin
+#
+msgid  "Disabling the function: X11 Server (listen on TCP/6000)"
+msgstr "Disabling the function: X11 Server (listen on TCP/6000)"
+#
+msgid  "Adding the \\\"-nolisten tcp\\\" option to ${E_XSERVERS}."
+msgstr "Adding the \\\"-nolisten tcp\\\" option to ${E_XSERVERS}."
+#
+msgid  "This file is being created from the master version of the file,"
+"\n"
+"${U_XSERVERS}."
+msgstr "This file is being created from the master version of the file,"
+"\n"
+"${U_XSERVERS}."
+#
+msgid  "The file, ${E_XSERVERS}, could not be created as the"
+"\n"
+"master file, ${U_XSERVERS}, could not be not found."
+msgstr "The file, ${E_XSERVERS}, could not be created as the"
+"\n"
+"master file, ${U_XSERVERS}, could not be not found."
+#
+#
+# Finish/enable-32bit-kernel.fin
+#
+msgid  "Configuring the system to boot into 32-bit kernel mode."
+msgstr "Configuring the system to boot into 32-bit kernel mode."
+#
+msgid  "Setting the EEPROM parameter \\\"boot-file\\\" to \\\"kernel/unix\\\"."
+msgstr "Setting the EEPROM parameter \\\"boot-file\\\" to \\\"kernel/unix\\\"."
+#
+msgid  "This function is not supported on the ${ARCH} architecture."
+msgstr "This function is not supported on the ${ARCH} architecture."
+#
+# Finish/enable-account-lockout.fin
+#
+msgid  "Enabling account lockout to lock user accounts with repeated failed entries."
+msgstr "Enabling account lockout to lock user accounts with repeated failed entries."
+#
+# There are several duplicated messages here with Audit/enable-account-lockout
+# If they diverge, they will need to be added.  Alternately, a simple common
+# log function could be added.
+#
+msgid  "Removing lock_after_retries user_attr(4) entry for user ${USER}."
+msgstr "Removing lock_after_retries user_attr(4) entry for user ${USER}."
+#
+msgid  "Setting LOCK_AFTER_RETRIES to YES in ${POLICY}."
+msgstr "Setting LOCK_AFTER_RETRIES to YES in ${POLICY}."
+#
+# Finish/enable-bart.fin
+#
+msgid  "Enabling the function: Basic Auditing and Reporting Tool (BART)"
+msgstr "Enabling the function: Basic Auditing and Reporting Tool (BART)"
+#
+msgid  "Running bart create -r ${JASS_ROOT_DIR}${RULES}."
+msgstr "Running bart create -r ${JASS_ROOT_DIR}${RULES}."
+#
+msgid  "BART control manifest ${CONTROL_MANIFEST_FILE}"
+"\n"
+"created."
+msgstr "BART control manifest ${CONTROL_MANIFEST_FILE}"
+"\n"
+"created."
+#
+msgid  "BART create failed; return code ${bart_status}. Manifest file"
+"\n"
+"${FAILED_MANIFEST_FILE}."
+msgstr "BART create failed; return code ${bart_status}. Manifest file"
+"\n"
+"${FAILED_MANIFEST_FILE}."
+#
+msgid  "${JASS_ROOT_DIR}usr/bin/bart is not installed."
+msgstr "${JASS_ROOT_DIR}usr/bin/bart is not installed."
+#
+# Finish/enable-bsm.fin
+#
+msgid  "Enabling the SunSHIELD Basic Security Module (BSM)"
+msgstr "Enabling the SunSHIELD Basic Security Module (BSM)"
+#
+msgid  "BSM Auditing has already been enabled."
+msgstr "BSM Auditing has already been enabled."
+#
+msgid  "Executing ${JASS_ROOT_DIR}etc/security/bsmconv."
+msgstr "Executing ${JASS_ROOT_DIR}etc/security/bsmconv."
+#
+msgid  "Removing the \\\"abort disable\\\" code that was added to file"
+"\n"
+"${JASS_ROOT_DIR}etc/system by command ${JASS_ROOT_DIR}/etc/security/bsmconv."
+msgstr "Removing the \\\"abort disable\\\" code that was added to file"
+"\n"
+"${JASS_ROOT_DIR}etc/system by command ${JASS_ROOT_DIR}/etc/security/bsmconv."
+#
+msgid  "When per-zone BSM auditing is configured, auditing must"
+"\n"
+"be enabled for each zone.  To enable, run this from the global zone:"
+"\n"
+"/etc/security/bsmconv /root/directory/name/for/zone"
+msgstr "When per-zone BSM auditing is configured, auditing must"
+"\n"
+"be enabled for each zone.  To enable, run this from the global zone:"
+"\n"
+"/etc/security/bsmconv /root/directory/name/for/zone"
+#
+msgid  "Copying files from the 'Auditing in the Solaris OE' BluePrint OnLine article"
+"\n"
+"available at http://www.sun.com/blueprints"
+msgstr "Copying files from the 'Auditing in the Solaris OE' BluePrint OnLine article"
+"\n"
+"available at http://www.sun.com/blueprints"
+#
+msgid  "Checking if the 'audit_warn' alias is installed."
+msgstr "Checking if the 'audit_warn' alias is installed."
+#
+msgid  "Installing 'audit_warn' alias for the 'root' account."
+msgstr "Installing 'audit_warn' alias for the 'root' account."
+#
+# Finish/enable-coreadm.fin
+#
+msgid  "Configuring coreadm to use pattern matching and logging."
+msgstr "Configuring coreadm to use pattern matching and logging."
+#
+msgid  "Directory ${COREDIR} was not owned by \\\"root\\\"."
+msgstr "Directory ${COREDIR} was not owned by \\\"root\\\"."
+#
+msgid  "Directory ${COREDIR} did not have group \\\"root\\\"."
+msgstr "Directory ${COREDIR} did not have group \\\"root\\\"."
+#
+msgid  "'Directory ${COREDIR} did not have mode 700."
+msgstr "'Directory ${COREDIR} did not have mode 700."
+#
+msgid  "coreadm change was successful."
+msgstr "coreadm change was successful."
+#
+msgid  "coreadm configuration update failure."
+msgstr "coreadm configuration update failure."
+#
+msgid  "Invalid coreadm configuration."
+msgstr "Invalid coreadm configuration."
+#
+msgid  "Unknown coreadm return code."
+msgstr "Unknown coreadm return code."
+#
+msgid  "coreadm has already been successfully configured."
+msgstr "coreadm has already been successfully configured."
+#
+msgid  "Adding ${COREADM_WORKAROUND} line to ${RC_COREADM}."
+msgstr "Adding ${COREADM_WORKAROUND} line to ${RC_COREADM}."
+#
+# Finish/enable-ftp-syslog.fin (share with enable-ftpaccess.fin)
+#
+msgid  "Enabling connection logging for the FTP service."
+msgstr "Enabling connection logging for the FTP service."
+#
+msgid  "Adding the \\\"-l\\\" option to FTP service in ${INETD}."
+msgstr "Adding the \\\"-l\\\" option to FTP service in ${INETD}."
+#
+msgid  "The FTP service was not found in ${INETD}."
+msgstr "The FTP service was not found in ${INETD}."
+#
+# Finish/enable-ftpaccess.fin (share with enable-ftpsyslog.fin)
+#
+msgid  "Enabling the use of the ftpaccess(4) file for the FTP daemon."
+msgstr "Enabling the use of the ftpaccess(4) file for the FTP daemon."
+#
+msgid  "Adding the \\\"-a\\\" option to the FTP service in ${INETD}."
+msgstr "Adding the \\\"-a\\\" option to the FTP service in ${INETD}."
+#
+# Finish/enable-inetd-syslog.fin
+#
+msgid  "Configuring the Internet services daemon to log all incoming connections."
+msgstr "Configuring the Internet services daemon to log all incoming connections."
+#
+msgid  "Setting the \\\"ENABLE_CONNECTION_LOGGING\\\" parameter to \\\"YES\\\" in ${INETD}."
+msgstr "Setting the \\\"ENABLE_CONNECTION_LOGGING\\\" parameter to \\\"YES\\\" in ${INETD}."
+#
+msgid  "Adding the \\\"-t\\\" option to /usr/sbin/inetd in ${INETSVC}."
+msgstr "Adding the \\\"-t\\\" option to /usr/sbin/inetd in ${INETSVC}."
+#
+# Finish/enable-ipfilter.fin
+#
+msgid  "Enabling the function: IP Filtering"
+msgstr "Enabling the function: IP Filtering"
+#
+#
+# Finish/enable-password-history.fin
+#
+msgid  "Enabling password history checks on the system for local users."
+msgstr "Enabling password history checks on the system for local users."
+#
+msgid  "Setting \\\"HISTORY\\\" to \\\"${JASS_PASS_HISTORY}\\\" in ${PASSWORD}."
+msgstr "Setting \\\"HISTORY\\\" to \\\"${JASS_PASS_HISTORY}\\\" in ${PASSWORD}."
+#
+# Finish/enable-priv-nfs-ports.fin
+#
+msgid  "Configuring the NFS server service to accept connections/requests originating"
+"\n"
+"from privileged ports only."
+msgstr "Configuring the NFS server service to accept connections/requests originating"
+"\n"
+"from privileged ports only."
+#
+msgid  "Adding \\\"set nfssrv:nfs_portmon=1\\\" to ${SYSTEM}."
+msgstr "Adding \\\"set nfssrv:nfs_portmon=1\\\" to ${SYSTEM}."
+#
+# Finish/enable-process-accounting.fin
+#
+msgid  "Enabling the function: Solaris Process Accounting"
+msgstr "Enabling the function: Solaris Process Accounting"
+#
+msgid  "Solaris Process Accounting is not installed.  The packages SUNWaccr"
+"\n"
+"and SUNWaccu must be installed to use Solaris process accounting."
+msgstr "Solaris Process Accounting is not installed.  The packages SUNWaccr"
+"\n"
+"and SUNWaccu must be installed to use Solaris process accounting."
+#
+msgid  "Removing redundant ${JASS_ROOT_DIR}etc/rc3.d/S99acct link."
+msgstr "Removing redundant ${JASS_ROOT_DIR}etc/rc3.d/S99acct link."
+#
+msgid  "${JASS_ROOT_DIR}etc/rc0.d/K22acct already exists.  This file will"
+"\n"
+"not be overwritten."
+msgstr "${JASS_ROOT_DIR}etc/rc0.d/K22acct already exists.  This file will"
+"\n"
+"not be overwritten."
+#
+msgid  "${JASS_ROOT_DIR}etc/rc3.d/S22acct already exists.  This file will"
+"\n"
+"not be overwritten."
+msgstr "${JASS_ROOT_DIR}etc/rc3.d/S22acct already exists.  This file will"
+"\n"
+"not be overwritten."
+#
+msgid  "Linking ../init.d/acct to ${JASS_ROOT_DIR}etc/rc0.d/K22acct."
+msgstr "Linking ../init.d/acct to ${JASS_ROOT_DIR}etc/rc0.d/K22acct."
+#
+msgid  "Linking ../init.d/acct to ${JASS_ROOT_DIR}etc/rc3.d/S22acct."
+msgstr "Linking ../init.d/acct to ${JASS_ROOT_DIR}etc/rc3.d/S22acct."
+#
+# Finish/enable-rfc1948.fin
+#
+msgid  "Enabling the function: RFC 1948 Sequence Number Generation."
+msgstr "Enabling the function: RFC 1948 Sequence Number Generation."
+#
+msgid  "Setting the \\\"TCP_STRONG_ISS\\\" parameter to \\\"2\\\" in ${INETINIT}."
+msgstr "Setting the \\\"TCP_STRONG_ISS\\\" parameter to \\\"2\\\" in ${INETINIT}."
+#
+# Finish/enable-stack-protection.fin
+#
+msgid  "Enabling the function: kernel-level stack protections and logging"
+msgstr "Enabling the function: kernel-level stack protections and logging"
+#
+msgid  "Setting the \\\"set noexec_user_stack\\\" parameter to \\\"1\\\" in ${SYSTEM}."
+msgstr "Setting the \\\"set noexec_user_stack\\\" parameter to \\\"1\\\" in ${SYSTEM}."
+#
+msgid  "Setting the \\\"set noexec_user_stack_log\\\" parameter to \\\"1\\\" in ${SYSTEM}."
+msgstr "Setting the \\\"set noexec_user_stack_log\\\" parameter to \\\"1\\\" in ${SYSTEM}."
+#
+# Finish/enable-tcpwrappers.fin
+#
+msgid  "Enabling the function: TCP Wrappers"
+msgstr "Enabling the function: TCP Wrappers"
+#
+msgid  "Setting the \\\"ENABLE_TCPWRAPPERS\\\" parameter to \\\"YES\\\" in ${INETD}."
+msgstr "Setting the \\\"ENABLE_TCPWRAPPERS\\\" parameter to \\\"YES\\\" in ${INETD}."
+#
+# Finish/install-Sun_ONE-WS.fin
+#
+msgid  "Installing Software: Sun ONE Web Server"
+msgstr "Installing Software: Sun ONE Web Server"
+#
+msgid  "The directory, ${SUNONE_DIR}, already exists."
+msgstr "The directory, ${SUNONE_DIR}, already exists."
+#
+msgid  "Extracting the Sun ONE Web Server into ${SUNONE_DIR}."
+msgstr "Extracting the Sun ONE Web Server into ${SUNONE_DIR}."
+#
+# Finish/install-at-deny.fin
+#
+msgid  "Updating \\\"at\\\" facility access controls (at.allow)."
+msgstr "Updating \\\"at\\\" facility access controls (at.allow)."
+#
+msgid  "Account, ${ACCT}, does not exist in ${JASS_PASSWD}."
+msgstr "Account, ${ACCT}, does not exist in ${JASS_PASSWD}."
+#
+msgid  "Account, ${ACCT}, exists in ${ATDENY}."
+msgstr "Account, ${ACCT}, exists in ${ATDENY}."
+#
+msgid  "Adding ${ACCT} to ${ATALLOW}"
+msgstr "Adding ${ACCT} to ${ATALLOW}"
+#
+# Finish/install-fix-modes.fin
+#
+msgid  "Installing Software: fix-modes"
+msgstr "Installing Software: fix-modes"
+#
+msgid  "The Fix Modes package is already installed at ${FIX_MODES_DIR_PKG}."
+msgstr "The Fix Modes package is already installed at ${FIX_MODES_DIR_PKG}."
+#
+msgid  "The Fix Modes software is already installed at ${FIX_MODES_DIR_TAR}."
+msgstr "The Fix Modes software is already installed at ${FIX_MODES_DIR_TAR}."
+#
+msgid  "Installing the Fix Modes package into ${FIX_MODES_DIR_LOC}."
+msgstr "Installing the Fix Modes package into ${FIX_MODES_DIR_LOC}."
+#
+msgid  "Installing the Fix Modes software into ${FIX_MODES_DIR_TAR}."
+msgstr "Installing the Fix Modes software into ${FIX_MODES_DIR_TAR}."
+#
+msgid  "The Fix Modes program is not included as part of the distribution of the"
+"\n"
+"Sun Security Toolkit: Community Edition.  This tool can however be obtained from the Sun"
+"\n"
+"BluePrints Tools site at http://www.sun.com/blueprints/tools/."
+msgstr "The Fix Modes program is not included as part of the distribution of the"
+"\n"
+"Sun Security Toolkit: Community Edition.  This tool can however be obtained from the Sun"
+"\n"
+"BluePrints Tools site at http://www.sun.com/blueprints/tools/."
+#
+msgid  "Executing \\\"fix-modes\\\" from ${realInstallDir}."
+msgstr "Executing \\\"fix-modes\\\" from ${realInstallDir}."
+#
+msgid  "The installation directory, ${FIX_MODES_DIR_LOC}, does not exist."
+msgstr "The installation directory, ${FIX_MODES_DIR_LOC}, does not exist."
+#
+# Finish/install-ftpusers.fin
+#
+msgid  "Restricting access to the File Transfer Protocol (FTP) service."
+msgstr "Restricting access to the File Transfer Protocol (FTP) service."
+#
+msgid  "The FTP service is not installed on this system, so the \\\"ftpusers\\\" file will"
+"\n"
+"not be created."
+msgstr "The FTP service is not installed on this system, so the \\\"ftpusers\\\" file will"
+"\n"
+"not be created."
+#
+msgid  "Adding ${ACCT} to ${FTPUSERS}."
+msgstr "Adding ${ACCT} to ${FTPUSERS}."
+#
+# Finish/install-jass.fin
+#
+msgid  "Installing Software: Sun Security Toolkit: Community Edition"
+msgstr "Installing Software: Sun Security Toolkit: Community Edition"
+#
+msgid  "This script cannot be used in standalone mode due to the potential"
+"\n"
+"for overwriting the local Sun Security Toolkit: Community Edition installation."
+msgstr "This script cannot be used in standalone mode due to the potential"
+"\n"
+"for overwriting the local Sun Security Toolkit: Community Edition installation."
+#
+msgid  "Installing ${JASS_PKG} from the path ${JASS_PKG_SRC_DIR}."
+msgstr "Installing ${JASS_PKG} from the path ${JASS_PKG_SRC_DIR}."
+#
+# Dup within the same file
+#msgid  "Installing ${JASS_PKG} from the path ${JASS_PKG_SRC_DIR}."
+#msgstr "Installing ${JASS_PKG} from the path ${JASS_PKG_SRC_DIR}."
+#
+msgid  "Directory ${JASS_PKG_SRC_DIR} skipped, name is not ${JASS_PKG}"
+msgstr "Directory ${JASS_PKG_SRC_DIR} skipped, name is not ${JASS_PKG}"
+#
+#
+# Finish/install-loginlog.fin
+#
+msgid  "Creating log file to track failed login attempts."
+msgstr "Creating log file to track failed login attempts."
+#
+msgid  "Creating file ${LOGINLOG}."
+msgstr "Creating file ${LOGINLOG}."
+#
+msgid  "File ${LOGINLOG} already exists."
+msgstr "File ${LOGINLOG} already exists."
+#
+msgid  "File ${LOGINLOG} was not owned by root."
+msgstr "File ${LOGINLOG} was not owned by root."
+#
+msgid  "File ${LOGINLOG} did not have group sys."
+msgstr "File ${LOGINLOG} did not have group sys."
+#
+msgid  "File ${LOGINLOG} did not have mode 600."
+msgstr "File ${LOGINLOG} did not have mode 600."
+#
+# Finish/install-md5.fin
+#
+msgid  "Installing Software: MD5"
+msgstr "Installing Software: MD5"
+#
+msgid  "MD5 is provided by Solaris digest(1) command"
+msgstr "MD5 is provided by Solaris digest(1) command"
+#
+msgid  "The MD5 package is already installed at ${MD5_DIR_PKG}."
+msgstr "The MD5 package is already installed at ${MD5_DIR_PKG}."
+#
+msgid  "The MD5 software is already installed at ${MD5_DIR_TAR}."
+msgstr "The MD5 software is already installed at ${MD5_DIR_TAR}."
+#
+msgid  "Installing the MD5 package into ${MD5_DIR_LOC}."
+msgstr "Installing the MD5 package into ${MD5_DIR_LOC}."
+#
+msgid  "Installing the MD5 software into ${MD5_DIR_TAR}."
+msgstr "Installing the MD5 software into ${MD5_DIR_TAR}."
+#
+msgid  "The MD5 program is not included as part of the distribution of the"
+"\n"
+"Sun Security Toolkit: Community Edition.  MD5 can however be obtained from the Sun"
+"\n"
+"BluePrints Tools site at http://www.sun.com/blueprints/tools/."
+msgstr "The MD5 program is not included as part of the distribution of the"
+"\n"
+"Sun Security Toolkit: Community Edition.  MD5 can however be obtained from the Sun"
+"\n"
+"BluePrints Tools site at http://www.sun.com/blueprints/tools/."
+#
+msgid  "The installation directory, ${MD5_DIR_LOC}, does not exist."
+msgstr "The installation directory, ${MD5_DIR_LOC}, does not exist."
+#
+# Finish/install-nddconfig.fin
+#
+msgid  "Installing the \\\"nddconfig\\\" run-control script."
+msgstr "Installing the \\\"nddconfig\\\" run-control script."
+#
+# Finish/install-newaliases.fin
+#
+msgid  "Creating the \\\"newaliases\\\" link to the \\\"sendmail\\\" program."
+msgstr "Creating the \\\"newaliases\\\" link to the \\\"sendmail\\\" program."
+#
+msgid  "Adding \\\"newaliases\\\" link to \\\"sendmail\\\"."
+msgstr "Adding \\\"newaliases\\\" link to \\\"sendmail\\\"."
+#
+msgid  "The \\\"newaliases\\\" link to \\\"sendmail\\\" is already installed."
+msgstr "The \\\"newaliases\\\" link to \\\"sendmail\\\" is already installed."
+#
+# Finish/install-openssh.fin
+#
+msgid  "Installing Software: OpenSSH"
+msgstr "Installing Software: OpenSSH"
+#
+msgid  "This script cannot be used in standalone mode due to the potential for"
+"\n"
+"overwriting the local OBSDssh installation."
+msgstr "This script cannot be used in standalone mode due to the potential for"
+"\n"
+"overwriting the local OBSDssh installation."
+#
+msgid  "Installing ${OPENSSH_NAME} from ${OPENSSH_PKG_DIR}/${OPENSSH_PKG_SRC}."
+msgstr "Installing ${OPENSSH_NAME} from ${OPENSSH_PKG_DIR}/${OPENSSH_PKG_SRC}."
+#
+msgid  "\n"
+"The OpenSSH program is not included as part of the distribution of the Solaris"
+"\n"
+"Security Toolkit.  A procedure for building this tool can be obtained from the"
+"\n"
+"Sun BluePrints site in the article titled \\\"Building and Deploying OpenSSH on"
+"\n"
+"the Solaris OE\\\".  For more information, see:"
+"\n"
+"http://www.sun.com/security/blueprints."
+msgstr "\n"
+"The OpenSSH program is not included as part of the distribution of the Solaris"
+"\n"
+"Security Toolkit.  A procedure for building this tool can be obtained from the"
+"\n"
+"Sun BluePrints site in the article titled \\\"Building and Deploying OpenSSH on"
+"\n"
+"the Solaris OE\\\".  For more information, see:"
+"\n"
+"http://www.sun.com/security/blueprints."
+#
+# Finish/install-recommended-patches.fin
+#
+msgid  "Installing Software: Solaris Recommended and Security Patch Cluster"
+msgstr "Installing Software: Solaris Recommended and Security Patch Cluster"
+#
+msgid  "The patch directory, ${PATCH_DIR}, does not exist."
+msgstr "The patch directory, ${PATCH_DIR}, does not exist."
+#
+msgid  "The patch directory, ${PATCH_SERV_DIR}, does not exist."
+msgstr "The patch directory, ${PATCH_SERV_DIR}, does not exist."
+#
+msgid  "Installing the patches from the directory, ${PATCH_DIR}/${PATCH_SERV_DIR}."
+msgstr "Installing the patches from the directory, ${PATCH_DIR}/${PATCH_SERV_DIR}."
+#
+# Finish/install-sadmind-options.fin
+#
+msgid  "Define the security level for the system administration (sadmind) service."
+msgstr "Define the security level for the system administration (sadmind) service."
+#
+msgid  "Adding the \\\"${JASS_SADMIND_OPTIONS}\\\" options to sadmind in ${INETD}."
+msgstr "Adding the \\\"${JASS_SADMIND_OPTIONS}\\\" options to sadmind in ${INETD}."
+#
+msgid  "The \\\"sadmind\\\" service was not found in ${INETD}."
+msgstr "The \\\"sadmind\\\" service was not found in ${INETD}."
+#
+# Finish/install-security-mode.fin
+#
+msgid  "Enabling the EEPROM Security Mode."
+msgstr "Enabling the EEPROM Security Mode."
+#
+msgid  "The EEPROM security-mode parameter is set as: ${EEPROM_SECURITY}."
+msgstr "The EEPROM security-mode parameter is set as: ${EEPROM_SECURITY}."
+#
+msgid  "To improve the security of the system, the following command should be"
+"\n"
+"executed manually from the operating system.  For more information on this"
+"\n"
+"command and its possible values, refer to the eeprom(1M) manual entry."
+"\n"
+"\n"
+"   eeprom \\\"security-mode=command\\\""
+msgstr "To improve the security of the system, the following command should be"
+"\n"
+"executed manually from the operating system.  For more information on this"
+"\n"
+"command and its possible values, refer to the eeprom(1M) manual entry."
+"\n"
+"\n"
+"   eeprom \\\"security-mode=command\\\""
+#
+msgid  "The current number of EEPROM \\\"badlogins\\\" is ${EEPROM_BADLOGINS}."
+msgstr "The current number of EEPROM \\\"badlogins\\\" is ${EEPROM_BADLOGINS}."
+#
+msgid  "Setting the number of badlogins to \\\"0\\\"."
+msgstr "Setting the number of badlogins to \\\"0\\\"."
+#
+msgid  "This script is not supported on this architecture, ${UNAME_P} ${ISAINFO_B}-bit."
+msgstr "This script is not supported on this architecture, ${UNAME_P} ${ISAINFO_B}-bit."
+#
+# Finish/install-shells.fin
+#
+msgid  "Defining valid shells for this system."
+msgstr "Defining valid shells for this system."
+#
+msgid  "Adding ${NEW_SHELL} to ${SHELLS}."
+msgstr "Adding ${NEW_SHELL} to ${SHELLS}."
+#
+# Finish/install-strong-permissions.fin
+#
+msgid  "Installing stronger permissions on system files and directories."
+msgstr "Installing stronger permissions on system files and directories."
+#
+# Finish/install-sulog.fin
+#
+msgid  "Creating \\\"sulog\\\" file to track the use or attempted use of \\\"su\\\"."
+msgstr "Creating \\\"sulog\\\" file to track the use or attempted use of \\\"su\\\"."
+#
+msgid  "Creating the file, ${SULOG}."
+msgstr "Creating the file, ${SULOG}."
+#
+msgid  "The file, ${SULOG}, already exists."
+msgstr "The file, ${SULOG}, already exists."
+#
+msgid  "Setting owner of ${SULOG} to \\\"root\\\"."
+msgstr "Setting owner of ${SULOG} to \\\"root\\\"."
+#
+msgid  "Setting group of ${SULOG} to \\\"root\\\"."
+msgstr "Setting group of ${SULOG} to \\\"root\\\"."
+#
+msgid  "Setting permissions of ${SULOG} to \\\"600\\\"."
+msgstr "Setting permissions of ${SULOG} to \\\"600\\\"."
+#
+# Finish/install-templates.fin
+#
+msgid  "Copying personalized files (templates)."
+msgstr "Copying personalized files (templates)."
+#
+# Finish/print-rhosts.fin
+#
+msgid  "Searching for all \\\".rhosts\\\" or \\\"hosts.equiv\\\" files."
+msgstr "Searching for all \\\".rhosts\\\" or \\\"hosts.equiv\\\" files."
+#
+msgid  "The output file, ${JASS_RHOSTS_FILE}, already exists."
+msgstr "The output file, ${JASS_RHOSTS_FILE}, already exists."
+#
+msgid  "The output file, ${JASS_RHOSTS_FILE}, could not be created."
+msgstr "The output file, ${JASS_RHOSTS_FILE}, could not be created."
+#
+msgid  "Recording output to ${JASS_RHOSTS_FILE}."
+msgstr "Recording output to ${JASS_RHOSTS_FILE}."
+#
+# Finish/print-sgid-files.fin
+#
+msgid  "Searching for all Set-GID files."
+msgstr "Searching for all Set-GID files."
+#
+msgid  "The output file, ${JASS_SGID_FILE}, already exists."
+msgstr "The output file, ${JASS_SGID_FILE}, already exists."
+#
+msgid  "The output file, ${JASS_SGID_FILE}, could not be created."
+msgstr "The output file, ${JASS_SGID_FILE}, could not be created."
+#
+msgid  "Recording output to ${JASS_SGID_FILE}."
+msgstr "Recording output to ${JASS_SGID_FILE}."
+#
+# Finish/print-suid-files.fin
+#
+msgid  "Searching for all Set-UID files."
+msgstr "Searching for all Set-UID files."
+#
+msgid  "The output file, ${JASS_SUID_FILE}, already exists."
+msgstr "The output file, ${JASS_SUID_FILE}, already exists."
+#
+msgid  "The output file, ${JASS_SUID_FILE}, could not be created."
+msgstr "The output file, ${JASS_SUID_FILE}, could not be created."
+#
+msgid  "Recording output to ${JASS_SUID_FILE}."
+msgstr "Recording output to ${JASS_SUID_FILE}."
+#
+# Finish/print-unowned-objects.fin
+#
+msgid  "Searching for all unowned objects."
+msgstr "Searching for all unowned objects."
+#
+msgid  "The output file, ${JASS_UNOWNED_FILE}, already exists."
+msgstr "The output file, ${JASS_UNOWNED_FILE}, already exists."
+#
+msgid  "The output file, ${JASS_UNOWNED_FILE}, could not be created."
+msgstr "The output file, ${JASS_UNOWNED_FILE}, could not be created."
+#
+msgid  "Recording output to ${JASS_UNOWNED_FILE}."
+msgstr "Recording output to ${JASS_UNOWNED_FILE}."
+#
+# Finish/print-world-writable-objects.fin
+#
+msgid  "Searching for all world writable objects."
+msgstr "Searching for all world writable objects."
+#
+msgid  "The output file, ${JASS_WRITABLE_FILE}, already exists."
+msgstr "The output file, ${JASS_WRITABLE_FILE}, already exists."
+#
+msgid  "The output file, ${JASS_WRITABLE_FILE}, could not be created."
+msgstr "The output file, ${JASS_WRITABLE_FILE}, could not be created."
+#
+msgid  "Recording output to ${JASS_WRITABLE_FILE}."
+msgstr "Recording output to ${JASS_WRITABLE_FILE}."
+#
+# Finish/remove-unneeded-accounts.fin
+#
+msgid  "Removing non-essential system accounts."
+msgstr "Removing non-essential system accounts."
+#
+msgid  "Removing account $USER from the system."
+msgstr "Removing account $USER from the system."
+#
+msgid  "Updating /etc/shadow file from /etc/passwd file so account $USER can be removed."
+msgstr "Updating /etc/shadow file from /etc/passwd file so account $USER can be removed."
+#
+# Finish/set-banner-dtlogin.fin
+#
+msgid  "Setting the service banner for the CDE dtlogin service."
+msgstr "Setting the service banner for the CDE dtlogin service."
+#
+msgid  "Configuring CDE to display \\\"${JASS_BANNER_DTLOGIN}\\\" at login."
+msgstr "Configuring CDE to display \\\"${JASS_BANNER_DTLOGIN}\\\" at login."
+#
+msgid  "CDE is configured to display \\\"${JASS_BANNER_DTLOGIN}\\\" at login."
+msgstr "CDE is configured to display \\\"${JASS_BANNER_DTLOGIN}\\\" at login."
+#
+msgid  "CDE (package SUNWdtdte) does not appear to be installed."
+msgstr "CDE (package SUNWdtdte) does not appear to be installed."
+#
+msgid  "Skipping the setting of the CDE dtlogin service banner."
+msgstr "Skipping the setting of the CDE dtlogin service banner."
+#
+# Finish/set-banner-ftpd.fin
+#
+msgid  "Setting the connection banner for the FTP service."
+msgstr "Setting the connection banner for the FTP service."
+#
+msgid  "Setting \\\"greeting\\\" to \\\"brief\\\" in ${FTPACCESS}."
+msgstr "Setting \\\"greeting\\\" to \\\"brief\\\" in ${FTPACCESS}."
+#
+msgid  "Setting \\\"banner\\\" to \\\"${bannerFile}\\\" in ${FTPACCESS}."
+msgstr "Setting \\\"banner\\\" to \\\"${bannerFile}\\\" in ${FTPACCESS}."
+#
+msgid  "Installing the FTP service banner message on the system."
+msgstr "Installing the FTP service banner message on the system."
+#
+msgid  "FTP (package SUNWftpr) does not appear to be installed."
+msgstr "FTP (package SUNWftpr) does not appear to be installed."
+#
+msgid  "Skipping the setting of the FTP service banner."
+msgstr "Skipping the setting of the FTP service banner."
+#
+msgid  "Setting \\\"BANNER\\\" to \\\"${JASS_BANNER_FTPD}\\\" in ${FTPD}."
+msgstr "Setting \\\"BANNER\\\" to \\\"${JASS_BANNER_FTPD}\\\" in ${FTPD}."
+#
+# Finish/set-banner-sendmail.fin
+#
+msgid  "Setting the service banner for the sendmail."
+msgstr "Setting the service banner for the sendmail."
+#
+msgid  "Setting \\\"$PARAM\\\" to \\\"${JASS_BANNER_SENDMAIL}\\\" in ${SENDMAIL}."
+msgstr "Setting \\\"$PARAM\\\" to \\\"${JASS_BANNER_SENDMAIL}\\\" in ${SENDMAIL}."
+#
+# Dup of disable-sendmail.fin
+#msgid  "Sendmail (package SUNWsndmr) does not appear to be installed."
+#msgstr "Sendmail (package SUNWsndmr) does not appear to be installed."
+#
+msgid  "Skipping setting banner for sendmail."
+msgstr "Skipping setting banner for sendmail."
+#
+# Finish/set-banner-sshd.fin
+#
+msgid  "Setting the service banner for the SSH daemon."
+msgstr "Setting the service banner for the SSH daemon."
+#
+msgid  "Setting \\\"Banner\\\" to \\\"${JASS_BANNER_SSHD}\\\" in ${SSHD_CONFIG}."
+msgstr "Setting \\\"Banner\\\" to \\\"${JASS_BANNER_SSHD}\\\" in ${SSHD_CONFIG}."
+#
+msgid  "Skipping the setting of the SSH service banner."
+msgstr "Skipping the setting of the SSH service banner."
+#
+# Finish/set-banner-telnetd.fin
+#
+msgid  "Setting the service banner for the TELNET daemon."
+msgstr "Setting the service banner for the TELNET daemon."
+#
+msgid  "Setting \\\"BANNER\\\" to \\\"${JASS_BANNER_TELNETD}\\\" in ${TELNETD}."
+msgstr "Setting \\\"BANNER\\\" to \\\"${JASS_BANNER_TELNETD}\\\" in ${TELNETD}."
+#
+# Finish/set-flexible-crypt.fin
+#
+msgid  "Installing stronger algorithms for local passwords."
+msgstr "Installing stronger algorithms for local passwords."
+#
+msgid  "An algorithm undefined in ${CRYPT} is used in JASS_CRYPT_ALGORITHMS_ALLOW."
+msgstr "An algorithm undefined in ${CRYPT} is used in JASS_CRYPT_ALGORITHMS_ALLOW."
+#
+msgid  "Expiring all local user passwords due to change in policy."
+msgstr "Expiring all local user passwords due to change in policy."
+#
+#
+# Finish/set-ftpd-umask.fin
+#
+msgid  "Setting the default file creation mask for the FTP service."
+msgstr "Setting the default file creation mask for the FTP service."
+#
+msgid  "Setting \\\"defumask\\\" to \\\"${JASS_FTPD_UMASK}\\\" in ${FTPACCESS}."
+msgstr "Setting \\\"defumask\\\" to \\\"${JASS_FTPD_UMASK}\\\" in ${FTPACCESS}."
+#
+msgid  "Skipping setting default file creation mask for FTP."
+msgstr "Skipping setting default file creation mask for FTP."
+#
+msgid  "Setting \\\"UMASK\\\" to \\\"${JASS_FTPD_UMASK}\\\" in ${FTPD}."
+msgstr "Setting \\\"UMASK\\\" to \\\"${JASS_FTPD_UMASK}\\\" in ${FTPD}."
+#
+# Finish/set-login-retries.fin
+#
+msgid  "Limiting the number of failed login attempts allowed before the"
+"\n"
+"'login' program exits."
+msgstr "Limiting the number of failed login attempts allowed before the"
+"\n"
+"'login' program exits."
+#
+msgid  "Setting \\\"RETRIES\\\" to \\\"${JASS_LOGIN_RETRIES}\\\" in ${LOGIN}."
+msgstr "Setting \\\"RETRIES\\\" to \\\"${JASS_LOGIN_RETRIES}\\\" in ${LOGIN}."
+#
+# Finish/set-power-restrictions.fin
+#
+msgid  "Restricting access to power management functions."
+msgstr "Restricting access to power management functions."
+#
+msgid  "Changing PMCHANGEPERM   setting from ${powerMgtUser} to ${JASS_POWER_MGT_USER}."
+msgstr "Changing PMCHANGEPERM   setting from ${powerMgtUser} to ${JASS_POWER_MGT_USER}."
+#
+msgid  "Changing CPRCHANGEPERM  setting from ${cprMgtUser} to ${JASS_CPR_MGT_USER}."
+msgstr "Changing CPRCHANGEPERM  setting from ${cprMgtUser} to ${JASS_CPR_MGT_USER}."
+#
+# Finish/set-rmmount-nosuid.fin
+#
+msgid  "Preventing remove media types from being mounted set-uid."
+msgstr "Preventing remove media types from being mounted set-uid."
+#
+msgid  "Disabling removable media from being mounted set-uid."
+msgstr "Disabling removable media from being mounted set-uid."
+#
+msgid  "Disabling HSFS removable media from being mounted set-uid."
+msgstr "Disabling HSFS removable media from being mounted set-uid."
+#
+msgid  "Disabling UFS removable media from being mounted set-uid."
+msgstr "Disabling UFS removable media from being mounted set-uid."
+#
+# Finish/set-root-group.fin
+#
+msgid  "Changing the \\\"root\\\" account primary group to avoid sharing the same"
+"\n"
+"group identifier with other users."
+msgstr "Changing the \\\"root\\\" account primary group to avoid sharing the same"
+"\n"
+"group identifier with other users."
+#
+msgid  "Setting the \\\"root\\\" account primary group to ${JASS_ROOT_GROUP}."
+msgstr "Setting the \\\"root\\\" account primary group to ${JASS_ROOT_GROUP}."
+#
+# Finish/set-root-home-dir.fin
+#
+msgid  "Creating /root home directory for root account."
+msgstr "Creating /root home directory for root account."
+#
+msgid  "Setting the home directory for the root account to \\\"/root\\\"."
+msgstr "Setting the home directory for the root account to \\\"/root\\\"."
+#
+msgid  "Home directory for the root account is ${passwd_root_home_dir}; \\\"/\\\" or \\\"/root\\\" expected."
+msgstr "Home directory for the root account is ${passwd_root_home_dir}; \\\"/\\\" or \\\"/root\\\" expected."
+#
+msgid  "Copying .cshrc and .profile files for the root account."
+msgstr "Copying .cshrc and .profile files for the root account."
+#
+msgid  "Account root does not exist in ${PASSWD}."
+msgstr "Account root does not exist in ${PASSWD}."
+#
+msgid  "JASS_ROOT_HOME_DIR must be \\\"/root\\\" (Solaris 10 or above) or \\\"/\\\"."
+msgstr "JASS_ROOT_HOME_DIR must be \\\"/root\\\" (Solaris 10 or above) or \\\"/\\\"."
+#
+# Finish/set-root-password.fin
+#
+msgid  "Setting the password for the \\\"root\\\" account."
+msgstr "Setting the password for the \\\"root\\\" account."
+#
+msgid  "Setting the password for the \\\"root\\\" account to the value specified by"
+"\n"
+"the \\\"JASS_ROOT_PASSWORD\\\" variable in ${SHADOW}."
+msgstr "Setting the password for the \\\"root\\\" account to the value specified by"
+"\n"
+"the \\\"JASS_ROOT_PASSWORD\\\" variable in ${SHADOW}."
+#
+msgid  "The system is not booted from mini-root, no changes made."
+msgstr "The system is not booted from mini-root, no changes made."
+#
+msgid  "The \\\"root\\\" account currently does not have a password assigned."
+msgstr "The \\\"root\\\" account currently does not have a password assigned."
+#
+# Finish/set-strict-password-checks.fin
+#
+msgid  "Installing stricter password requirements."
+msgstr "Installing stricter password requirements."
+#
+msgid  "An Invalid dictionary was listed in JASS_PASS_DICTIONLIST, ${diction_file}."
+msgstr "An Invalid dictionary was listed in JASS_PASS_DICTIONLIST, ${diction_file}."
+#
+# Finish/set-sys-suspend-restrictions.fin
+#
+msgid  "Restricting access to suspend and resume functions."
+msgstr "Restricting access to suspend and resume functions."
+#
+msgid  "Changing PERMS setting from ${perms} to ${JASS_SUSPEND_PERMS}."
+msgstr "Changing PERMS setting from ${perms} to ${JASS_SUSPEND_PERMS}."
+#
+# Finish/set-system-umask.fin
+#
+msgid  "Setting system-wide default file creation mask."
+msgstr "Setting system-wide default file creation mask."
+#
+msgid  "Setting the \\\"CMASK\\\" parameter to \\\"${JASS_UMASK}\\\" in ${INIT}."
+msgstr "Setting the \\\"CMASK\\\" parameter to \\\"${JASS_UMASK}\\\" in ${INIT}."
+#
+msgid  "${UMASK} has already been installed; no further changes made."
+msgstr "${UMASK} has already been installed; no further changes made."
+#
+msgid  "Installing the ${UMASK} file."
+msgstr "Installing the ${UMASK} file."
+#
+msgid  "Adding link from ${dir}/S00umask.sh to ${UMASK}"
+msgstr "Adding link from ${dir}/S00umask.sh to ${UMASK}"
+#
+# Finish/set-term-type.fin
+#
+msgid  "Setting the default terminal type to 'vt100'."
+msgstr "Setting the default terminal type to 'vt100'."
+#
+msgid  "Adding \\\"TERM=vt100\\\" to ${PROFILE}."
+msgstr "Adding \\\"TERM=vt100\\\" to ${PROFILE}."
+#
+msgid  "Adding \\\"setenv TERM vt100\\\" to ${LOGIN}."
+msgstr "Adding \\\"setenv TERM vt100\\\" to ${LOGIN}."
+#
+# Finish/set-tmpfs-limit.fin
+#
+msgid  "Setting limits on the usable size of the /tmp filesystem."
+msgstr "Setting limits on the usable size of the /tmp filesystem."
+#
+msgid  "Setting the maximum tmpfs filesystem size to be ${JASS_TMPFS_SIZE}."
+msgstr "Setting the maximum tmpfs filesystem size to be ${JASS_TMPFS_SIZE}."
+#
+# Finish/set-user-password-reqs.fin
+#
+msgid  "Installing user password requirements."
+msgstr "Installing user password requirements."
+#
+msgid  "Changing MINWEEKS   setting from ${minWeeks} to ${JASS_AGING_MINWEEKS}."
+msgstr "Changing MINWEEKS   setting from ${minWeeks} to ${JASS_AGING_MINWEEKS}."
+#
+msgid  "Changing MAXWEEKS   setting from ${maxWeeks} to ${JASS_AGING_MAXWEEKS}."
+msgstr "Changing MAXWEEKS   setting from ${maxWeeks} to ${JASS_AGING_MAXWEEKS}."
+#
+msgid  "Changing WARNWEEKS  setting from ${warnWeeks} to ${JASS_AGING_WARNWEEKS}."
+msgstr "Changing WARNWEEKS  setting from ${warnWeeks} to ${JASS_AGING_WARNWEEKS}."
+#
+msgid  "Changing PASSLENGTH setting from ${passLength} to ${JASS_PASS_LENGTH}."
+msgstr "Changing PASSLENGTH setting from ${passLength} to ${JASS_PASS_LENGTH}."
+#
+# Finish/set-user-umask.fin
+#
+msgid  "Configuring default file creation mask parameters for users."
+msgstr "Configuring default file creation mask parameters for users."
+#
+msgid  "Setting umask (UMASK) value to ${JASS_UMASK} in ${userfile}."
+msgstr "Setting umask (UMASK) value to ${JASS_UMASK} in ${userfile}."
+#
+# Finish/update-at-deny.fin
+#
+msgid  "Updating 'at' facility access controls (at.deny)"
+msgstr "Updating 'at' facility access controls (at.deny)"
+#
+msgid  "Account, ${ACCT}, exists in ${ATALLOW}."
+msgstr "Account, ${ACCT}, exists in ${ATALLOW}."
+#
+msgid  "Adding ${ACCT} to ${ATDENY}"
+msgstr "Adding ${ACCT} to ${ATDENY}"
+#
+# Finish/update-cron-allow.fin
+#
+msgid  "Updating cron facility access controls (cron.allow)."
+msgstr "Updating cron facility access controls (cron.allow)."
+#
+msgid  "Account, ${ACCT}, exists in ${CRONDENY}."
+msgstr "Account, ${ACCT}, exists in ${CRONDENY}."
+#
+msgid  "Adding ${ACCT} to ${CRONALLOW}."
+msgstr "Adding ${ACCT} to ${CRONALLOW}."
+#
+# Finish/update-cron-deny.fin
+#
+msgid  "Updating cron facility access controls (cron.deny)."
+msgstr "Updating cron facility access controls (cron.deny)."
+#
+msgid  "Account, ${ACCT}, exists in ${CRONALLOW}."
+msgstr "Account, ${ACCT}, exists in ${CRONALLOW}."
+#
+msgid  "Adding ${ACCT} to ${CRONDENY}."
+msgstr "Adding ${ACCT} to ${CRONDENY}."
+#
+msgid  "Account, ${ACCT}, will not be added to ${CRONDENY}."
+msgstr "Account, ${ACCT}, will not be added to ${CRONDENY}."
+#
+# Finish/update-cron-log-size.fin
+#
+msgid  "Unable to create temporary file ${LOGADMTMP}."
+msgstr "Unable to create temporary file ${LOGADMTMP}."
+#
+msgid  "Setting maximum size limits for the CRON facility log file."
+msgstr "Setting maximum size limits for the CRON facility log file."
+#
+msgid  "Setting the maximum size of the CRON facility log to"
+"\n"
+"${newSize}k in ${LOGADM}."
+msgstr "Setting the maximum size of the CRON facility log to"
+"\n"
+"${newSize}k in ${LOGADM}."
+#
+msgid  "Setting the maximum size of the CRON facility log to"
+"\n"
+"${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}."
+msgstr "Setting the maximum size of the CRON facility log to"
+"\n"
+"${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}."
+#
+# Finish/update-inetd-conf.fin
+#
+msgid  "Disabling smf(5) services listed in JASS_SVCS_DISABLE."
+msgstr "Disabling smf(5) services listed in JASS_SVCS_DISABLE."
+#
+msgid  "Disabling service, ${svc}."
+msgstr "Disabling service, ${svc}."
+#
+msgid  "Enabling smf(5) services listed in JASS_SVCS_ENABLE."
+msgstr "Enabling smf(5) services listed in JASS_SVCS_ENABLE."
+#
+msgid  "Enabling service, ${svc}."
+msgstr "Enabling service, ${svc}."
+#
+msgid  "Updating status of network services in ${INETD}."
+msgstr "Updating status of network services in ${INETD}."
+#
+msgid  "Required file ${NETCONFIG} was not found."
+msgstr "Required file ${NETCONFIG} was not found."
+#
+msgid  "Disabling those services listed in JASS_SVCS_DISABLE in ${INETD}."
+msgstr "Disabling those services listed in JASS_SVCS_DISABLE in ${INETD}."
+#
+msgid  "${svc} is also enabled as an SMF service, ${_fmri}, in JASS_SVCS_ENABLE."
+msgstr "${svc} is also enabled as an SMF service, ${_fmri}, in JASS_SVCS_ENABLE."
+#
+msgid  "Please correct this inconsistency."
+msgstr "Please correct this inconsistency."
+#
+msgid  "Failed to identify service ${svc} as an FMRI, check ${INETD}."
+msgstr "Failed to identify service ${svc} as an FMRI, check ${INETD}."
+#
+msgid  "Disabling service, ${svc_name} (${svc_binary})."
+msgstr "Disabling service, ${svc_name} (${svc_binary})."
+#
+msgid  "Disabling the FMRI analogue (${_fmri}) of service ${svc}."
+msgstr "Disabling the FMRI analogue (${_fmri}) of service ${svc}."
+#
+msgid  "Enabling those services listed in JASS_SVCS_ENABLE in ${INETD}."
+msgstr "Enabling those services listed in JASS_SVCS_ENABLE in ${INETD}."
+#
+msgid  "Enabling service, ${svc_name} (${svc_binary})."
+msgstr "Enabling service, ${svc_name} (${svc_binary})."
+#
+msgid  "Enabling the FMRI analogue (${_fmri}) of service ${svc}."
+msgstr "Enabling the FMRI analogue (${_fmri}) of service ${svc}."
+#
+msgid  "${svc} is also enabled as an SMF service, ${_fmri}, in JASS_SVCS_DISABLE."
+msgstr "${svc} is also enabled as an SMF service, ${_fmri}, in JASS_SVCS_DISABLE."
+#
+# =============================================================================
+# =============================================================================
+# STRINGS FOR AUDIT SCRIPTS
+# =============================================================================
+# =============================================================================
+#
+msgid  "\n"
+"# The following checks are used to determine if the software is installed."
+"\n "
+msgstr "\n"
+"# The following checks are used to determine if the software is installed."
+"\n "
+#
+msgid  "\n"
+"# The following checks are used to determine if the software is patched."
+"\n "
+msgstr "\n"
+"# The following checks are used to determine if the software is patched."
+"\n "
+#
+msgid  "\n"
+"# The following checks are used to determine if the software is configured."
+"\n "
+msgstr "\n"
+"# The following checks are used to determine if the software is configured."
+"\n "
+#
+msgid  "\n"
+"# The following checks are used to determine if the software is running."
+"\n "
+msgstr "\n"
+"# The following checks are used to determine if the software is running."
+"\n "
+#
+# Audit/disable-appserver.aud
+#
+msgid  "Appserver domains are still running."
+msgstr "Appserver domains are still running."
+#
+# Audit/disable-face-log.aud
+#
+msgid  "File ${TERRLOG} ignored as is on a read-only filesystem."
+msgstr "File ${TERRLOG} ignored as is on a read-only filesystem."
+#
+# Audit/disable-ipv6.aud
+#
+msgid  "# Checking for configured IPv6 interfaces.\n "
+msgstr "# Checking for configured IPv6 interfaces.\n "
+#
+msgid  "IPv6 enabled on interface, $interface"
+msgstr "IPv6 enabled on interface, $interface"
+#
+msgid  "No IPv6 interfaces were found to be configured."
+msgstr "No IPv6 interfaces were found to be configured."
+#
+msgid  "\n# Checking for plumbed IPv6 interfaces.\n "
+msgstr "\n# Checking for plumbed IPv6 interfaces.\n "
+#
+msgid  "IPv6 interface ${interface} plumbed."
+msgstr "IPv6 interface ${interface} plumbed."
+#
+msgid  "No IPv6 interfaces were found to be plumbed."
+msgstr "No IPv6 interfaces were found to be plumbed."
+#
+# Audit/disable-keyboard-abort.aud
+#
+msgid  "$PARAM parameter is set to disable in ${KBD}."
+msgstr "$PARAM parameter is set to disable in ${KBD}."
+#
+msgid  "$PARAM parameter is not set to disable in ${KBD}."
+msgstr "$PARAM parameter is not set to disable in ${KBD}."
+#
+msgid  "$PARAM parameter is not set in ${KBD}."
+msgstr "$PARAM parameter is not set in ${KBD}."
+#
+# Audit/disable-keyserv-uid-nobody.aud
+#
+msgid  "ENABLE_NOBODY_KEYS is set to \\\"NO\\\" in ${KEYSERV}."
+msgstr "ENABLE_NOBODY_KEYS is set to \\\"NO\\\" in ${KEYSERV}."
+#
+msgid  "ENABLE_NOBODY_KEYS is not set to \\\"NO\\\" in ${KEYSERV}."
+msgstr "ENABLE_NOBODY_KEYS is not set to \\\"NO\\\" in ${KEYSERV}."
+#
+msgid  "ENABLE_NOBODY_KEYS is not defined in ${KEYSERV}."
+msgstr "ENABLE_NOBODY_KEYS is not defined in ${KEYSERV}."
+#
+msgid  "keyserv is configured to use the \\\"-d\\\" option in ${RPC}."
+msgstr "keyserv is configured to use the \\\"-d\\\" option in ${RPC}."
+#
+msgid  "keyserv is not configured to use the \\\"-d\\\" option in ${RPC}."
+msgstr "keyserv is not configured to use the \\\"-d\\\" option in ${RPC}."
+#
+msgid  "keyserv is not defined in ${RPC}."
+msgstr "keyserv is not defined in ${RPC}."
+#
+msgid  "keyserv is configured to disable anonymous access to SecureRPC."
+msgstr "keyserv is configured to disable anonymous access to SecureRPC."
+#
+msgid  "keyserv is not configured to disable anonymous access to SecureRPC."
+msgstr "keyserv is not configured to disable anonymous access to SecureRPC."
+#
+msgid  "keyserv is running with the \\\"-d\\\" option."
+msgstr "keyserv is running with the \\\"-d\\\" option."
+#
+msgid  "keyserv is not running with the \\\"-d\\\" option."
+msgstr "keyserv is not running with the \\\"-d\\\" option."
+#
+msgid  "keyserv is running with ENABLE_NOBODY_KEYS=NO."
+msgstr "keyserv is running with ENABLE_NOBODY_KEYS=NO."
+#
+msgid  "keyserv is not running on the system."
+msgstr "keyserv is not running on the system."
+#
+# Audit/disable-lp.aud
+#
+msgid  "\n# Checking if 'lp' is restricted from using the cron facility.\n "
+msgstr "\n# Checking if 'lp' is restricted from using the cron facility.\n "
+#
+msgid  "Account \\\"lp\\\" is listed in ${CRONDENY}."
+msgstr "Account \\\"lp\\\" is listed in ${CRONDENY}."
+#
+msgid  "Account \\\"lp\\\" is not listed in ${CRONDENY}."
+msgstr "Account \\\"lp\\\" is not listed in ${CRONDENY}."
+#
+msgid  "\n# Checking if the 'lp' crontab has been removed.\n "
+msgstr "\n# Checking if the 'lp' crontab has been removed.\n "
+#
+# Audit/disable-nscd-caching.aud
+#
+msgid  "# Checking the nscd time-to-live parameters.\n "
+msgstr "# Checking the nscd time-to-live parameters.\n "
+#
+msgid  "Patch ${nscdPatch} or later should be installed.  This script will"
+"\n"
+"not check for other changes to the NSCD configuration until this patch is"
+"\n"
+"applied to the system."
+msgstr "Patch ${nscdPatch} or later should be installed.  This script will"
+"\n"
+"not check for other changes to the NSCD configuration until this patch is"
+"\n"
+"applied to the system."
+#
+msgid  "positive-time-to-live for \\\"${svc}\\\" is \\\"0\\\"."
+msgstr "positive-time-to-live for \\\"${svc}\\\" is \\\"0\\\"."
+#
+msgid  "positive-time-to-live for \\\"${svc}\\\" is not \\\"0\\\"."
+msgstr "positive-time-to-live for \\\"${svc}\\\" is not \\\"0\\\"."
+#
+msgid  "negative-time-to-live for \\\"${svc}\\\" is \\\"0\\\"."
+msgstr "negative-time-to-live for \\\"${svc}\\\" is \\\"0\\\"."
+#
+msgid  "negative-time-to-live for \\\"${svc}\\\" is not \\\"0\\\"."
+msgstr "negative-time-to-live for \\\"${svc}\\\" is not \\\"0\\\"."
+#
+# Audit/disable-nfs-client.aud
+#
+msgid  "\n# Checking for the 'swapadd' run-control script.\n "
+msgstr "\n# Checking for the 'swapadd' run-control script.\n "
+#
+# Audit/disable-routing.aud
+#
+msgid  "Option ${i} is persistently disabled."
+msgstr "Option ${i} is persistently disabled."
+#
+msgid  "Option ${i} is persistently enabled."
+msgstr "Option ${i} is persistently enabled."
+#
+msgid  "Option ${i} is currently disabled."
+msgstr "Option ${i} is currently disabled."
+#
+msgid  "Option ${i} is currently enabled."
+msgstr "Option ${i} is currently enabled."
+#
+#
+# Audit/disable-remote-root-login.aud
+#
+msgid  "CONSOLE parameter is set in ${LOGIN}."
+msgstr "CONSOLE parameter is set in ${LOGIN}."
+#
+msgid  "CONSOLE parameter is not set in ${LOGIN}."
+msgstr "CONSOLE parameter is not set in ${LOGIN}."
+#
+# Audit/disable-rhosts.aud
+#
+msgid  "# Checking if rhosts authentication is enabled.\n "
+msgstr "# Checking if rhosts authentication is enabled.\n "
+#
+msgid  "Service rlogin is not configured for rhosts authentication."
+msgstr "Service rlogin is not configured for rhosts authentication."
+#
+msgid  "Service rlogin is configured for rhosts authentication."
+msgstr "Service rlogin is configured for rhosts authentication."
+#
+msgid  "Service rsh is not configured for rhosts authentication."
+msgstr "Service rsh is not configured for rhosts authentication."
+#
+msgid  "Service rsh is configured for rhosts authentication."
+msgstr "Service rsh is configured for rhosts authentication."
+#
+# Audit/disable-rpc.aud
+#
+msgid  "\n# Checking services registered with the RPC port mapper.\n "
+msgstr "\n# Checking services registered with the RPC port mapper.\n "
+#
+msgid  "Program ${program} (${service}) is registered with rpcbind."
+msgstr "Program ${program} (${service}) is registered with rpcbind."
+#
+msgid  "No services were registered with rpcbind."
+msgstr "No services were registered with rpcbind."
+#
+# Audit/disable-sendmail.aud
+#
+msgid  "DaemonPortOptions is set to \\\"Addr=127.0.0.1\\\" in ${CSENDMAIL}."
+msgstr "DaemonPortOptions is set to \\\"Addr=127.0.0.1\\\" in ${CSENDMAIL}."
+#
+msgid  "DaemonPortOptions is not set to \\\"Addr=127.0.0.1\\\" in ${CSENDMAIL}."
+msgstr "DaemonPortOptions is not set to \\\"Addr=127.0.0.1\\\" in ${CSENDMAIL}."
+#
+msgid  "MODE is set to \\\"${JASS_SENDMAIL_MODE}\\\" in ${DSENDMAIL}."
+msgstr "MODE is set to \\\"${JASS_SENDMAIL_MODE}\\\" in ${DSENDMAIL}."
+#
+msgid  "MODE is not set to \\\"${JASS_SENDMAIL_MODE}\\\" in ${DSENDMAIL}."
+msgstr "MODE is not set to \\\"${JASS_SENDMAIL_MODE}\\\" in ${DSENDMAIL}."
+#
+msgid  "root crontab is configured to process mail queue."
+msgstr "root crontab is configured to process mail queue."
+#
+msgid  "root crontab is not configured to process mail queue."
+msgstr "root crontab is not configured to process mail queue."
+#
+# Audit/disable-sma.aud
+#
+msgid  "DISABLE parameter is set to \\\"YES\\\" in ${servcfg}."
+msgstr "DISABLE parameter is set to \\\"YES\\\" in ${servcfg}."
+#
+msgid  "DISABLE parameter is not set to \\\"YES\\\" in ${servcfg}."
+msgstr "DISABLE parameter is not set to \\\"YES\\\" in ${servcfg}."
+#
+# Audit/disable-ssh-root-login.aud
+#
+msgid  "PermitRootLogin parameter is set to \\\"no\\\" in ${LOGIN}."
+msgstr "PermitRootLogin parameter is set to \\\"no\\\" in ${LOGIN}."
+#
+msgid  "PermitRootLogin parameter is not set to \\\"no\\\" in ${LOGIN}."
+msgstr "PermitRootLogin parameter is not set to \\\"no\\\" in ${LOGIN}."
+#
+msgid  "PermitRootLogin parameter is not set in ${LOGIN}."
+msgstr "PermitRootLogin parameter is not set in ${LOGIN}."
+#
+msgid  "Sun Secure Shell (SUNWsshdr) does not appear to be installed."
+msgstr "Sun Secure Shell (SUNWsshdr) does not appear to be installed."
+#
+# Audit/disable-syslogd-listen.aud
+#
+msgid  "LOG_FROM_REMOTE is set to \\\"NO\\\" in ${DSYSLOG}."
+msgstr "LOG_FROM_REMOTE is set to \\\"NO\\\" in ${DSYSLOG}."
+#
+msgid  "LOG_FROM_REMOTE is not set to \\\"NO\\\" in ${DSYSLOG}."
+msgstr "LOG_FROM_REMOTE is not set to \\\"NO\\\" in ${DSYSLOG}."
+#
+msgid  "LOG_FROM_REMOTE is not defined in ${DSYSLOG}."
+msgstr "LOG_FROM_REMOTE is not defined in ${DSYSLOG}."
+#
+msgid  "syslogd is configured to use \\\"-t\\\" option in ${ISYSLOG}."
+msgstr "syslogd is configured to use \\\"-t\\\" option in ${ISYSLOG}."
+#
+msgid  "syslogd is not configured to use \\\"-t\\\" option in ${ISYSLOG}."
+msgstr "syslogd is not configured to use \\\"-t\\\" option in ${ISYSLOG}."
+#
+msgid  "syslogd is not defined in ${ISYSLOG}."
+msgstr "syslogd is not defined in ${ISYSLOG}."
+#
+msgid  "syslogd is configured to not accept logs from remote sources."
+msgstr "syslogd is configured to not accept logs from remote sources."
+#
+msgid  "syslogd is configured to accept logs from remote sources."
+msgstr "syslogd is configured to accept logs from remote sources."
+#
+msgid  "syslogd is running with the \\\"-t\\\" option."
+msgstr "syslogd is running with the \\\"-t\\\" option."
+#
+msgid  "syslogd is not running with the \\\"-t\\\" option."
+msgstr "syslogd is not running with the \\\"-t\\\" option."
+#
+msgid  "syslogd is running with LOG_FROM_REMOTE=NO."
+msgstr "syslogd is running with LOG_FROM_REMOTE=NO."
+#
+msgid  "syslogd is not running on the system."
+msgstr "syslogd is not running on the system."
+#
+# Audit/disable-system-accounts.aud
+#
+msgid  "# Checking if the disable shell exists on the system.\n "
+msgstr "# Checking if the disable shell exists on the system.\n "
+#
+msgid  "\n# Checking if system accounts are disabled.\n "
+msgstr "\n# Checking if system accounts are disabled.\n "
+#
+msgid  "User ${user} has shell \\\"${SH_FILE}\\\"."
+msgstr "User ${user} has shell \\\"${SH_FILE}\\\"."
+#
+msgid  "User ${user} does not have shell \\\"${SH_FILE}\\\"."
+msgstr "User ${user} does not have shell \\\"${SH_FILE}\\\"."
+#
+msgid  "User ${user} does not exist in ${JASS_PASSWD}."
+msgstr "User ${user} does not exist in ${JASS_PASSWD}."
+#
+msgid  "User ${user} is exempt from this check."
+msgstr "User ${user} is exempt from this check."
+#
+# Audit/disable-uucp.aud
+#
+msgid  "\n# Checking if the 'in.uucpd' service exists.\n"
+msgstr "\n# Checking if the 'in.uucpd' service exists.\n"
+#
+msgid  "Service uucp is not listed in ${INETD}."
+msgstr "Service uucp is not listed in ${INETD}."
+#
+msgid  "Service uucp is listed in ${INETD}."
+msgstr "Service uucp is listed in ${INETD}."
+#
+msgid  "\n# Checking if account 'nuucp' is locked.\n"
+msgstr "\n# Checking if account 'nuucp' is locked.\n"
+#
+msgid  "\n# Checking if the 'nuucp' user has been removed.\n"
+msgstr "\n# Checking if the 'nuucp' user has been removed.\n"
+#
+msgid  "User nuucp has been removed from ${JASS_PASSWD}."
+msgstr "User nuucp has been removed from ${JASS_PASSWD}."
+#
+msgid  "User nuucp has not been removed from ${JASS_PASSWD}."
+msgstr "User nuucp has not been removed from ${JASS_PASSWD}."
+#
+msgid  "\n# Checking if the 'uucp' crontab has been removed.\n"
+msgstr "\n# Checking if the 'uucp' crontab has been removed.\n"
+#
+# Audit/disable-xserver-listen.aud
+#
+msgid  "# Checking that the X11 server will not listen on TCP port 6000.\n "
+msgstr "# Checking that the X11 server will not listen on TCP port 6000.\n "
+#
+msgid  "File ${file} is configured to use \\\"-nolisten tcp\\\"."
+msgstr "File ${file} is configured to use \\\"-nolisten tcp\\\"."
+#
+msgid  "File ${file} is not configured to use \\\"-nolisten tcp\\\"."
+msgstr "File ${file} is not configured to use \\\"-nolisten tcp\\\"."
+#
+msgid  "X11 server is not configured to listen on TCP port 6000."
+msgstr "X11 server is not configured to listen on TCP port 6000."
+#
+msgid  "X11 server is configured to listen on TCP port 6000."
+msgstr "X11 server is configured to listen on TCP port 6000."
+#
+msgid  "X11 server configuration files were not found."
+msgstr "X11 server configuration files were not found."
+#
+msgid  "\n# Checking if the running X11 server permits TCP connections.\n "
+msgstr "\n# Checking if the running X11 server permits TCP connections.\n "
+#
+msgid  "Xsun is not configured to listen on TCP port 6000."
+msgstr "Xsun is not configured to listen on TCP port 6000."
+#
+msgid  "Xsun is configured to listen on TCP port 6000."
+msgstr "Xsun is configured to listen on TCP port 6000."
+#
+msgid  "Xsun is not running on the system."
+msgstr "Xsun is not running on the system."
+#
+# Audit/enable-32bit-kernel.aud
+#
+msgid  "32-bit system kernel is enabled."
+msgstr "32-bit system kernel is enabled."
+#
+msgid  "32-bit system kernel is not enabled."
+msgstr "32-bit system kernel is not enabled."
+#
+msgid  "EEPROM \\\"boot-file\\\" parameter is \\\"${result}\\\"."
+msgstr "EEPROM \\\"boot-file\\\" parameter is \\\"${result}\\\"."
+#
+msgid  "This script is not supported on the ${ARCH} architecture."
+msgstr "This script is not supported on the ${ARCH} architecture."
+#
+msgid  "System is running in 64-bit mode."
+msgstr "System is running in 64-bit mode."
+#
+msgid  "System is running in 32-bit mode."
+msgstr "System is running in 32-bit mode."
+#
+# Audit/enable-account-lockout.aud
+#
+msgid  "LOCK_AFTER_RETRIES parameter is set to \\\"${JASS_PASS_LOCK_AFTER_RETRIES}\\\" in ${POLICY}."
+msgstr "LOCK_AFTER_RETRIES parameter is set to \\\"YES\\\" in ${POLICY}."
+#
+msgid  "LOCK_AFTER_RETRIES parameter is not set to \\\"YES\\\" in ${POLICY}."
+msgstr "LOCK_AFTER_RETRIES parameter is not set to \\\"YES\\\" in ${POLICY}."
+#
+msgid  "LOCK_AFTER_RETRIES parameter is not defined in ${POLICY}."
+msgstr "LOCK_AFTER_RETRIES parameter is not defined in ${POLICY}."
+#
+msgid  "There is ${_unset_users} account with lock_after_retries set."
+msgstr "There is ${_unset_users} account with lock_after_retries set."
+#
+msgid  "Account: ${WARN_LIST}."
+msgstr "Account: ${WARN_LIST}."
+#
+msgid  "There are ${_unset_users} accounts with lock_after_retries set."
+msgstr "There are ${_unset_users} accounts with lock_after_retries set."
+#
+msgid  "Accounts: ${WARN_LIST}."
+msgstr "Accounts: ${WARN_LIST}."
+#
+# Audit/enable-bart.aud
+#
+# Already in Finish/enable-bart.fin:
+#msgid  "Running bart create -r ${JASS_ROOT_DIR}${RULES}."
+#msgstr "Running bart create -r ${JASS_ROOT_DIR}${RULES}."
+#
+msgid  "BART snapshot manifest ${AUDIT_MANIFEST_FILE}"
+"\n"
+"created."
+msgstr "BART snapshot manifest ${AUDIT_MANIFEST_FILE}"
+"\n"
+"created."
+#
+msgid  "Running bart compare with control manifest"
+"\n"
+"${lastest_manifest_file}."
+msgstr "Running bart compare with control manifest"
+"\n"
+"${lastest_manifest_file}."
+#
+msgid  "BART compare with control manifest successful."
+msgstr "BART compare with control manifest successful."
+#
+msgid  "BART found one or more files have changed.  For details see file"
+"\n"
+"${COMPARE_FILE} (${compare_file_lines} line(s))."
+"\n"
+"Check earlier manifest files in ${MANIFESTS},"
+"\n"
+"and check with the Solaris Fingerprint Database for any issues found."
+msgstr "BART found one more more files have changed.  For details see file"
+"\n"
+"${COMPARE_FILE} (${compare_file_lines} line(s))."
+"\n"
+"Check earlier manifest files in ${MANIFESTS},"
+"\n"
+"and check with the Solaris Fingerprint Database for any issues found."
+#
+msgid  "BART create failed; return code ${bart_status}."
+"\n"
+"Manifest file ${FAILED_MANIFEST_FILE}."
+msgstr "BART create failed; return code ${bart_status}."
+"\n"
+"Manifest file ${FAILED_MANIFEST_FILE}."
+#
+# Already in Finish/enable-bart.fin:
+#msgid  "BART create failed; return code ${bart_status}."
+#"\n"
+#"Please see file ${FAILED_MANIFEST_FILE} for details."
+#msgstr "BART create failed; return code ${bart_status}."
+#"\n"
+#"Please see file ${FAILED_MANIFEST_FILE} for details."
+#
+msgid  "BART rules file ${JASS_ROOT_DIR}${RULES} is incorrect for this driver."
+"\n"
+"To fix, run \\\"jass-execute -d driver\\\"."
+msgstr "BART rules file ${JASS_ROOT_DIR}${RULES} is incorrect for this driver."
+"\n"
+"To fix, run \\\"jass-execute -d driver\\\"."
+#
+msgid  "BART rules file ${JASS_ROOT_DIR}${RULES} is not present."
+msgstr "BART rules file ${JASS_ROOT_DIR}${RULES} is not present."
+#
+# Already in Finish/enable-bart.fin:
+#msgid  "/usr/bin/bart is not installed."
+#msgstr "/usr/bin/bart is not installed."
+#
+# Audit/enable-bsm.aud
+#
+msgid  "BSM auditing is configured to load in ${SYSTEM}."
+msgstr "BSM auditing is configured to load in ${SYSTEM}."
+#
+msgid  "BSM auditing is not configured to load in ${SYSTEM}."
+msgstr "BSM auditing is not configured to load in ${SYSTEM}."
+#
+msgid  "BSM auditing is enabled."
+msgstr "BSM auditing is enabled."
+#
+msgid  "BSM auditing is running / turned on."
+msgstr "BSM auditing is running / turned on."
+#
+msgid  "BSM auditing is not running / turned off."
+msgstr "BSM auditing is not running / turned off."
+#
+msgid  "BSM auditing is not enabled."
+msgstr "BSM auditing is not enabled."
+#
+# Already in enable-bsm.fin:
+#msgid  "When per-zone BSM auditing is configured, auditing must be"
+#"\n"
+#"enabled for each zone.  To enable, run this as root from the global zone:"
+#"\n"
+#"/etc/security/bsmconv /root/directory/name/for/zone"
+#msgstr "When per-zone BSM auditing is configured, auditing must be"
+#"\n"
+#"enabled for each zone.  To enable, run this as root from the global zone:"
+#"\n"
+#"/etc/security/bsmconv /root/directory/name/for/zone"
+#
+msgid  "BSM auditing is not enabled, but no space exists."
+msgstr "BSM auditing is not enabled, but no space exists."
+#
+msgid  "Unknown BSM condition: ${auditState}"
+msgstr "Unknown BSM condition: ${auditState}"
+#
+msgid  "\\\"audit_warn\\\" e-mail alias is defined in ${ALIASES}."
+msgstr "\\\"audit_warn\\\" e-mail alias is defined in ${ALIASES}."
+#
+msgid  "\\\"audit_warn\\\" e-mail alias is not defined in ${ALIASES}."
+msgstr "\\\"audit_warn\\\" e-mail alias is not defined in ${ALIASES}."
+#
+# Audit/enable-coreadm.aud
+#
+msgid  "coreadm syslogging enabled in ${CONF}."
+msgstr "coreadm syslogging enabled in ${CONF}."
+#
+msgid  "coreadm syslogging disabled in ${CONF}."
+msgstr "coreadm syslogging disabled in ${CONF}."
+#
+msgid  "coreadm syslogging option unconfigured in ${CONF}."
+msgstr "coreadm syslogging option unconfigured in ${CONF}."
+#
+msgid  "coreadm process setuid core dump is disabled in ${CONF}."
+msgstr "coreadm process setuid core dump is disabled in ${CONF}."
+#
+msgid  "coreadm process setuid core dump is enabled in ${CONF}."
+msgstr "coreadm process setuid core dump is enabled in ${CONF}."
+#
+msgid  "coreadm process setuid core dump option unconfigured in ${CONF}."
+msgstr "coreadm process setuid core dump option unconfigured in ${CONF}."
+#
+msgid  "coreadm global setuid is disabled in ${CONF}."
+msgstr "coreadm global setuid is disabled in ${CONF}."
+#
+msgid  "coreadm global setuid is enabled in ${CONF}."
+msgstr "coreadm global setuid is enabled in ${CONF}."
+#
+msgid  "coreadm global seruid unconfigured in ${CONF}."
+msgstr "coreadm global seruid unconfigured in ${CONF}."
+#
+msgid  "coreadm process core dump enabled in ${CONF}."
+msgstr "coreadm process core dump enabled in ${CONF}."
+#
+msgid  "coreadm process core dump disabled in ${CONF}."
+msgstr "coreadm process core dump disabled in ${CONF}."
+#
+msgid  "coreadm process core dump option unconfigured in ${CONF}."
+msgstr "coreadm process core dump option unconfigured in ${CONF}."
+#
+msgid  "coreadm global core dump enabled in ${CONF}."
+msgstr "coreadm global core dump enabled in ${CONF}."
+#
+msgid  "coreadm global core dump disabled in ${CONF}."
+msgstr "coreadm global core dump disabled in ${CONF}."
+#
+msgid  "coreadm global core dump unconfigured in ${CONF}."
+msgstr "coreadm global core dump unconfigured in ${CONF}."
+#
+msgid  "coreadm init pattern matches JASS_CORE_PATTERN in ${CONF}."
+msgstr "coreadm init pattern matches JASS_CORE_PATTERN in ${CONF}."
+#
+msgid  "coreadm init pattern does not match JASS_CORE_PATTERN in ${CONF}."
+msgstr "coreadm init pattern does not match JASS_CORE_PATTERN in ${CONF}."
+#
+msgid  "coreadm init pattern option unconfigured in ${CONF}."
+msgstr "coreadm init pattern option unconfigured in ${CONF}."
+#
+msgid  "coreadm global pattern matches JASS_CORE_PATTERN in ${CONF}."
+msgstr "coreadm global pattern matches JASS_CORE_PATTERN in ${CONF}."
+#
+msgid  "coreadm global pattern does not match JASS_CORE_PATTERN in ${CONF}."
+msgstr "coreadm global pattern does not match JASS_CORE_PATTERN in ${CONF}."
+#
+# Audit/enable-ftp-syslog.aud
+#
+msgid  "Service FTP is configured to log session information."
+msgstr "Service FTP is configured to log session information."
+#
+msgid  "Service FTP is not configured to log session information."
+msgstr "Service FTP is not configured to log session information."
+#
+msgid  "Service FTP is not configured in ${INETD}."
+msgstr "Service FTP is not configured in ${INETD}."
+#
+# Audit/enable-ftpaccess.aud
+#
+msgid  "Service FTP is configured to use the \\\"ftpaccess\\\" file."
+msgstr "Service FTP is configured to use the \\\"ftpaccess\\\" file."
+#
+msgid  "Service FTP is not configured to use \\\"ftpaccess\\\" file."
+msgstr "Service FTP is not configured to use \\\"ftpaccess\\\" file."
+#
+# Audit/enable-inetd-syslog.aud
+#
+msgid  "ENABLE_CONNECTION_LOGGING is set to \\\"YES\\\" in ${INETD}."
+msgstr "ENABLE_CONNECTION_LOGGING is set to \\\"YES\\\" in ${INETD}."
+#
+msgid  "ENABLE_CONNECTION_LOGGING is not set to \\\"YES\\\" in ${INETD}."
+msgstr "ENABLE_CONNECTION_LOGGING is not set to \\\"YES\\\" in ${INETD}."
+#
+msgid  "ENABLE_CONNECTION_LOGGING is not defined in ${INETD}."
+msgstr "ENABLE_CONNECTION_LOGGING is not defined in ${INETD}."
+#
+msgid  "inetd is configured to use the \\\"-t\\\" option in ${INETSVC}."
+msgstr "inetd is configured to use the \\\"-t\\\" option in ${INETSVC}."
+#
+msgid  "inetd is not configured to use the \\\"-t\\\" option in ${INETSVC}."
+msgstr "inetd is not configured to use the \\\"-t\\\" option in ${INETSVC}."
+#
+msgid  "inetd is not defined in ${INETSVC}."
+msgstr "inetd is not defined in ${INETSVC}."
+#
+msgid  "inetd is configured to log incoming connections."
+msgstr "inetd is configured to log incoming connections."
+#
+msgid  "inetd is not configured to log incoming connections."
+msgstr "inetd is not configured to log incoming connections."
+#
+msgid  "inetd is running with the \\\"-t\\\" option."
+msgstr "inetd is running with the \\\"-t\\\" option."
+#
+msgid  "inetd is not running with the \\\"-t\\\" option."
+msgstr "inetd is not running with the \\\"-t\\\" option."
+#
+msgid  "inetd is running with ENABLE_CONNECTION_LOGGING=YES."
+msgstr "inetd is running with ENABLE_CONNECTION_LOGGING=YES."
+#
+msgid  "inetd is not running on the system."
+msgstr "inetd is not running on the system."
+#
+# Audit/enable-ipfilter.aud
+#
+msgid  "Driver ${interface} was not listed in ${PFIL}."
+msgstr "Driver ${interface} was not listed in ${PFIL}."
+#
+msgid  "Driver ${interface} of family ${family} did not have pfil pushed"
+msgstr "Driver ${interface} of family ${family} did not have pfil pushed"
+#
+# Audit/enable-password-history.aud
+#
+msgid  "HISTORY parameter is set to \\\"${JASS_PASS_HISTORY}\\\" in ${PASSWORD}."
+msgstr "HISTORY parameter is set to \\\"${JASS_PASS_HISTORY}\\\" in ${PASSWORD}."
+#
+msgid  "HISTORY parameter is not set to \\\"${JASS_PASS_HISTORY}\\\" in ${PASSWORD}."
+msgstr "HISTORY parameter is not set to \\\"${JASS_PASS_HISTORY}\\\" in ${PASSWORD}."
+#
+msgid  "HISTORY parameter is not defined in ${PASSWORD}."
+msgstr "HISTORY parameter is not defined in ${PASSWORD}."
+#
+# Audit/enable-priv-nfs-ports.aud
+#
+msgid  "nfssrv:nfs_portmon is set to \\\"1\\\" in ${SYSTEM}."
+msgstr "nfssrv:nfs_portmon is set to \\\"1\\\" in ${SYSTEM}."
+#
+msgid  "nfssrv:nfs_portmon is not set to \\\"1\\\" in ${SYSTEM}."
+msgstr "nfssrv:nfs_portmon is not set to \\\"1\\\" in ${SYSTEM}."
+#
+msgid  "nfssrv:nfs_portmon is not configured in ${SYSTEM}."
+msgstr "nfssrv:nfs_portmon is not configured in ${SYSTEM}."
+#
+# Audit/enable-rfc1948.aud
+#
+msgid  "TCP_STRONG_ISS is set to \\\"2\\\" in ${INETINIT}."
+msgstr "TCP_STRONG_ISS is set to \\\"2\\\" in ${INETINIT}."
+#
+msgid  "TCP_STRONG_ISS is not set to \\\"2\\\" in ${INETINIT}."
+msgstr "TCP_STRONG_ISS is not set to \\\"2\\\" in ${INETINIT}."
+#
+msgid  "TCP_STRONG_ISS is not defined in ${INETINIT}."
+msgstr "TCP_STRONG_ISS is not defined in ${INETINIT}."
+#
+msgid  "System is running with tcp_strong_iss=2."
+msgstr "System is running with tcp_strong_iss=2."
+#
+msgid  "System is not running with tcp_strong_iss=2."
+msgstr "System is not running with tcp_strong_iss=2."
+#
+# Audit/enable-stack-protection.aud
+#
+msgid  "noexec_user_stack is set to \\\"1\\\" in ${SYSTEM}."
+msgstr "noexec_user_stack is set to \\\"1\\\" in ${SYSTEM}."
+#
+msgid  "noexec_user_stack is not set to \\\"1\\\" in ${SYSTEM}."
+msgstr "noexec_user_stack is not set to \\\"1\\\" in ${SYSTEM}."
+#
+msgid  "noexec_user_stack is not defined in ${SYSTEM}."
+msgstr "noexec_user_stack is not defined in ${SYSTEM}."
+#
+msgid  "noexec_user_stack_log is set to \\\"1\\\" in ${SYSTEM}."
+msgstr "noexec_user_stack_log is set to \\\"1\\\" in ${SYSTEM}."
+#
+msgid  "noexec_user_stack_log is not set to \\\"1\\\" in ${SYSTEM}."
+msgstr "noexec_user_stack_log is not set to \\\"1\\\" in ${SYSTEM}."
+#
+msgid  "noexec_user_stack_log is not defined in ${SYSTEM}."
+msgstr "noexec_user_stack_log is not defined in ${SYSTEM}."
+#
+# Audit/enable-tcpwrappers.aud
+#
+msgid  "ENABLE_TCPWRAPPERS is set to \\\"YES\\\" in ${INETD}."
+msgstr "ENABLE_TCPWRAPPERS is set to \\\"YES\\\" in ${INETD}."
+#
+msgid  "ENABLE_TCPWRAPPERS is not set to \\\"YES\\\" in ${INETD}."
+msgstr "ENABLE_TCPWRAPPERS is not set to \\\"YES\\\" in ${INETD}."
+#
+msgid  "ENABLE_TCPWRAPPERS is not defined in ${INETD}."
+msgstr "ENABLE_TCPWRAPPERS is not defined in ${INETD}."
+#
+# Audit/install-at-allow.aud
+#
+msgid  "# Checking users denied access to the at or batch facilities.\n "
+msgstr "# Checking users denied access to the at or batch facilities.\n "
+#
+msgid  "User ${acct} is listed in ${AT_ALLOW}."
+msgstr "User ${acct} is listed in ${AT_ALLOW}."
+#
+msgid  "User ${acct} is also listed in ${AT_DENY}."
+msgstr "User ${acct} is also listed in ${AT_DENY}."
+#
+msgid  "User ${acct} is not listed in ${AT_ALLOW}."
+msgstr "User ${acct} is not listed in ${AT_ALLOW}."
+#
+msgid  "User ${acct} is not listed in ${JASS_PASSWD}."
+msgstr "User ${acct} is not listed in ${JASS_PASSWD}."
+#
+msgid  "There are no users defined by the JASS_AT_ALLOW parameter."
+msgstr "There are no users defined by the JASS_AT_ALLOW parameter."
+#
+# Audit/install-fix-modes.aud
+#
+msgid  "The Fix Modes software exists in ${FIXMODESTAR}."
+msgstr "The Fix Modes software exists in ${FIXMODESTAR}."
+#
+msgid  "The Fix Modes software does not exist in ${FIXMODESTAR}."
+msgstr "The Fix Modes software does not exist in ${FIXMODESTAR}."
+#
+msgid  "The Fix Modes software exists in ${FIXMODESPKG}."
+msgstr "The Fix Modes software exists in ${FIXMODESPKG}."
+#
+msgid  "The Fix Modes software does not exist in ${FIXMODESPKG}."
+msgstr "The Fix Modes software does not exist in ${FIXMODESPKG}."
+#
+msgid  "Fix Modes software is not installed on system."
+msgstr "Fix Modes software is not installed on system."
+#
+msgid  "The Fix Modes has been used on this system."
+msgstr "The Fix Modes has been used on this system."
+#
+msgid  "The Fix Modes has not been used on this system."
+msgstr "The Fix Modes has not been used on this system."
+#
+msgid  "\n# Checking for files that would be changed by Fix Modes.\n "
+msgstr "\n# Checking for files that would be changed by Fix Modes.\n "
+#
+msgid  "Object ${object} should be mode ${arg2}."
+msgstr "Object ${object} should be mode ${arg2}."
+#
+msgid  "Object ${object} should have owner ${arg2}."
+msgstr "Object ${object} should have owner ${arg2}."
+#
+# Audit/install-ftpusers.aud
+#
+msgid  "Service FTP is not installed on the system."
+msgstr "Service FTP is not installed on the system."
+#
+msgid  "User ${user} is listed in ${FTPUSERS}."
+msgstr "User ${user} is listed in ${FTPUSERS}."
+#
+msgid  "User ${user} is not listed in ${FTPUSERS}."
+msgstr "User ${user} is not listed in ${FTPUSERS}."
+#
+# Audit/install-iPlanetWS.aud
+#
+msgid  "Object ${IPLANET_DIR} is a directory."
+msgstr "Object ${IPLANET_DIR} is a directory."
+#
+msgid  "Object ${IPLANET_DIR} is not a directory."
+msgstr "Object ${IPLANET_DIR} is not a directory."
+#
+# Audit/install-jass.aud
+#
+msgid  "Package has description \\\"${pkgName}\\\""
+msgstr "Package has description \\\"${pkgName}\\\""
+#
+msgid  "Package has version \\\"${pkgVersion}\\\""
+msgstr "Package has version \\\"${pkgVersion}\\\""
+#
+msgid  "Package has base directory \\\"${pkgBaseDir}\\\""
+msgstr "Package has base directory \\\"${pkgBaseDir}\\\""
+#
+msgid  "Package has contact \\\"${pkgContact}\\\""
+msgstr "Package has contact \\\"${pkgContact}\\\""
+#
+# Audit/install-md5.aud
+#
+msgid  "MD5 is provided by digest(1) command"
+msgstr "MD5 is provided by digest(1) command"
+#
+msgid  "MD5 was not provided by digest(1) command"
+msgstr "MD5 was not provided by digest(1) command"
+#
+msgid  "digest(1) command was not available"
+msgstr "digest(1) command was not available"
+#
+msgid  "The MD5 software exists in ${MD5TAR}."
+msgstr "The MD5 software exists in ${MD5TAR}."
+#
+msgid  "${MD5TAR} is not a directory."
+msgstr "${MD5TAR} is not a directory."
+#
+msgid  "The MD5 software does not exist in ${MD5TAR}."
+msgstr "The MD5 software does not exist in ${MD5TAR}."
+#
+msgid  "The MD5 software exists in ${MD5PKG}."
+msgstr "The MD5 software exists in ${MD5PKG}."
+#
+msgid  "${MD5PKG} is not a directory."
+msgstr "${MD5PKG} is not a directory."
+#
+msgid  "The MD5 software does not exist in ${MD5PKG}."
+msgstr "The MD5 software does not exist in ${MD5PKG}."
+#
+msgid  "MD5 software is not installed on system."
+msgstr "MD5 software is not installed on system."
+#
+# Audit/install-nddconfig.aud
+#
+msgid  "Checking for the existance of the \\\"nddconfig\\\" run-control script.\n"
+msgstr "Checking for the existance of the \\\"nddconfig\\\" run-control script.\n"
+#
+msgid  "\nChecking if the settings defined by \\\"nddconfig\\\" are in effect.\n"
+msgstr "\nChecking if the settings defined by \\\"nddconfig\\\" are in effect.\n"
+#
+msgid  "Parameter ${param} is set to \\\"${curVal}\\\"."
+msgstr "Parameter ${param} is set to \\\"${curVal}\\\"."
+#
+msgid  "Parameter ${param} is \\\"${curVal}\\\" not \\\"${goodVal}\\\"."
+msgstr "Parameter ${param} is \\\"${curVal}\\\" not \\\"${goodVal}\\\"."
+#
+msgid  "Unable to create temporary file ${NDDCONFIG_COMPARE_TMP}."
+msgstr "Unable to create temporary file ${NDDCONFIG_COMPARE_TMP}."
+#
+# Audit/install-newaliases.aud
+#
+msgid  "File ${NEWALIASES} is a symbolic link."
+msgstr "File ${NEWALIASES} is a symbolic link."
+#
+msgid  "File ${NEWALIASES} is not a symbolic link."
+msgstr "File ${NEWALIASES} is not a symbolic link."
+#
+msgid  "This check is only applicable to minimized builds."
+msgstr "This check is only applicable to minimized builds."
+#
+# Audit/install-openssh.aud
+#
+# Same as install-jass.aud
+#
+# Audit/install-sadmind-options.aud
+#
+msgid  "Service sadmind is configured for \\\"${JASS_SADMIND_OPTIONS}\\\"."
+msgstr "Service sadmind is configured for \\\"${JASS_SADMIND_OPTIONS}\\\"."
+#
+msgid  "Service sadmind does not exist in ${INETD}."
+msgstr "Service sadmind does not exist in ${INETD}."
+#
+msgid  "Service sadmind is not configured for \\\"${JASS_SADMIND_OPTIONS}\\\"."
+msgstr "Service sadmind is not configured for \\\"${JASS_SADMIND_OPTIONS}\\\"."
+#
+msgid  "Service sadmind is running with options \\\"${JASS_SADMIND_OPTIONS}\\\"."
+msgstr "Service sadmind is running with options \\\"${JASS_SADMIND_OPTIONS}\\\"."
+#
+msgid  "Service sadmind is not running with options \\\"${JASS_SADMIND_OPTIONS}\\\"."
+msgstr "Service sadmind is not running with options \\\"${JASS_SADMIND_OPTIONS}\\\"."
+#
+msgid  "Service sadmind is not running on the system."
+msgstr "Service sadmind is not running on the system."
+#
+# Audit/install-security-mode.aud
+#
+msgid  "EEPROM security-mode is set to ${EEPROM_MODE}."
+msgstr "EEPROM security-mode is set to ${EEPROM_MODE}."
+#
+msgid  "EEPROM security-#badlogins is ${EEPROM_BADLOGINS}."
+msgstr "EEPROM security-#badlogins is ${EEPROM_BADLOGINS}."
+#
+# Audit/install-shells.aud
+#
+msgid  "Shell ${shell} exists in ${SHELLS}."
+msgstr "Shell ${shell} exists in ${SHELLS}."
+#
+msgid  "Shell ${shell} does not exist in ${SHELLS}."
+msgstr "Shell ${shell} does not exist in ${SHELLS}."
+#
+# Audit/install-strong-permissions.aud
+#
+msgid  "File ${file} is not group writable."
+msgstr "File ${file} is not group writable."
+#
+msgid  "File ${file} is group writable."
+msgstr "File ${file} is group writable."
+#
+# Audit/print-jass-environment.aud
+#
+msgid  "This script does not perform any checks."
+msgstr "This script does not perform any checks."
+#
+# Audit/print-rhosts.aud
+#
+msgid  "\n# Searching for all '.rhosts' and 'hosts.equiv' files.\n "
+msgstr "\n# Searching for all '.rhosts' and 'hosts.equiv' files.\n "
+#
+msgid  "Contents of ${filename}:"
+msgstr "Contents of ${filename}:"
+#
+# Audit/print-sgid-files.aud
+#
+msgid  "# Searching for all filesystem objects that are set-gid.\n "
+msgstr "# Searching for all filesystem objects that are set-gid.\n "
+#
+msgid  "Object Listing for ${filename}:"
+msgstr "Object Listing for ${filename}:"
+#
+# Audit/print-suid-files.aud
+#
+msgid  "# Searching for all filesystem objects that are set-uid.\n "
+msgstr "# Searching for all filesystem objects that are set-uid.\n "
+#
+# Audit/print-unowned-objects.aud
+#
+msgid  "# Searching for all filesystem objects that are unowned.\n "
+msgstr "# Searching for all filesystem objects that are unowned.\n "
+#
+# Audit/print-world-writable-objects.aud
+#
+msgid  "# Searching for all filesystem objects that are world-writable.\n "
+msgstr "# Searching for all filesystem objects that are world-writable.\n "
+#
+# Audit/remove-unneeded-accounts.aud
+#
+msgid  "User ${user} does not exist in ${SHADOW}."
+msgstr "User ${user} does not exist in ${SHADOW}."
+#
+msgid  "User ${user} exists in ${SHADOW}."
+msgstr "User ${user} exists in ${SHADOW}."
+#
+# Audit/set-banner-dtlogin.aud
+#
+msgid  "dtlogin service banner matches value of JASS_BANNER_DTLOGIN."
+msgstr "dtlogin service banner matches value of JASS_BANNER_DTLOGIN."
+#
+msgid  "dtlogin service banner does not match value of JASS_BANNER_DTLOGIN."
+msgstr "dtlogin service banner does not match value of JASS_BANNER_DTLOGIN."
+#
+msgid  "dtlogin service banner is not defined in ${DTLOGIN}."
+msgstr "dtlogin service banner is not defined in ${DTLOGIN}."
+#
+msgid  "dtlogin service banner file $JASS_BANNER_DTLOGIN exists"
+msgstr "dtlogin service banner file $JASS_BANNER_DTLOGIN exists"
+#
+msgid  "CDE/dthello (SUNWdtdte) does not appear to be installed."
+msgstr "CDE/dthello (SUNWdtdte) does not appear to be installed."
+#
+# Audit/set-banner-ftpd.aud
+#
+msgid  "FTP service parameter 'greeting' is set to 'brief'."
+msgstr "FTP service parameter 'greeting' is set to 'brief'."
+#
+msgid  "FTP service parameter 'greeting' is not set to 'brief'."
+msgstr "FTP service parameter 'greeting' is not set to 'brief'."
+#
+msgid  "FTP service parameter 'greeting' is not defined in ${FTPACCESS}."
+msgstr "FTP service parameter 'greeting' is not defined in ${FTPACCESS}."
+#
+msgid  "FTP service parameter 'banner' is set to '/etc/ftpd/banner.msg'."
+msgstr "FTP service parameter 'banner' is set to '/etc/ftpd/banner.msg'."
+#
+msgid  "FTP service parameter 'banner' is not set to '/etc/ftpd/banner.msg'."
+msgstr "FTP service parameter 'banner' is not set to '/etc/ftpd/banner.msg'."
+#
+msgid  "FTP service parameter 'banner' is not defined in ${FTPACCESS}."
+msgstr "FTP service parameter 'banner' is not defined in ${FTPACCESS}."
+#
+msgid  "FTP service banner matches value of JASS_BANNER_FTPD."
+msgstr "FTP service banner matches value of JASS_BANNER_FTPD."
+#
+msgid  "FTP service banner does not match value of JASS_BANNER_FTPD."
+msgstr "FTP service banner does not match value of JASS_BANNER_FTPD."
+#
+msgid  "FTP service banner is not defined in ${FTPACCESS}."
+msgstr "FTP service banner is not defined in ${FTPACCESS}."
+#
+msgid  "Package SUNWftpr is not installed."
+msgstr "Package SUNWftpr is not installed."
+#
+msgid  "FTP service banner is not defined in ${FTPD}."
+msgstr "FTP service banner is not defined in ${FTPD}."
+#
+# Audit/set-banner-sendmail.aud
+#
+msgid  "sendmail service banner matches value of JASS_BANNER_SENDMAIL."
+msgstr "sendmail service banner matches value of JASS_BANNER_SENDMAIL."
+#
+msgid  "sendmail service banner does not match value of JASS_BANNER_SENDMAIL."
+msgstr "sendmail service banner does not match value of JASS_BANNER_SENDMAIL."
+#
+msgid  "sendmail service banner is not defined in ${SENDMAIL}."
+msgstr "sendmail service banner is not defined in ${SENDMAIL}."
+#
+# Audit/set-banner-sshd.aud
+#
+msgid  "SSH service banner matches value of JASS_BANNER_SSHD."
+msgstr "SSH service banner matches value of JASS_BANNER_SSHD."
+#
+msgid  "SSH service banner file exists."
+msgstr "SSH service banner file exists."
+#
+msgid  "SSH service banner does not match value of JASS_BANNER_SSHD."
+msgstr "SSH service banner does not match value of JASS_BANNER_SSHD."
+#
+msgid  "SSH service banner is not defined in ${SSHD_CONFIG}."
+msgstr "SSH service banner is not defined in ${SSHD_CONFIG}."
+#
+# Audit/set-banner-telnetd.aud
+#
+msgid  "Telnet service (svc:/network/telnet:default) does not appear to be installed."
+msgstr "Telnet service (svc:/network/telnet:default) does not appear to be installed."
+#
+msgid  "TELNET service banner matches value of JASS_BANNER_TELNETD."
+msgstr "TELNET service banner matches value of JASS_BANNER_TELNETD."
+#
+msgid  "TELNET service banner does not match value of JASS_BANNER_TELNETD."
+msgstr "TELNET service banner does not match value of JASS_BANNER_TELNETD."
+#
+msgid  "TELNET service banner is not defined in ${TELNETD}."
+msgstr "TELNET service banner is not defined in ${TELNETD}."
+#
+# Audit/set-flexible-crypt.aud
+#
+msgid  "The password of user ${USER} is not expired and has not been changed"
+msgstr "The password of user ${USER} is not expired and has not been changed"
+#
+msgid  "Password Expiration Check not performed because perl was missing"
+msgstr "Password Expiration Check not performed because perl was missing"
+#
+# Audit/set-ftpd-umask.aud
+#
+msgid  "FTP service (svc:/network/FTP:default) does not appear to be installed."
+msgstr "FTP service (svc:/network/FTP:default) does not appear to be installed."
+#
+# Shared with set-banner-ftpd.aud
+#msgid  "Package SUNWftpr is not installed."
+#msgstr "Package SUNWftpr is not installed."
+#
+msgid  "FTP service umask is set to ${JASS_FTPD_UMASK}."
+msgstr "FTP service umask is set to ${JASS_FTPD_UMASK}."
+#
+msgid  "FTP service umask is not set to ${JASS_FTPD_UMASK}."
+msgstr "FTP service umask is not set to ${JASS_FTPD_UMASK}."
+#
+msgid  "FTP service umask is not defined in ${FTPACCESS}."
+msgstr "FTP service umask is not defined in ${FTPACCESS}."
+#
+msgid  "FTP service umask is not defined in ${FTPD}."
+msgstr "FTP service umask is not defined in ${FTPD}."
+#
+# Audit/set-login-retries.aud
+#
+msgid  "RETRIES parameter is set to \\\"${JASS_LOGIN_RETRIES}\\\" in ${LOGIN}."
+msgstr "RETRIES parameter is set to \\\"${JASS_LOGIN_RETRIES}\\\" in ${LOGIN}."
+#
+msgid  "RETRIES parameter is not set to \\\"${JASS_LOGIN_RETRIES}\\\" in ${LOGIN}."
+msgstr "RETRIES parameter is not set to \\\"${JASS_LOGIN_RETRIES}\\\" in ${LOGIN}."
+#
+msgid  "RETRIES parameter is not defined in ${LOGIN}."
+msgstr "RETRIES parameter is not defined in ${LOGIN}."
+#
+# Audit/set-power-restrictions.aud
+#
+msgid  "PMCHANGEPERM is set to \\\"${JASS_POWER_MGT_USER}\\\" in ${POWER}."
+msgstr "PMCHANGEPERM is set to \\\"${JASS_POWER_MGT_USER}\\\" in ${POWER}."
+#
+msgid  "PMCHANGEPERM is not set to \\\"${JASS_POWER_MGT_USER}\\\" in ${POWER}."
+msgstr "PMCHANGEPERM is not set to \\\"${JASS_POWER_MGT_USER}\\\" in ${POWER}."
+#
+msgid  "PMCHANGEPERM is not defined in ${POWER}."
+msgstr "PMCHANGEPERM is not defined in ${POWER}."
+#
+msgid  "CPRCHANGEPERM is set to \\\"${JASS_CPR_MGT_USER}\\\" in ${POWER}."
+msgstr "CPRCHANGEPERM is set to \\\"${JASS_CPR_MGT_USER}\\\" in ${POWER}."
+#
+msgid  "CPRCHANGEPERM is not set to \\\"${JASS_CPR_MGT_USER}\\\" in ${POWER}."
+msgstr "CPRCHANGEPERM is not set to \\\"${JASS_CPR_MGT_USER}\\\" in ${POWER}."
+#
+msgid  "CPRCHANGEPERM is not defined in ${POWER}."
+msgstr "CPRCHANGEPERM is not defined in ${POWER}."
+#
+# Audit/set-rmmount-suid.aud
+#
+msgid  "Removable HSFS filesystems are mounted \\\"nosuid\\\"."
+msgstr "Removable HSFS filesystems are mounted \\\"nosuid\\\"."
+#
+msgid  "Removable HSFS filesystems are not mounted \\\"nosuid\\\"."
+msgstr "Removable HSFS filesystems are not mounted \\\"nosuid\\\"."
+#
+msgid  "Removable UFS filesystems are mounted \\\"nosuid\\\"."
+msgstr "Removable UFS filesystems are mounted \\\"nosuid\\\"."
+#
+msgid  "Removable UFS filesystems are not mounted \\\"nosuid\\\"."
+msgstr "Removable UFS filesystems are not mounted \\\"nosuid\\\"."
+#
+# Audit/set-root-group.aud
+#
+msgid  "The root account primary group is set to ${JASS_ROOT_GROUP}."
+msgstr "The root account primary group is set to ${JASS_ROOT_GROUP}."
+#
+msgid  "The root account primary group is not set to ${JASS_ROOT_GROUP}."
+msgstr "The root account primary group is not set to ${JASS_ROOT_GROUP}."
+#
+# Audit/set-root-home-dir.aud
+#
+msgid  "Home directory for the root account, ${ROOT_HOME_DIR}, does not exist."
+msgstr "Home directory for the root account, ${ROOT_HOME_DIR}, does not exist."
+
+#
+msgid  "File ${i} not moved from \\\"$JASS_ROOT_DIR\\\" to \\\"$ROOT_HOME_DIR\\\"."
+msgstr "File ${i} not moved from \\\"$JASS_ROOT_DIR\\\" to \\\"$ROOT_HOME_DIR\\\"."
+#
+msgid  "Directory ${i} not moved from \\\"$JASS_ROOT_DIR\\\" to \\\"$ROOT_HOME_DIR\\\"."
+msgstr "Directory ${i} not moved from \\\"$JASS_ROOT_DIR\\\" to \\\"$ROOT_HOME_DIR\\\"."
+#
+msgid  "Home directory for the root account is \\\"/\\\"; \\\"/root\\\" expected."
+msgstr "Home directory for the root account is \\\"/\\\"; \\\"/root\\\" expected."
+#
+# Already in set-root-home-dir.fin:
+#msgid  "Home directory for the root account is ${passwd_root_home_dir}; \\\"/\\\" or \\\"/root\\\" expected."
+#msgstr "Home directory for the root account is ${passwd_root_home_dir}; \\\"/\\\" or \\\"/root\\\" expected."
+#
+# Already in set-root-home-dir.fin:
+#msgid  "Account root does not exist in ${PASSWD}."
+#msgstr "Account root does not exist in ${PASSWD}."
+#
+#msgid  "JASS_ROOT_HOME_DIR must be \\\"/root\\\" (Solaris 10 or above) or \\\"\\\" (empty)."
+#msgstr "JASS_ROOT_HOME_DIR must be \\\"/root\\\" (Solaris 10 or above) or \\\"\\\" (empty)."
+#
+# Audit/set-root-password.aud
+#
+msgid  "The root account password is not the same as JASS_ROOT_PASSWORD."
+msgstr "The root account password is not the same as JASS_ROOT_PASSWORD."
+#
+msgid  "The root account password is the same as JASS_ROOT_PASSWORD."
+msgstr "The root account password is the same as JASS_ROOT_PASSWORD."
+#
+msgid  "The root account password is NOT set"
+msgstr "The root account password is NOT set"
+#
+# Audit/set-sys-suspend-restrictions.aud
+#
+msgid  "PERMS is set to \\\"${JASS_SUSPEND_PERMS}\\\" in ${SYSSUSPEND}."
+msgstr "PERMS is set to \\\"${JASS_SUSPEND_PERMS}\\\" in ${SYSSUSPEND}."
+#
+msgid  "PERMS is not set to \\\"${JASS_SUSPEND_PERMS}\\\" in ${SYSSUSPEND}."
+msgstr "PERMS is not set to \\\"${JASS_SUSPEND_PERMS}\\\" in ${SYSSUSPEND}."
+#
+msgid  "PERMS is not defined in ${SYSSUSPEND}."
+msgstr "PERMS is not defined in ${SYSSUSPEND}."
+#
+# Audit/set-system-umask.aud
+#
+msgid  "Default file creation mask (CMASK) is set to ${JASS_UMASK}."
+msgstr "Default file creation mask (CMASK) is set to ${JASS_UMASK}."
+#
+msgid  "Default file creation mask (CMASK) is not set to ${JASS_UMASK}."
+msgstr "Default file creation mask (CMASK) is not set to ${JASS_UMASK}."
+#
+msgid  "The CMASK parameter is not defined in ${INIT}."
+msgstr "The CMASK parameter is not defined in ${INIT}."
+#
+msgid  "File ${UMASK} exists and sets umask to ${JASS_UMASK}."
+msgstr "File ${UMASK} exists and sets umask to ${JASS_UMASK}."
+#
+msgid  "File ${UMASK} exists, but does not set umask to ${JASS_UMASK}."
+msgstr "File ${UMASK} exists, but does not set umask to ${JASS_UMASK}."
+#
+msgid  "System file creation mask is set to ${JASS_UMASK}."
+msgstr "System file creation mask is set to ${JASS_UMASK}."
+#
+msgid  "System file creation mask is not set to ${JASS_UMASK}."
+msgstr "System file creation mask is not set to ${JASS_UMASK}."
+#
+# Audit/set-term-type.aud
+#
+msgid  "File ${PROFILE} sets TERM variable to \\\"vt100\\\"."
+msgstr "File ${PROFILE} sets TERM variable to \\\"vt100\\\"."
+#
+msgid  "File ${PROFILE} does not set TERM variable to \\\"vt100\\\"."
+msgstr "File ${PROFILE} does not set TERM variable to \\\"vt100\\\"."
+#
+msgid  "File ${LOGIN} sets TERM variable to \\\"vt100\\\"."
+msgstr "File ${LOGIN} sets TERM variable to \\\"vt100\\\"."
+#
+msgid  "File ${LOGIN} does not set TERM variable to \\\"vt100\\\"."
+msgstr "File ${LOGIN} does not set TERM variable to \\\"vt100\\\"."
+#
+# Audit/set-tmpfs-limit.aud
+#
+msgid  "tmpfs size is set to \\\"${JASS_TMPFS_SIZE}\\\" in ${VFSTAB}."
+msgstr "tmpfs size is set to \\\"${JASS_TMPFS_SIZE}\\\" in ${VFSTAB}."
+#
+msgid  "tmpfs size is not set to \\\"${JASS_TMPFS_SIZE}\\\" in ${VFSTAB}."
+msgstr "tmpfs size is not set to \\\"${JASS_TMPFS_SIZE}\\\" in ${VFSTAB}."
+#
+msgid  "tmpfs size is not defined in ${JASS_TMPFS_SIZE}."
+msgstr "tmpfs size is not defined in ${JASS_TMPFS_SIZE}."
+#
+# Audit/set-user-password-reqs.aud
+#
+msgid  "Password Aging MINWEEKS is set to ${JASS_AGING_MINWEEKS}."
+msgstr "Password Aging MINWEEKS is set to ${JASS_AGING_MINWEEKS}."
+#
+msgid  "Password Aging MINWEEKS is not set to ${JASS_AGING_MINWEEKS}."
+msgstr "Password Aging MINWEEKS is not set to ${JASS_AGING_MINWEEKS}."
+#
+msgid  "Password Aging MINWEEKS is not set in ${PASSWD}."
+msgstr "Password Aging MINWEEKS is not set in ${PASSWD}."
+#
+msgid  "Password Aging MAXWEEKS is set to ${JASS_AGING_MAXWEEKS}."
+msgstr "Password Aging MAXWEEKS is set to ${JASS_AGING_MAXWEEKS}."
+#
+msgid  "Password Aging MAXWEEKS is not set to ${JASS_AGING_MAXWEEKS}."
+msgstr "Password Aging MAXWEEKS is not set to ${JASS_AGING_MAXWEEKS}."
+#
+msgid  "Password Aging MAXWEEKS is not set in ${PASSWD}."
+msgstr "Password Aging MAXWEEKS is not set in ${PASSWD}."
+#
+msgid  "Password Aging WARNWEEKS is set to ${JASS_AGING_WARNWEEKS}."
+msgstr "Password Aging WARNWEEKS is set to ${JASS_AGING_WARNWEEKS}."
+#
+msgid  "Password Aging WARNWEEKS is not set to ${JASS_AGING_WARNWEEKS}."
+msgstr "Password Aging WARNWEEKS is not set to ${JASS_AGING_WARNWEEKS}."
+#
+msgid  "Password Aging WARNWEEKS is not set in ${PASSWD}."
+msgstr "Password Aging WARNWEEKS is not set in ${PASSWD}."
+#
+msgid  "Password Policy PASSLENGTH is set to ${JASS_PASS_LENGTH}."
+msgstr "Password Policy PASSLENGTH is set to ${JASS_PASS_LENGTH}."
+#
+msgid  "Password Policy PASSLENGTH is not set to ${JASS_PASS_LENGTH}."
+msgstr "Password Policy PASSLENGTH is not set to ${JASS_PASS_LENGTH}."
+#
+msgid  "Password Policy PASSLENGTH is not set in ${PASSWD}."
+msgstr "Password Policy PASSLENGTH is not set in ${PASSWD}."
+#
+# Audit/set-user-umask.aud
+#
+msgid  "UMASK parameter set to ${JASS_UMASK} in ${userfile}."
+msgstr "UMASK parameter set to ${JASS_UMASK} in ${userfile}."
+#
+msgid  "UMASK parameter is not set to ${JASS_UMASK} in ${userfile}."
+msgstr "UMASK parameter is not set to ${JASS_UMASK} in ${userfile}."
+#
+msgid  "UMASK parameter is not set in ${userfile}."
+msgstr "UMASK parameter is not set in ${userfile}."
+#
+msgid  "umask is set to ${JASS_UMASK} in ${userfile}."
+msgstr "umask is set to ${JASS_UMASK} in ${userfile}."
+#
+msgid  "umask is not set to ${JASS_UMASK} in ${userfile}."
+msgstr "umask is not set to ${JASS_UMASK} in ${userfile}."
+#
+msgid  "umask is not set in ${userfile}."
+msgstr "umask is not set in ${userfile}."
+#
+# Audit/update-at-deny.aud
+#
+msgid  "User ${acct} is listed in ${AT_DENY}."
+msgstr "User ${acct} is listed in ${AT_DENY}."
+#
+msgid  "User ${acct} is not listed in ${AT_DENY}."
+msgstr "User ${acct} is not listed in ${AT_DENY}."
+#
+# Audit/update-cron-allow.aud
+#
+msgid  "# Checking users permitted access to the cron facility.\n "
+msgstr "# Checking users permitted access to the cron facility.\n "
+#
+msgid  "User ${acct} is listed in ${CRON_ALLOW}."
+msgstr "User ${acct} is listed in ${CRON_ALLOW}."
+#
+msgid  "User ${acct} also listed in ${CRON_DENY}."
+msgstr "User ${acct} also listed in ${CRON_DENY}."
+#
+msgid  "User ${acct} is not listed in ${CRON_ALLOW}."
+msgstr "User ${acct} is not listed in ${CRON_ALLOW}."
+#
+# Audit/update-cron-deny.aud
+#
+msgid  "# Checking users denied access to the cron facility.\n "
+msgstr "# Checking users denied access to the cron facility.\n "
+#
+msgid  "User ${acct} is listed in ${CRON_DENY}."
+msgstr "User ${acct} is listed in ${CRON_DENY}."
+#
+msgid  "User ${acct} is not listed in ${CRON_DENY}."
+msgstr "User ${acct} is not listed in ${CRON_DENY}."
+#
+# Audit/update-cron-log-size.aud
+#
+msgid  "log size (\\\"-s\\\") is set to ${newSize}k in ${LOGADM}."
+msgstr "log size (\\\"-s\\\") is set to ${newSize}k in ${LOGADM}."
+#
+msgid  "log size (\\\"-s\\\") is not set to ${newSize}k in ${LOGADM}."
+msgstr "log size (\\\"-s\\\") is not set to ${newSize}k in ${LOGADM}."
+#
+msgid  "log size (\\\"-s\\\") is not defined in ${LOGADM}."
+msgstr "log size (\\\"-s\\\") is not defined in ${LOGADM}."
+#
+msgid  "log size (\\\"LIMIT\\\") is set to ${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}."
+msgstr "log size (\\\"LIMIT\\\") is set to ${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}."
+#
+msgid  "log size (\\\"LIMIT\\\") is not set to ${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}."
+msgstr "log size (\\\"LIMIT\\\") is not set to ${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}."
+#
+msgid  "log size (\\\"LIMIT\\\") is not defined in ${LOGCHECKER}."
+msgstr "log size (\\\"LIMIT\\\") is not defined in ${LOGCHECKER}."
+#
+# Audit/update-inetd-conf.aud
+#
+msgid  "Service ${svc} was found in both DISABLE and ENABLE lists."
+msgstr "Service ${svc} was found in both DISABLE and ENABLE lists."
+#
+msgid  "\n# Checking that the following services are disabled.\n "
+msgstr "\n# Checking that the following services are disabled.\n "
+#
+msgid  "Service ${svc} does not exist in ${INETD}."
+msgstr "Service ${svc} does not exist in ${INETD}."
+#
+msgid  "Service ${svc} is disabled in ${INETD}."
+msgstr "Service ${svc} is disabled in ${INETD}."
+#
+msgid  "Service ${svc} is enabled in ${INETD}."
+msgstr "Service ${svc} is enabled in ${INETD}."
+#
+msgid  "The SMF version of ${svc}, ${_fmri} was enabled."
+msgstr "The SMF version of ${svc}, ${_fmri} was enabled."
+#
+msgid  "The SMF version of ${svc}, ${_fmri} was not enabled."
+msgstr "The SMF version of ${svc}, ${_fmri} was not enabled."
+#
+msgid  "\n# Checking that the following services are enabled.\n "
+msgstr "\n# Checking that the following services are enabled.\n "
+#
+msgid  "There are no ${INETD} services defined by the JASS_SVCS_ENABLE parameter."
+msgstr "There are no ${INETD} services defined by the JASS_SVCS_ENABLE parameter."

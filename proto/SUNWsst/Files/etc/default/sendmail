@@ -1,0 +1,95 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved
+# All rights reserved.
+#
+#ident  "@(#)sendmail 1.3     03/01/03     SMI"
+#
+# INTRODUCTION
+#
+#  This configuration file defines sendmail operating modes, queue
+#  intervals, and any additional options.  Install this configuration
+#  file to affect changes to sendmail operations.  For further
+#  information regarding sendmail security, see the Sun Blueprints(tm)
+#  OnLine article entitled "Solaris Operating Environment Security -
+#  updated for 8".
+#
+#	http://www.sun.com/blueprints/0401/security-updt1.pdf
+#
+#  The latest version of this configuration file is available for the 
+#  Blueprints OnLine tools area at:
+#
+#	http://www.sun.com/blueprints/tools/
+#
+#  This configuration file only works for the Solaris 8 Operating
+#  Environment release.
+#
+# INSTALLATION
+#
+#	# cp <file> /etc/default/sendmail
+#	# chmod 644 /etc/default/sendmail
+#	# chown root:sys /etc/default/sendmail
+#
+
+#
+# MODE
+#
+# This variable defines the mode in which sendmail will operate.  Only
+# the background mode ("-bd") and the queue mode ("") make sense in
+# this context.  sendmail will listen for SMTP connections and process
+# queued mail in background mode.  In queue mode, it will ONLY process 
+# queued mail.
+# The default mode is "-bd" if this variable is not defined.
+#
+MODE=""
+
+#
+# QUEUEUINTERVAL
+#
+# The queue interval defines how long sendmail waits before attempting
+# to process any mail in the queue.  Use the following characters to
+# define the time:
+#
+#	's' senconds
+#	'm' minutes
+#	'h' hours
+#	'd' days
+#	'w' weeks
+#
+# For example:
+#	"15m" == 15 minutes
+#	"1h"  == 1 hour
+#	"3d"  == 3 days
+#	
+# The default queue interval is "15m" (15 minutes) if this variable is
+# not defined.
+#
+QUEUEINTERVAL="15m"
+
+#
+# OPTIONS
+#
+# This variable defines any additional options to sendmail.
+# There is no default value for this variable.
+#
+OPTIONS=""
+

@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-sys-suspend-restrictions.fin	3.7	05/04/12 SMI"
+#
+# This script alters the configuration of /etc/default/sys-suspend file to
+# restrict access to suspend/resume functions.
+#
+
+logMessage "Restricting access to suspend and resume functions."
+echo ""
+
+if check_os_min_revision 5.6 ; then
+
+   SYSSUSPEND=${JASS_ROOT_DIR}etc/default/sys-suspend
+
+   if [ ! -f ${SYSSUSPEND} ]; then
+      create_a_file -m 0444 -o root:sys ${SYSSUSPEND}
+      echo ""
+   fi
+
+   updateNeeded="0"
+
+   # Determine the values to be used.  If values are
+   # already in place, then use them.  Otherwise, use the
+   # defaults that are included below.
+
+   perms=`grep '^PERMS' ${SYSSUSPEND} | nawk -F= '{ print $2 }'`
+
+   if [ ! -z "${JASS_SUSPEND_PERMS}" ]; then
+
+      if [ "${JASS_SUSPEND_PERMS}" != "${perms}" ]; then
+         if [ -z "${perms}" ]; then
+            perms="NONE"
+         fi
+         logMessage 'Changing PERMS setting from ${perms} to ${JASS_SUSPEND_PERMS}.'
+         updateNeeded="1"
+      fi
+
+      perms="${JASS_SUSPEND_PERMS}"
+   fi
+
+   if [ "${updateNeeded}" = "1" ]; then
+
+      echo ""
+      backup_file ${SYSSUSPEND}
+
+      # Remove the old entries and insert the new ones.
+
+      cat ${SYSSUSPEND}.${JASS_SUFFIX}  |\
+         grep -v '^PERMS=' > ${SYSSUSPEND}
+      echo "PERMS=${perms}" >> ${SYSSUSPEND}
+
+      chown root:sys ${SYSSUSPEND}
+      chmod 0444     ${SYSSUSPEND}
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

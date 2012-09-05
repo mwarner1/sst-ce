@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)install-security-mode.aud	1.8	05/04/12 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="EEPROM Security Mode"
+servfil="install-security-mode.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   For systems running the Solaris OE on the SPARC architecture, additional
+   firmware security measures can be taken.  The eeprom(1M) command can be
+   used to set the EEPROM security mode of the system.  This setting takes
+   one of three values: none, command or full.
+
+Rationale for Verification Check:
+
+   This script will check to see if the system has its security mode set
+   to either command or full indicating that a PROM password will be
+   required to access firmware commands or to boot the system.  Note that
+   if the security mode is set to command, a password will only be
+   required to boot the system when booting to a non-default device.
+
+Determination of Compliance:
+
+   This script will check the status of the EEPROM security mode and return
+   a warning if the mode is not command or full.  In addition, this script
+   will check the PROM failed login counter and return a warning if it is
+   non-zero.
+
+   Note that since the install-security-mode.fin script cannot change the
+   security mode of the system, this script will only indicate a warning
+   for non-compliance rather than a failure.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+
+   UNAME_P="`uname -p`"
+
+   if [ "${UNAME_P}" = "sparc" ]; then
+
+      EEPROM_MODE="`eeprom | grep security-mode | nawk -F= '{ print $2 }'`"
+      if [ "${EEPROM_MODE}" = "command" -o "${EEPROM_MODE}" = "full" ]; then
+         logSuccess 'EEPROM security-mode is set to ${EEPROM_MODE}.'
+      else
+         logWarning 'EEPROM security-mode is set to ${EEPROM_MODE}.'
+      fi
+
+      EEPROM_BADLOGINS="`eeprom | grep security-#badlogins |\
+         nawk -F= '{ print $2 }'`"
+
+      if [ "${EEPROM_BADLOGINS}" = "0" ]; then
+         logSuccess 'EEPROM security-#badlogins is ${EEPROM_BADLOGINS}.'
+      else
+         logWarning 'EEPROM security-#badlogins is ${EEPROM_BADLOGINS}.'
+      fi
+   else
+      logNotice 'This script is not supported on this architecture, ${UNAME_P}.'
+   fi
+
+else
+   logNotGlobalZone
+fi
+
+finish_audit

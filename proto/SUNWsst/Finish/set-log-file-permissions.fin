@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-log-file-permissions.fin	1.2	07/01/03 SMI"
+#
+# Set permissions for some log files based on
+# Center for Internet Security recommendations.
+#
+# Run this after install-connlog.fin and install-loginlog.fin
+#
+
+# Log files:
+SYSLOG=${JASS_ROOT_DIR}var/log/syslog
+AUTHLOG=${JASS_ROOT_DIR}var/log/authlog
+UTMPX=${JASS_ROOT_DIR}var/adm/utmpx
+WTMPX=${JASS_ROOT_DIR}var/adm/wtmpx
+LOGINLOG=${JASS_ROOT_DIR}var/adm/loginlog
+CONNLOG=${JASS_ROOT_DIR}var/log/connlog
+# Log directories:
+SA=${JASS_ROOT_DIR}var/adm/sa
+AUDIT=${JASS_ROOT_DIR}var/audit
+
+logMessage "Setting file permissions for log files."
+echo ""
+
+change_owner 'root:sys' "${SYSLOG}"
+change_mode 0644 "${SYSLOG}"
+
+change_owner 'root:sys' "${AUTHLOG}"
+change_mode 0600 "${AUTHLOG}"
+
+change_owner 'root:bin' "${UTMPX}"
+change_mode 0644 "${UTMPX}"
+
+change_owner 'adm:adm' "${WTMPX}"
+change_mode 0644 "${WTMPX}"
+
+if [ -f "${CONNLOG}" ] ; then
+   change_owner 'root:root' "${CONNLOG}"
+   change_mode 0600 "${CONNLOG}"
+fi
+
+if [ -f "${LOGINLOG}" ] ; then
+   change_owner 'root:sys' "${LOGINLOG}"
+   change_mode 0600 "${LOGINLOG}"
+fi
+

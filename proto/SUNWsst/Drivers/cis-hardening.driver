@@ -1,0 +1,211 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)cis-hardening.driver	1.16	07/09/25 SMI"
+#
+# The purpose of this driver is to implement the Solaris Operating System
+# hardening recommendations that are documented in the Sun BluePrints OnLine
+# articles (Solaris Operating Environment Security and Solaris OE Network
+# Settings for Security), and the Center for Internet Security article
+# titled "Solaris Benchmark" available from http://www.CISecurity.org/
+#
+
+DIR="`/bin/dirname $0`"
+export DIR
+
+. ${DIR}/driver.init
+
+JASS_FILES="
+		/etc/dt/config/Xaccess
+		/etc/init.d/set-tmp-permissions
+		/etc/issue
+		/etc/motd
+		/etc/rc2.d/S00set-tmp-permissions
+		/etc/rc2.d/S07set-tmp-permissions
+"
+
+# Note: to set the GRUB password with set-grub-password.fin, set
+# JASS_GRUB_PASSWORD in /opt/SUNWsst/Drivers/user.init with the MD5
+# encrypted password string output by the md5crypt GRUB shell command.
+# For example,
+# # /boot/grub/bin/grub
+# grub> md5crypt
+# Password: t00lk1t
+# Encrypted: $1$4zk3Z0$vWGA8KZc7kqGYsTVpZ4AS1
+# grub> quit
+# # cat /opt/SUNWsst/Drivers/user.init
+# JASS_GRUB_PASSWORD='$1$4zk3Z0$vWGA8KZc7kqGYsTVpZ4AS1' # use single quotes
+# export JASS_GRUB_PASSWORD
+#
+# Note: install-strong-permissions.fin, install-fix-modes.fin, and
+# enable-bart.fin are generally always the last Finish scripts to run
+# as their effects could be undone by Finish scripts that would follow them.
+# The install-fix-modes.fin script is generally run first.  If additional
+# tightening is required, install-strong-permissions.fin can be used.  The
+# enable-bart.fin script captures the state of the filesystem in a manifest.
+#
+# Scripts that modify the syslog configuration, such as install-connlog, should
+# be run after install-local-syslog, to prevent overwriting changes.
+#
+# Note: install-security-mode.fin is not included in the script list
+# since it requires manual intervention.  For more information, refer
+# to the script source code.
+#
+
+JASS_SCRIPTS="
+		check-extended-file-attributes.aud
+		check-hidden-files.aud
+		check-home-permissions.aud
+		check-include-nis-map.aud
+		check-netrc-files.aud
+		check-null-passwords.aud
+		check-password-file-permissions.aud
+		check-gids-unique.aud
+		check-root-path.aud
+		check-uids-unique.aud
+		check-world-writable-files.aud
+		disable-ab2.fin
+		disable-apache.fin
+		disable-apache2.fin
+		disable-appserv.fin
+		disable-asppp.fin
+		disable-autoinst.fin
+		disable-automount.fin
+		disable-dhcpd.fin
+		disable-directory.fin
+		disable-dmi.fin
+		disable-dtlogin.fin
+		disable-face-log.fin
+		disable-ipv6.fin
+                disable-IIim.fin
+		disable-kdc.fin
+#		disable-keyboard-abort.fin
+                disable-keyserv-uid-nobody.fin
+		disable-ldap-client.fin
+		disable-lp.fin
+		disable-mesg.fin
+		disable-mipagent.fin
+		disable-named.fin
+		disable-nfs-client.fin
+		disable-nfs-server.fin
+		disable-nis-client.fin
+                disable-nscd-caching.fin
+#		disable-picld.fin
+		disable-ppp.fin
+		disable-preserve.fin
+		disable-power-mgmt.fin
+                disable-remote-root-login.fin
+		disable-rhosts.fin
+                disable-routing.fin
+		disable-rpc.fin
+		disable-samba.fin
+		disable-sendmail.fin
+		disable-serial-login.fin
+		disable-slp.fin
+		disable-sma.fin
+		disable-smcwebserver.fin
+		disable-snmp.fin
+		disable-spc.fin
+		disable-ssh-root-login.fin
+		disable-syslogd-listen.fin
+                disable-system-accounts.fin
+		disable-uucp.fin
+		disable-vold.fin
+		disable-wbem.fin
+		disable-xdmcp.fin
+		disable-xfs.fin
+		disable-xserver-listen.fin
+		enable-account-lockout.fin
+		enable-coreadm.fin
+		enable-cronlog.fin
+		enable-ftpaccess.fin
+		enable-ftp-debuglog.fin
+		enable-ftp-syslog.fin
+		enable-inetd-syslog.fin
+		enable-ipfilter.fin
+		enable-password-history.fin
+                enable-priv-nfs-ports.fin
+		enable-process-accounting.fin
+		enable-rfc1948.fin
+		enable-sar.fin
+		enable-stack-protection.fin
+		enable-tcpwrappers.fin
+		enable-xscreensaver.fin
+		install-at-allow.fin
+		install-ftpusers.fin
+		install-local-syslog.fin
+		install-loginlog.fin
+		install-md5.fin
+		install-nddconfig.fin
+		install-newaliases.fin
+		install-sadmind-options.fin
+		install-security-mode.fin
+		install-shells.fin
+		install-sulog.fin
+		install-authlog.fin
+		install-connlog.fin
+		remove-unneeded-accounts.fin
+		set-banner-dtlogin.fin
+		set-banner-ftpd.fin
+		set-banner-sendmail.fin
+		set-banner-sshd.fin
+		set-banner-telnetd.fin
+		set-failed-logins.fin
+		set-flexible-crypt.fin
+		set-ftpd-umask.fin
+		set-greeter-warning.fin
+		set-grub-password.fin
+		set-log-file-permissions.fin
+		set-login-retries.fin
+		set-oem-banner.fin
+		set-power-restrictions.fin
+		set-rmmount-nosuid.fin
+		set-root-group.fin
+		set-ssh-config.fin
+		set-strict-password-checks.fin
+		set-sys-suspend-restrictions.fin
+		set-system-umask.fin
+		set-tmpfs-limit.fin
+                set-user-password-reqs.fin
+		set-user-umask.fin
+		enable-password-changes.fin
+		update-at-deny.fin
+		update-cron-allow.fin
+		update-cron-deny.fin
+		update-cron-log-size.fin
+                update-inetd-conf.fin
+		enable-bsm.fin
+		install-fix-modes.fin
+#		install-strong-permissions.fin
+		print-package-files.fin
+		print-rhosts.aud
+		print-sgid-files.aud
+		print-suid-files.aud
+		print-unowned-objects.aud
+		enable-bart.fin
+"
+
+. ${DIR}/driver.run
+

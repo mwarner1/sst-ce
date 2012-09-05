@@ -1,0 +1,271 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<?Fm: Validation Off>
+
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY man1m CDATA "System Administration">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.2">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY opts-tt CDATA "OPTIONS">
+<!ENTITY exam-tt CDATA "EXAMPLES">
+<!ENTITY exit-tt CDATA "EXIT STATUS">
+<!ENTITY exitstatuslead CDATA "The following exit values are returned:">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry lang = "en" os = "solaris"><refmeta><refentrytitle lang = "en">jass-execute</refentrytitle>
+<manvolnum>1m</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man1m;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>unalias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>pseudonym, create
+or remove</primary></indexterm></refmeta>
+<refnamediv>
+<refname>jass-execute</refname><refpurpose>execute the Solaris Security
+Toolkit functionality				</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<cmdsynopsis os = "solaris"><command>jass-execute</command><arg
+    choice = "opt" rep = "norepeat"><option>r</option><replaceable> root_directory </replaceable><option>p</option> <replaceable>os_version</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>q</option>|<option>o</option> <replaceable>output_file</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>m</option><replaceable> e-mail_address</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>V</option> &lsqb;3|4] </arg>
+<arg choice = "opt" rep = "norepeat"><option>d</option>]<replaceable>driver</replaceable></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>jass-execute </command><arg
+    choice = "plain" rep = "norepeat"><option>u</option></arg><arg
+    choice = "opt" rep = "norepeat"><option>b</option>|<option>f</option>|<option>k</option></arg>
+<arg choice = "opt" rep = "norepeat"><option>q</option>|<option>o </option><replaceable>output_file</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>m</option> <replaceable>e-mail_address</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>V &lsqb;3|4]</option></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>jass-execute </command><arg
+    choice = "plain" rep = "norepeat"><option>a </option><replaceable>driver</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>V</option> &lsqb;0|1|2|3|4] </arg>
+<arg choice = "opt" rep = "norepeat"><option>q</option>|<option>o</option> <replaceable>output_file</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>m</option> <replaceable>e-mail_address</replaceable></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>jass-execute </command><arg
+    choice = "plain" rep = "norepeat"><option>c </option></arg><arg
+    choice = "opt" rep = "norepeat"><option>q</option>|<option>o</option> <replaceable>output_file</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>m</option> <replaceable>e-mail_address</replaceable></arg>
+<arg choice = "opt" rep = "norepeat"><option>V</option> <replaceable> &lsqb;3|4]</replaceable></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>jass-execute </command><arg
+    choice = "plain" rep = "norepeat"><option>H</option></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>jass-execute </command><arg
+    choice = "plain" rep = "norepeat"><option>l</option></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>jass-execute </command><arg
+    choice = "plain" rep = "norepeat"><option>h</option>|<option>?</option></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>jass-execute </command><arg
+    choice = "plain" rep = "norepeat"><option>v</option></arg></cmdsynopsis></refsynopsisdiv>
+<refsect1 lang = "en"><title>&desc-tt;</title>
+<para><command>jass-execute</command> executes various functions of the Solaris Security Toolkit (also known as JASS) depending on the options used. For more information about how to use the jass-execute command and its various options, refer to the Solaris Security Toolkit 4.2 Administration Guide, Chapter 3, &ldquo;Upgrading, Installing, and Running Security Software.&rdquo; </para></refsect1>
+<refsect1 lang = "en"><title>EXTENDED DESCRIPTION</title>
+<para>You need to specify a driver with options -a and -d of the jass-execute command. Drivers are used by the Solaris Security Toolkit software to harden, minimize, and audit Solaris OS systems. A series of drivers and related files make up a security profile.</para>
+<para>The following standard drivers are supplied by default in the Drivers directory:</para>
+<para>config.driver</para>
+<para>hardening.driver</para>
+<para>secure.driver</para>
+<para>The following product-specific drivers are used to harden specific Sun products or configurations.</para>
+<para>server-&lsqb;secure|hardening|config].driver</para>
+<para>suncluster3x-&lsqb;secure|hardening|config].driver</para>
+<para>sunfire_15k_sc-&lsqb;secure|hardening|config].driver</para>
+<para>Use only the &lsqb;<replaceable>name</replaceable>]-secure.driver as an argument to the <command>jass-execute</command> command.</para>
+<para>For more information about drivers, refer to the Solaris Security Toolkit 4.2 Reference Manual, Chapter 4, &ldquo;Drivers&rdquo;.</para>
+<refsect2 lang = "en"><title>Group Privileges Required</title>
+<para>You must have superuser privileges to run this command. </para></refsect2></refsect1>
+<refsect1 lang = "en"><title>&opts-tt;</title>
+<para>The following options are supported:</para><variablelist
+    termlength = "narrow" os = "solaris">
+<varlistentry>
+<term os = "solaris"><option>a </option><replaceable>driver</replaceable></term>
+<listitem os = "solaris"><para>Determines if the system is in compliance with its security profile.</para>
+<para>Do not use with the <option>c</option>, <option>d</option>, <option>h</option>, <option>H</option>, <option>l</option>, <option>p</option>, <option>r</option>, or <option>u</option> options.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>b</option></term>
+<listitem os = "solaris"><para>Backs up any files that have been manually changed since the last hardening run, then restores system to its original state.</para>
+<para>Use only with the -u option.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">-c</term>
+<listitem os = "solaris"><para>Specifies the clean option. Removes saved files from a previous run of Solaris Security Toolkit.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>d </option><replaceable>driver</replaceable></term>
+<listitem os = "solaris"><para>Specifies the driver to be run in stand-alone mode.</para>
+<para>Do not use with the <option>a</option>, <option>b</option>, <option>c</option>, <option>f</option>, <option>h</option>, <option>H</option>, <option>k</option>, or <option>u</option> options.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>f</option></term>
+<listitem os = "solaris"><para>Reverses changes made during a hardening run without asking you about exceptions, even if files were manually changed after a hardening run.</para>
+<para>Use only with the -u option.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>H</option></term>
+<listitem os = "solaris"><para>Displays the history of Solaris Security Toolkit applications on the system. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>h</option> |<option>?</option></term>
+<listitem os = "solaris"><para>Displays usage descriptions for jass-execute.</para>
+<para>Use alone. Any option specified in addition to <option>h</option>|<option>?</option> is ignored.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>k</option></term>
+<listitem os = "solaris"><para>Keeps any manual changes you made to files after a hardening run.</para>
+<para>Use only with the -u option.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>l</option></term>
+<listitem os = "solaris"><para>Displays the last application of the Solaris Security Toolkit installed on the system. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>m</option><replaceable> e-mail_address</replaceable></term>
+<listitem os = "solaris"><para>Specifies an email address for in-house support. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>o</option> <replaceable>output_file</replaceable></term>
+<listitem os = "solaris"><para>Specifies the complete path to the output file as well as the output file itself.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>p</option> <replaceable>os_version</replaceable></term>
+<listitem os = "solaris"><para>Specifies the OS version of Solaris. The format is the same as that of <command>uname -r.</command></para>
+<para>Must use with the <command>-r <replaceable>root_directory option</replaceable>.</command></para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>q</option></term>
+<listitem os = "solaris"><para>Specifies quiet mode. Messages are not displayed while running this command. Output is stored in <filename>JASS_REPOSITORY/</filename>.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>r </option><replaceable>root_directory</replaceable></term>
+<listitem os = "solaris"><para>Specifies the root directory used during jass-execute runs. By default, the root file system is <literal>/</literal>. This root directory is defined by the Solaris Security Toolkit environment variable, <literal>JASS_ROOT_DIR</literal>. The Solaris OS being secured is available through <literal>/</literal>. For example, if you wanted to secure a separate OS directory, temporarily mounted under <literal>/mnt</literal> then use the <option>r</option> option to specify <literal>/mnt</literal>.</para>
+<para>Must use with the <command>-p <replaceable>os_version</replaceable> option.</command></para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>u</option></term>
+<listitem os = "solaris"><para>Runs the undo option with interactive prompts that ask you what action you want to take when exceptions are encountered.</para>
+<para>Do not use with the <option>a</option>, <option>c</option>, <option>d</option>, <option>h</option>, <option>l,</option> or <option>H</option> options. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>V </option><replaceable>verbosity_level</replaceable></term>
+<listitem os = "solaris"><para>Specifies the level of verbosity for an audit run. There are five levels (0-4):</para>
+<variablelist termlength = "narrow" os = "solaris"><varlistentry><term><command>0</command></term>
+<listitem><para>Final. This mode results in only one line of output that indicates the combined result of the entire verification run. This mode is useful if a single PASS or FAIL is needed.</para></listitem></varlistentry>
+<varlistentry><term><command>1</command></term>
+<listitem><para>Consolidated. In this mode, one line of output per audit script is generated indicating the result of each audit script. In addition, subtotals are generated at the end of each script, as well as a grand total at the end of the run.</para></listitem></varlistentry>
+<varlistentry><term><command>2</command></term>
+<listitem><para>Brief. This mode combines the attributes of the Consolidated verbosity level and includes the results of the individual checks within each audit script. This mode is useful for quickly determining those items that passed and failed within a single audit script. The format of this mode still represents one result per line.</para></listitem></varlistentry>
+<varlistentry><term><command>3</command></term>
+<listitem><para>Full. This is the first of the multiline verbosity modes. In this mode, banners and headers are printed to illustrate more clearly the checks that are being run, their intended purpose, and how their results are determined. This is the default verbosity level and more suitable for those new to the Solaris Security Toolkit verification capability.</para></listitem></varlistentry>
+<varlistentry><term><command>4</command></term>
+<listitem><para>Debug. This mode extends upon the Full verbosity mode by including all entries that are generated by the logDebug logging function. Currently, this is not used by any of the Solaris Security Toolkit audit scripts, but it is included for completeness and to allow administrators to embed debugging statements within their code.</para></listitem></varlistentry></variablelist></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>v </option></term>
+<listitem os = "solaris"><para>Displays the version information for this program.</para></listitem>
+</varlistentry>
+</variablelist></refsect1>
+<refsect1 lang = "en"><title>&exam-tt;</title>
+<example width = "100" os = "solaris"><title>Configuring a Solaris Security Toolkit Application	</title><screen width = "100" format = "linespecific">
+sc0:#:> <userinput>/opt/SUNWsst/bin/jass-execute -r /mnt -p 5.9 -o output.txt -m support@mycompany.com -d secure.driver</userinput>
+
+&lsqb;NOTE] The following prompt can be disabled by setting JASS_NOVICE_USER to 0.
+&lsqb;WARN] Depending on how the Solaris Security Toolkit is configured, it is both possible and likely that by default all remote shell and file transfer access to this system will be disabled upon reboot effectively locking out any user without console access to the system.
+Are you sure that you want to continue? (YES/NO) &lsqb;NO] YES
+&lsqb;NOTE] Executing driver, secure.driver
+&lsqb;NOTE] Recording output to output.txt
+sc0:#:> 
+</screen></example>
+<example width = "100" arch = "sparc" os = "solaris"><title>Undoing a Previous Jass Application</title><screen width = "100" format = "linespecific">
+sc0:#:><userinput> /opt/SUNWsst/bin/jass-execute -u -b -q -m support@mycompany.com -V 3</userinput>
+&lsqb;WARN] Creating backup copies of some files may cause unintended affects.
+&lsqb;WARN] This is particularly true of <filename>/etc/hostname</filename>.&lsqb;interface] files as well as crontab files in <filename>/var/spool/cron/crontabs</filename>.
+&lsqb;NOTE] Executing driver, undo.driver
+
+Please select a Solaris Security Toolkit run to restore through:
+1.  June 28, 2004 at 19:11:49 (<filename>/var/opt/SUNWsst/run/20040628191149</filename>)
+2.  June 21, 2004 at 17:20:54 (<filename>/var/opt/SUNWsst/run/20040621172054</filename>)
+3.  June 17, 2004 at 10:45:23 (<filename>/var/opt/SUNWsst/run/20040617104523</filename>)
+Choice ('q' to exit)? 1
+&lsqb;NOTE] Restoring to previous run from <filename>/var/opt/SUNWsst/run/20040628191149</filename>
+sc0:#:> 
+</screen></example>
+<example width = "100" arch = "sparc" os = "solaris"><title>Auditing the System Against a Pre-Defined Profile		</title><screen width = "100" format = "linespecific">
+sc0:#:> /opt/SUNWsst/bin/<userinput>jass-execute -a secure.driver -V 2 -o output.txt -m support@mycompany.com</userinput>
+
+jass-execute                   &lsqb;NOTE] Executing driver, secure.driver
+jass-execute                   &lsqb;NOTE] Recording output to output.txt
+sc0:#:> 
+</screen></example>
+<example width = "100" arch = "sparc" os = "solaris"><title>Displaying the Last Installed Solaris Security Toolkit Application</title><screen width = "100" format = "linespecific">
+sc0:#:> /opt/SUNWsst/bin/<userinput>jass-execute -l</userinput>
+
+# ./jass-execute -l
+This information is only applicable for applications of the
+Solaris Security Toolkit starting with version 0.3.
+The last application of the Solaris Security Toolkit was:
+1.   June 28, 2004 at 19:11:49 (20040628191149) (UNDONE)
+sc0:#:> 
+</screen></example></refsect1>
+<refsect1 lang = "en"><title>&exit-tt;</title>
+<para>&exitstatuslead;</para><variablelist termlength = "narrow"
+    os = "solaris">
+<varlistentry>
+<term os = "solaris"><returnvalue>0</returnvalue></term>
+<listitem os = "solaris"><para>Successful completion.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">1</term>
+<listitem os = "solaris"><para>Error occurred.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">2</term>
+<listitem os = "solaris"><para>Security violation occurred.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">3</term>
+<listitem os = "solaris"><para>Another instance of jass-execute is running.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">4</term>
+<listitem os = "solaris"><para>Termination by user request.</para></listitem>
+</varlistentry>
+</variablelist></refsect1>
+<refsect1 lang = "en"><title>&attr-tt;</title>
+<para>See <citerefentry><refentrytitle lang = "en">attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" os = "solaris">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" valign = "top" os = "solaris"><para>Attribute Types</para></entry>
+<entry colname = "2" align = "center" valign = "top" os = "solaris"><para>Attribute Values</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Availability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>SUNWsst</para></entry>
+</row>
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Interface Stability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>Evolving</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 lang = "en"><title>&also-tt;</title>
+<para><citerefentry><refentrytitle lang = "en">add-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-check-sum</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">make-jass-pkg</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">rm-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para></refsect1></refentry>

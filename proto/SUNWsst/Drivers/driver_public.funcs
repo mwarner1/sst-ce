@@ -1,0 +1,2927 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)driver_public.funcs	3.66	05/07/15 SMI"
+#
+
+#
+# This file contains all of the public interfaces to the driver functions
+# used by the Toolkit's finish functionality.  These functions should be
+# considered public in nature and used in finish scripts where needed.
+#
+
+
+# ============================================================================
+# Function: is_patch_applied
+#
+# The purpose of this function is to determine if a given patch and
+# optional patch revision have been applied to the system.  The input to
+# this function is one mandatory argument, like either one of these:
+#	112481
+#	112481-05
+#
+# The result of this function is a integer return code with the following
+# meaning:
+#	0	: the patch has been applied at or above the level specified
+#	1	: the patch has not been applied at all (or error)
+#	2	: a version of the patch has been applied but not as
+#			high as the one you're looking for
+#
+# For example, if the patch argument were "112481", and patch 112481-04
+# was the highest rev installed, this function would return 0.
+# However, if the patch argument were "112481-05", with 112481-04 installed,
+# this function would return 2.
+# If no version of the patch is installed, this function returns 1.
+# (Note: Specifying "112481" without a patch revision actually behaves
+# like patch "112481-00" was specified.)
+#
+# Parameter:
+# $1	Patch number, with or without the rev.  E.g., "112481" or "112481-05"
+#
+# ============================================================================
+
+is_patch_applied()
+{
+   # Note the -s is important, it is for patches without revisions
+   patch_no=`echo ${1} | cut -d- -f1`
+   patch_rev=`echo ${1} | cut -s -d- -f2`
+
+   if [ "${patch_no}" = "" ]; then
+      logError 'The patch identifier was not specified to is_patch_applied.'
+      return 1	# error!
+   fi
+
+   max_rev=`grep PATCHLIST ${JASS_ROOT_DIR}var/sadm/pkg/*/pkginfo |\
+      nawk -F= '{print $2}' | xargs -n 1 echo | grep ${patch_no} |\
+      sort -rn | head -1 | nawk -F- '{print $2}'`
+
+   if [ "${max_rev}" = "" ]; then
+      # echo "A patch was not found with the designation: ${patch_no}."
+      return 1
+   fi
+
+   # echo "A patch was found with the designation: ${patch_no}."
+   # echo "The highest revision found was: ${max_rev}."
+
+   if [ "${patch_rev}" = "" ]; then
+      return 0
+   fi
+
+   if [ ${max_rev} -lt ${patch_rev} ] ; then
+      # echo "Not high enough."
+      return 2
+   fi
+
+   # echo "The same version or higher."
+   return 0
+}
+
+
+# ============================================================================
+# Function: is_patch_not_applied
+#
+# This one is just an inverse of is_patch_applied; returns 0 if the requested
+# patch is not applied at all or rev is not high enough; return 1 if patch
+# applied at or better rev than requested.
+#
+# Parameter:
+# $1	Patch number, with or without the rev.  E.g., "112481" or "112481-05"
+#
+# ============================================================================
+is_patch_not_applied()
+{
+   is_patch_applied "${1}" && return 1 || return 0
+}
+
+
+# ============================================================================
+# Function: add_patch
+#
+# The purpose of this function is to add patches in the Solaris patch
+# format from the ${JASS_ROOT_DIR}${JASS_PATCH_DIR} directory.  This
+# function can take the following arguments:
+#
+#    -o <options>         Options to be passed to the patchadd or
+#                         installpatch commands. (Optional)
+#
+#    -M <patchdir>        The source directory containing the patches to be
+#                         installed in Solaris patch format. (Optional)
+#
+#    <patchlist>          Command line list of patches or file containing
+#                         a list of patches to be applied.
+#
+# ============================================================================
+
+add_patch()
+{
+   # MNTTAB="${JASS_ROOT_DIR}etc/mnttab"
+
+   add_patch_options=""
+   add_patch_dir="${JASS_PATCH_DIR}"
+   add_patch_list=""
+
+   # reset OPTIND so that new arguments are processed
+   OPTIND=1
+   # reset variables
+   OPTARG=''
+   v=''
+
+   while getopts "o:M:" v; do
+      case ${v} in
+         o)
+            add_patch_options="${OPTARG}"
+            ;;
+         M)
+            add_patch_dir="${OPTARG}"
+            ;;
+	 *)
+	    logError 'An invalid argument, ${v}, was supplied to add_patch.'
+	    return
+            ;;
+      esac
+   done
+
+   shift `expr $OPTIND - 1`
+
+   # At this point the only parameter to this function is:
+   # $1     = Package to be installed.
+
+   add_patch_list="$*"
+
+   if [ -z "$add_patch_list" ]; then
+      logError 'The list of patches to be installed was not specified.'
+      return
+   fi
+
+   add_patches=""
+
+   if [ -f ${add_patch_dir}/${add_patch_list} ]; then
+      add_patches="`cat ${add_patch_dir}/${add_patch_list}`"
+   else
+      add_patches="${add_patch_list}"
+   fi
+
+   for patch in ${add_patches}; do
+
+      if [ ! -d ${add_patch_dir}/${patch} ]; then
+         logError 'Directory, ${add_patch_dir}/${patch}, was not found.'
+      else
+         synopsis="`grep '^Synopsis:' \
+            ${add_patch_dir}/${patch}/README.${patch} |\
+            sed 's/^Synopsis: //g'`"
+
+         BANNER_MSG="Installing Patch: ${patch}
+Patch Synopsis:   ${synopsis}
+Root Directory:   ${JASS_ROOT_DIR}
+Source Location:  ${add_patch_dir}
+Options:          ${add_patch_options}"
+
+         logBanner '${BANNER_MSG}'
+
+         SHOWCOMMAND=""
+
+         if [ -x ${JASS_ROOT_DIR}usr/sbin/patchadd ]; then
+            SHOWCOMMAND="/usr/sbin/patchadd"
+         elif [ -x ${JASS_ROOT_DIR}usr/bin/showrev ]; then
+            SHOWCOMMAND="/usr/bin/showrev"
+         fi
+
+         if [ "${SHOWCOMMAND}" = "/usr/sbin/patchadd" ]; then
+            /usr/sbin/patchadd ${add_patch_options} \
+               -R ${JASS_ROOT_DIR} -M ${add_patch_dir} ${patch}
+         elif [ -x ${add_patch_dir}/${patch}/installpatch ]; then
+            ${add_patch_dir}/${patch}/installpatch ${add_patch_options} \
+               -R ${JASS_ROOT_DIR} ${add_patch_dir}/${patch}
+         else
+            logError 'No installation programs were found for patch ${patch}.'
+         fi
+      fi
+
+   done
+}
+
+
+# ============================================================================
+# Function: add_pkg
+#
+# The purpose of this function is to add packages in the Solaris pkg
+# format from the ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR} directory.  This
+# function can take the following arguments:
+#
+#    -a <ask_file>        The pkgadd ask file to be used. (Optional)
+#
+#    -d <src_loc>         The source package to be installed.  Note that
+#                         this can be a directory or a stream file. (Optional)
+#
+#    -o <options>         Options to be used by the pkgadd command. (Optional)
+#
+#    package              This is the package to be installed.
+#
+# ============================================================================
+
+add_pkg()
+{
+   add_pkg_src_loc="`clean_path ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}`"
+   add_pkg_ask_file="${add_pkg_src_loc}/noask_pkgadd"
+   add_pkg_options=""
+
+   # reset OPTIND so that new arguments are processed
+   OPTIND=1
+   # reset variables
+   OPTARG=''
+   v=''
+
+   while getopts "a:d:o:" v; do
+      case ${v} in
+         a)
+            add_pkg_ask_file="`clean_path ${OPTARG}`"
+            ;;
+         d)
+            add_pkg_src_loc="`clean_path ${OPTARG}`"
+            ;;
+         o)
+            add_pkg_options="${OPTARG}"
+	    ;;
+	 *)
+	    logError 'An invalid argument, ${v}, was supplied to add_pkg.'
+	    return
+            ;;
+      esac
+   done
+
+   shift `expr $OPTIND - 1`
+
+   # At this point the only parameter to this function is:
+   # $1     = Package to be installed.
+
+   add_package_name=${1}
+
+   if [ -z "$add_package_name" ]; then
+      logError 'The package to be installed was not specified.'
+      return
+   fi
+
+   BANNER_MSG="Installing Package: ${add_package_name}
+Root Directory:     ${JASS_ROOT_DIR}
+Ask File:           ${add_pkg_ask_file}
+Source Location:    ${add_pkg_src_loc}
+Options:            ${add_pkg_options}"
+
+   logBanner '${BANNER_MSG}'
+
+   pkgadd -a ${add_pkg_ask_file} -d ${add_pkg_src_loc} \
+      -R ${JASS_ROOT_DIR} ${add_pkg_options} $add_package_name
+}
+
+
+# ============================================================================
+# Function: rm_pkg
+#
+# The purpose of this function is to remove packages in the Solaris pkg
+# format from the target host.  This function can take the following
+# arguments:
+#
+#    -a <ask_file>        The pkgrm ask file to be used. (Optional)
+#
+#    -o <options>         Options to be used by the pkgrm command. (Optional)
+#
+#    package              This is the package to be removed.
+#
+# ============================================================================
+
+rm_pkg()
+{
+   rm_pkg_ask_file="`clean_path ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}/noask_pkgrm`"
+
+   rm_pkg_options="-n"
+   if [ "${JASS_UNAME}" != "5.5.1" ]; then
+      rm_pkg_options="-A ${rm_pkg_options}"
+   fi
+
+   # reset OPTIND so that new arguments are processed
+   OPTIND=1
+   # reset variables
+   OPTARG=''
+   v=''
+
+   while getopts "a:o:" v; do
+      case ${v} in
+         a)
+            rm_pkg_ask_file="`clean_path ${OPTARG}`"
+            ;;
+         o)
+            rm_pkg_options="${OPTARG}"
+            ;;
+         *)
+	    logError 'An invalid argument, ${v}, was supplied to rm_pkg.'
+            return
+            ;;
+      esac
+   done
+
+   shift `expr $OPTIND - 1`
+
+   # At this point, the only parameter to this function is:
+   # $1     = Package to be removed
+
+   rm_pkg_name=${1}
+
+   if [ -z "${rm_pkg_name}" ]; then
+      logError 'The package to be removed was not specified.'
+      return
+   fi
+
+   BANNER_MSG="Removing Package: $rm_pkg_name, using:
+Root Directory:   ${JASS_ROOT_DIR}
+Ask File:         ${rm_pkg_ask_file}
+Options:          ${rm_pkg_options}"
+
+   logBanner '${BANNER_MSG}'
+
+   pkgrm -a ${rm_pkg_ask_file} -R ${JASS_ROOT_DIR} ${rm_pkg_options} ${rm_pkg_name}
+}
+
+
+# ============================================================================
+# Function: move_a_file
+#
+# This function is a helper function to copy_files and any other function
+# that needs it.  It moves exactly one thing (file, link, directory) from
+# a src to a dest.  No backup is performed, since the mv is the backup.
+#
+# Note: when moving files, you must specify a file as the destination
+# instead of a directory.  Otherwise, undo will not work.  For example, use
+# "move_a_file ${JASS_ROOT_DIR}etc/suds.pid ${JASS_ROOT_DIR}var/run/suds.pid"
+# instead of
+# "move_a_file ${JASS_ROOT_DIR}etc/suds.pid ${JASS_ROOT_DIR}var/run"
+#
+# Parameters to this function are:
+# ${1}	a path to the source
+# ${2}	a path to the destination
+#
+# ============================================================================
+
+move_a_file()
+{
+   srcFile="`clean_path ${1}`"
+   dstFile="`clean_path ${2}`"
+
+   mv ${srcFile} ${dstFile}
+
+   fix_s="`strip_path ${srcFile}`"
+   fix_d="`strip_path ${dstFile}`"
+   add_to_manifest M ${fix_s} ${fix_d}
+}
+
+
+# ============================================================================
+# Function: copy_a_file
+#
+# This function is a helper function for copy_files and any other
+# function that needs it.  It copies exactly one regular file from a
+# src to a dest, performing a backup of it if necessary, and logs the
+# action in the manifest appropriately, i.e., uses the op code "C" if
+# the file existed previously or "J" if it a newly created file.
+#
+# Parameters to this function are:
+# ${1}	a path to the source file
+# ${2}	a path to the destination
+#
+# ============================================================================
+
+copy_a_file()
+{
+   # src is a regular file if this function is called
+   cp_src="`clean_path ${1}`"
+   cp_dest="`clean_path ${2}`"
+
+   # Check if a new parent directory for the file needs to be made
+   dirnew=`dirname ${cp_dest}`
+   if [ ! -d ${dirnew} ]; then
+      mkdir_dashp ${dirnew}
+   fi
+
+   # Based on what type of file cp_dest is, try to either perform the
+   # operation if straightforward, or reduce it to a simpler case
+   while : ; do
+
+      # Case 3: cp_dest is a symbolic link
+      if [ -h ${cp_dest} ] ; then
+	 # Follow link down until it is a real file/directory or nothing
+	 cp_dest=`descend_link ${cp_dest}`
+
+	 # Next time, this can be any case, but we're a step closer
+	 continue
+      fi
+
+      # Case 1: cp_dest is regular file
+      if [ -f ${cp_dest} ] ; then
+	 diff ${cp_src} ${cp_dest} > /dev/null 2>&1
+	 if [ $? != 0 ]; then
+
+	   backup_file ${cp_dest}
+
+	   logNotice 'Copying ${cp_dest} from ${cp_src}.'
+	   cp ${cp_src} ${cp_dest}
+
+	   # Don't log copy since "backup_file" logged backup of file
+	 fi
+
+	 # Done; leave this function
+	 return
+      fi
+
+      # Case 2: cp_dest is a directory
+      if [ -d ${cp_dest} ] ; then
+	 # Change cp_dest to be the full resulting regular file path
+	 cp_dest=${cp_dest}/`basename ${cp_src}`
+
+	 # Now this is case 1; loop around
+	 continue
+      fi
+
+      # Case 4: cp_dest doesn't exist
+      if [ ! -r ${cp_dest} ] ; then
+
+         logNotice 'Copying ${cp_dest} from ${cp_src}.'
+	 cp ${cp_src} ${cp_dest}
+
+         create_file_timestamp "${cp_dest}"
+
+	 # Create the placeholder file with new timestamp
+	 touch ${cp_dest}.${JASS_SUFFIX}
+
+	 # Log the fact that this file was newly created
+	 # (Note that we do not log the cp_src file for JASS-created files.)
+
+         fix_s="`strip_path ${cp_dest}`"
+         fix_d="`strip_path ${cp_dest}.${JASS_SUFFIX}`"
+	 add_to_manifest J ${fix_s} ${fix_d}
+
+	 # Save the file in the saved file list regardless of whether
+	 # this file should be saved for checksumming or for cleanup.
+
+	 JASS_SAVED_LIST="${cp_dest}.${JASS_SUFFIX} ${JASS_SAVED_LIST}"
+
+	 # Done; leave this function
+	 return
+      fi
+
+      # Case 5: unexpected type of cp_dest; log error and return
+      logError 'Unexpected destination file type for ${cp_dest}.'
+      return
+   done
+}
+
+
+# ============================================================================
+# Function: copy_a_dir
+#
+# This function is a helper function for copy_files and any other
+# function that needs it.  It copies a directory RECURSIVELY from a
+# src to a dest, performing a backup of each file within if necessary,
+# and logs the actions in the manifest appropriately, i.e., uses the
+# op code "C" if the file existed previously or "J" if it a newly
+# created file or "D" if a directory is created.
+#
+# Parameters to this function are:
+# ${1}	a path to the source directory
+# ${2}	a path to the destination
+#
+# ============================================================================
+
+copy_a_dir()
+{
+   # src is a directory if this function is called
+   dir_src=${1}
+   dir_dest=${2}
+
+   # Check if a new directory for the file needs to be made
+   if [ ! -d ${dir_dest} ]; then
+      mkdir_dashp ${dir_dest}
+   fi
+
+   # Recursively copy the content files/dirs of this directory
+   for f in ${dir_src}/* ${dir_src}/.[a-zA-Z0-9]*; do
+      if [ -h ${f} ] ; then
+	 copy_a_symlink ${f} ${dir_dest}/`basename ${f}`
+      elif [ -f ${f} ] ; then
+	 copy_a_file ${f} ${dir_dest}/`basename ${f}`
+      elif [ -d ${f} ] ; then
+	 copy_a_dir ${f} ${dir_dest}/`basename ${f}`
+	 # Reset the globals that are tromped by recursion
+	 dir_src=${1}
+	 dir_dest=${2}
+      fi
+   done
+}
+
+
+# ============================================================================
+# Function: copy_a_symlink
+#
+# This function is a helper function for copy_files and any other
+# function that needs it.  It copies symbolic linked files from a
+# src to a dest, performing a backup of each file within if necessary,
+# and logs the actions in the manifest appropriately, i.e., uses the
+# op code "C" if the file existed previously or "J" if it a newly
+# created file or "S" if a symbolic link was created or "M" if something
+# was moved.
+#
+# Parameters:
+# ${1}	Source file to symbolically link
+# ${2}	Target file to symbolically link
+#
+# ============================================================================
+
+make_link()
+{
+   srcFile="`clean_path ${1}`"
+   dstFile="`clean_path ${2}`"
+
+   # Log that a new symbolic link was created
+   ln -s ${srcFile} ${dstFile}
+
+   fix_s="`strip_path ${srcFile}`"
+   fix_d="`strip_path ${dstFile}`"
+   add_to_manifest S ${fix_s} ${fix_d}
+}
+
+copy_a_symlink()
+{
+   # Parameters to this function are:
+   # ${1}	a path to the source symbolic link
+   # ${2}	a path to the destination
+
+   # src is a symbolic link if this function is called
+   sym_src="`clean_path ${1}`"
+   sym_dest="`clean_path ${2}`"
+
+   # Check if a new parent directory for the file needs to be made
+   dirnew=`dirname ${sym_dest}`
+   if [ ! -d ${dirnew} ]; then
+      mkdir_dashp ${dirnew}
+   fi
+
+   while : ; do
+
+      # Case 3: sym_dest is a symbolic link
+      if [ -h ${sym_dest} ] ; then
+	 # Descend both sym_src and sym_dest links
+	 sym_src=`descend_link ${sym_src}`
+	 sym_dest=`descend_link ${sym_dest}`
+
+	 # Start over based on what type of file sym_src is
+	 #if [ -r ${sym_src} ] ; then
+	    if [ -h ${sym_src} ] ; then
+	       copy_a_symlink ${sym_src} ${sym_dest}
+	    elif [ -f ${sym_src} ] ; then
+	       copy_a_file ${sym_src} ${sym_dest}
+	    elif [ -d ${sym_src} ] ; then
+	       copy_a_dir ${sym_src} ${sym_dest}
+	    fi
+	 #fi
+
+	 # Done; leave this function.
+	 return
+      fi
+
+      # Case 1: sym_dest is a regular file
+      if [ -f ${sym_dest} ] ; then
+
+	 backup_file ${sym_dest}
+
+	 # Link structure being created or restored, so remove sym_dest
+	 rm -f ${sym_dest}
+
+	 # Now this is case 4, loop around
+	 continue
+      fi
+
+      # Case 2: sym_dest is a directory
+      if [ -d ${sym_dest} ] ; then
+	 # Change sym_dest to be the full resulting regular file path
+	 sym_dest=${sym_dest}/`basename ${sym_src}`
+
+	 # Next time, this can be any case, but we're a step closer
+	 continue
+      fi
+
+      # Case 4: sym_dest doesn't exist
+      if [ ! -r ${sym_dest} ] ; then
+	 # Note: sym_src is redefined before the link is created;
+	 # then sym_dest is redefined to reduce this case to one
+	 # of the others; order of ops here is important
+
+	 # Get the target that sym_src points to and link that
+
+         logNotice 'Linking ${sym_dest} from ${sym_src}.'
+	 sym_targ=`link_target ${sym_src}`
+	 make_link ${sym_targ} ${sym_dest}
+
+	 # Drop down to the next level
+	 sym_src=`descend_link ${sym_src}`
+	 sym_dest=`descend_link ${sym_dest}`
+
+	 # Start over based on what type of file sym_src is
+	 #if [ -r ${sym_src} ] ; then
+	    if [ -h ${sym_src} ] ; then
+	       copy_a_symlink ${sym_src} ${sym_dest}
+	    elif [ -f ${sym_src} ] ; then
+	       copy_a_file ${sym_src} ${sym_dest}
+	    elif [ -d ${sym_src} ] ; then
+	       copy_a_dir ${sym_src} ${sym_dest}
+	    fi
+	 #fi
+
+	 # Done; leave this function
+	 return
+      fi
+
+      # Case 5: unexpected type of sym_dest; log error and return
+      logError 'Unexpected destination file type for ${sym_dest}.'
+      return
+   done
+}
+
+
+# ============================================================================
+# Function: get_expanded_file_name
+#
+# A common routine to get the expanded file name for use by this
+# OS version and driver script under $JASS_FILES_DIR.
+# See copy_files() for details on keywords and precedence.
+# Called by copy_files() and warn_on_default_files().
+#
+# Arguments:
+#           ${1} - a filename to expand for copying or comparison,
+#                  relative to root "/".  For example: "/etc/hosts.allow"
+# Returns:
+#           Prints the keyword expanded version of this filename,
+#           appropriate for this OS version and driver script,
+#           under $JASS_FILES_DIR.
+#           For example, "/opt/SUNWsst/Files/etc/hosts.allow-server"
+# ============================================================================
+get_expanded_file_name()
+{
+   pushfile=""
+   # If multiple files are passed, only use the first one
+
+   for _tmpfile in "$1"; do
+
+      LOC_GEN_FILE="${JASS_FILES_DIR}/${_tmpfile}"
+      LOC_OSS_FILE="${JASS_FILES_DIR}/${_tmpfile}+${JASS_OS_REVISION}"
+      LOC_KEY_FILE="${JASS_FILES_DIR}/${_tmpfile}-${JASS_FILE_COPY_KEYWORD}"
+      LOC_KY2_FILE="${JASS_FILES_DIR}/${_tmpfile}-${JASS_FILE_COPY_KEYWORD}+${JASS_OS_REVISION}"
+      LOC_SPC_FILE="${JASS_FILES_DIR}/${_tmpfile}.${JASS_HOSTNAME}"
+
+      [ -r ${LOC_GEN_FILE} ] && pushfile=${LOC_GEN_FILE}
+      [ -r ${LOC_OSS_FILE} ] && pushfile=${LOC_OSS_FILE}
+      [ -r ${LOC_KEY_FILE} ] && pushfile=${LOC_KEY_FILE}
+      [ -r ${LOC_KY2_FILE} ] && pushfile=${LOC_KY2_FILE}
+      [ -r ${LOC_SPC_FILE} ] && pushfile=${LOC_SPC_FILE}
+
+      echo "${pushfile}"
+      return
+   done
+}
+
+
+# ============================================================================
+# Function: copy_files
+#
+# The purpose of this function is to copy a set of files from a master archive
+# of personalized files (located under ${JASS_HOME_DIR}/Files) to their
+# respective locations on the target system.  Note that no checks are made
+# to verify the contents of the files.  The files are assumed to be correct.
+# Also, when possible, the actual file permissions and ownership will
+# be retained.  A few notes about usage:
+#
+#    There are six modes of operation:
+#
+#       /some/fully/qualified/path/file         = Copies generic file.
+#       /some/fully/qualified/path/file.${HOST} = Copies host-specific file.
+#       /some/fully/qualified/path/file+${OS}   = Copies OS-specific file.
+#       /some/fully/qualified/path/file-${JASS_FILE_COPY_KEYWORD}
+#                                               = Copies Keyword-specific file.
+#       /some/fully/qualified/path/file-${JASS_FILE_COPY_KEYWORD}+{$OS}
+#                                               = Copies Keyword and
+#                                                  OS-specific file.
+#       <path/file where file size is 0>        = Does not copy file.
+#
+#    The order of precedence, to determine which file will be copied in
+#    the event there is more than one candidate, is:
+#
+#    1. Host specific version
+#    2. Keyword + OS specific version
+#    3. Keyword specific version
+#    4. OS specific version
+#    5. Generic version
+#
+#    Note that the format of the OS specific version is created by appending
+#    to the filename a "+" followed immediately by the output of "uname -r"
+#    (5.5.1, 5.6, 5.7, 5.8, etc.)
+#
+#    Also note that if "file" is a directory, the entire directory tree will
+#    be copied to the target location.
+#
+# Parameters to this function are:
+# ${1}	One or more files to copy. Specify the fully-qualified installed
+#	target path relative to root "/", without any prefix.  For example,
+#	"/etc/motd"
+#
+# ============================================================================
+
+copy_files()
+{
+   if [ "${1}" = "" ]; then
+      # logNotice 'The source file list was not provided.'
+      return
+   fi
+
+   for file in `extractComments "${1}"`; do
+
+      # Get correct file based on precedence described above
+      pushfile="`get_expanded_file_name $file`"
+
+      [ -z "${pushfile}" ] && continue
+
+      srcFile="`clean_path ${pushfile}`"
+      dstFile="`clean_path ${JASS_ROOT_DIR}${file}`"
+
+      # Check if a new directory for the file needs to be made
+      dir_new=`dirname ${dstFile}`
+      if [ ! -d ${dir_new} ]; then
+	 mkdir_dashp ${dir_new}
+      fi
+
+      # Do the magic
+      if [ -h ${srcFile} ]; then
+	 copy_a_symlink ${srcFile} ${dstFile}
+      elif [ -f ${srcFile} ]; then
+	 copy_a_file ${srcFile}    ${dstFile}
+      elif [ -d ${srcFile} ]; then
+	 copy_a_dir ${srcFile}     ${dstFile}
+      fi
+   done
+}
+
+
+# ============================================================================
+# Function: backup_file
+#
+# The purpose of this function is to backup the original file using a
+# standard naming convention.  The convention will be to append JASS_SUFFIX
+# to the original file.  Since this is a common routine, it has been
+# added to here.
+#
+# Parameters to this function are:
+# $1     = Fully qualified path to source file.
+# $2     = -u means it's an undo file so strip prior timestamp
+#
+# ============================================================================
+
+backup_file()
+{
+   originalFile="`clean_path ${1}`"
+
+   if [ "${originalFile}" = "" ]; then
+      logError 'The source file was not provided.'
+      return
+   fi
+
+   if [ ! -f ${originalFile} ]; then
+      # logNotice 'The source file (${originalFile}) was not found.'
+      return
+   fi
+
+   undoFile=0
+   if [ "$2" = "-u" ]; then
+     logNotice 'File to be backed up is from an undo operation.'
+     undoFile=1
+   fi
+
+   # Assign a new JASS_SUFFIX for the file name.  In order to prevent
+   # file overrides, this filename must be unique.
+
+   create_file_timestamp "${originalFile}"
+
+   # Backup the original file.
+
+   if [ $undoFile = 1 ]; then
+      back_file="`clean_path ${originalFile}.BACKUP.${JASS_SUFFIX}`"
+   else
+      back_file="`clean_path ${originalFile}.${JASS_SUFFIX}`"
+   fi
+
+   rm -f ${back_file}
+
+   if [ -h ${originalFile} ]; then
+      # This is needed for functions such as copy_files that
+      # may backup a symbolic link in order to install a new
+      # file (regular file).  Note that in this case the
+      # symbolic link is moved when this function is called.
+
+      logNotice 'Moving ${originalFile} to ${back_file}'
+      move_a_file ${originalFile} ${back_file}
+   elif [ -f ${originalFile} ] ; then
+      logNotice 'Copying ${originalFile} to ${back_file}'
+      cp -p ${originalFile} ${back_file}
+
+      fix_s="`strip_path ${originalFile}`"
+      fix_d="`strip_path ${back_file}`"
+      add_to_manifest C ${fix_s} ${fix_d}
+   else
+      # Probably the only way to get here is if ${originalFile} is a directory
+      # and backing up entire directories is not supported
+      logError 'Directory ${originalFile} cannot be saved by backup_file'
+   fi
+
+   # Save the file in the saved file list regardless of whether
+   # this file should be saved for checksumming or for cleanup.
+
+   JASS_SAVED_LIST="${back_file} ${JASS_SAVED_LIST}"
+}
+
+# ============================================================================
+# Function: backup_file_in_safe_directory
+#
+# The purpose of this function is to backup the original file using a
+# standard naming convention. Unlike the standard backup_file routine, the
+# backup file will be placed in a different directory, namely
+# ../dirname.JASS  The convention will still be to append JASS_SUFFIX
+# to the original file.  This is useful because a number of directories
+# act on all the files in them, so moving the contents away is necessary. A
+# programmer might not want to use disable_file if the contents of the file
+# should be preserved for further modification.
+#
+# Parameters to this function are:
+# $1     = Fully qualified path to source file.
+# $2     = -u means it's an undo file so strip prior timestamp
+#
+# ============================================================================
+
+backup_file_in_safe_directory()
+{
+   originalFile="`clean_path ${1}`"
+   originalFileName="`basename ${originalFile}`"
+   originalFileDir="`dirname ${originalFile}`"
+
+   newFileDir="${originalFileDir}.JASS"
+   newFile="${newFileDir}/${originalFileName}"
+
+   if [ "${originalFile}" = "" ]; then
+      logError 'The source file was not provided.'
+      return
+   fi
+
+   if [ ! -f ${originalFile} ]; then
+      # logNotice 'The source file (${originalFile}) was not found.'
+      return
+   fi
+
+   undoFile=0
+   if [ "$2" = "-u" ]; then
+     logNotice 'File to be backed up is from an undo operation.'
+     undoFile=1
+   fi
+
+   # Create the safe directory.
+   mkdir_dashp ${newFileDir}
+
+   # Assign a new JASS_SUFFIX for the file name.  In order to prevent
+   # file overrides, this filename must be unique.
+
+   create_file_timestamp "${newFile}"
+
+   # Backup the original file.
+
+   if [ $undoFile = 1 ]; then
+      back_file="`clean_path ${newFile}.BACKUP.${JASS_SUFFIX}`"
+   else
+      back_file="`clean_path ${newFile}.${JASS_SUFFIX}`"
+   fi
+
+   rm -f ${back_file}
+
+   if [ -h ${originalFile} ]; then
+      # This is needed for functions such as copy_files that
+      # may backup a symbolic link in order to install a new
+      # file (regular file).  Note that in this case the
+      # symbolic link is moved when this function is called.
+
+      logNotice 'Moving ${originalFile} to ${back_file}'
+      move_a_file ${originalFile} ${back_file}
+   elif [ -f ${originalFile} ] ; then
+      logNotice 'Copying ${originalFile} to ${back_file}'
+      cp -p ${originalFile} ${back_file}
+
+      fix_s="`strip_path ${originalFile}`"
+      fix_d="`strip_path ${back_file}`"
+      add_to_manifest C ${fix_s} ${fix_d}
+   else
+      # Probably the only way to get here is if ${originalFile} is a directory
+      # and backing up entire directories is not supported
+      logError 'Directory ${originalFile} cannot be saved by backup_file'
+   fi
+
+   # Save the file in the saved file list regardless of whether
+   # this file should be saved for checksumming or for cleanup.
+
+   JASS_SAVED_LIST="${back_file}||${originalFile} ${JASS_SAVED_LIST}"
+}
+
+
+# ============================================================================
+# Function: disable_rc_file
+#
+# All /etc/rc*.d files are disabled in the same manner: a prefix of "_" is
+# prepended to each file that is to be disabled.
+#
+# Parameters to this function are:
+# $1     = Directory of source file.
+# $2     = Name of source file.
+#
+# ============================================================================
+
+disable_rc_file()
+{
+   rc_file_dir="`clean_path ${1}`"
+   rc_file_name="${2}"
+
+   if [ "${rc_file_dir}" = "" ]; then
+      logError 'The source directory was not provided.'
+      return
+   fi
+
+   if [ "${rc_file_name}" = "" ]; then
+      logError 'The source file was not provided.'
+      return
+   fi
+
+   srcFile="`clean_path ${rc_file_dir}/${rc_file_name}`"
+   dstFile="`clean_path ${rc_file_dir}/_${rc_file_name}`"
+
+   if [ ! -f ${srcFile} ]; then
+      ( LANG=C; LC_ALL=C; export LANG LC_ALL;
+         # Warning: pkgchk returns status 0, whether or not the file was found
+         /usr/sbin/pkgchk -R ${JASS_ROOT_DIR} -l -p "${srcFile}" \
+            2>/dev/null | grep installed >/dev/null
+      )
+      if [ $? -ne 0 ] ; then # file not installed
+         if [ "${JASS_CHECK_MINIMIZED}" != "1" ] ; then
+            # Issue an error message to help find errors from
+            # (a) old scripts checking for legacy files that no longer exist and
+            # (b) scripts checking for files in packages that are not installed.
+            # Don't warn for minimization runs, which may have a lot of output.
+            logNotice 'File ${srcFile} was not found and is not installed.'
+         fi
+      fi
+
+      return
+   fi
+
+   if [ "${JASS_SAVE_BACKUP}" = "1" ]; then
+      # Assign a new JASS_SUFFIX for the file name.  In order to prevent
+      # file overrides, this filename must be unique.
+
+      create_file_timestamp "${dstFile}"
+
+      logNotice 'Renaming ${srcFile} to ${dstFile}.${JASS_SUFFIX}'
+      move_a_file ${srcFile} ${dstFile}.${JASS_SUFFIX}
+
+   else
+      logNotice 'Removing ${srcFile}'
+      rm -f ${srcFile}
+      fix_s="`strip_path ${srcFile}`"
+      add_to_manifest R ${fix_s}
+   fi
+}
+
+
+# ============================================================================
+# Function: disable_conf_file
+#
+# This function currently only calls the disable_rc_file function.
+#
+# Parameters to this function are:
+# $1     = Directory of source file.
+# $2     = Name of source file.
+#
+# ============================================================================
+
+disable_conf_file()
+{
+   disable_rc_file "${1}" "${2}"
+}
+
+
+# ============================================================================
+# Function: disable_file
+#
+# The disable_file function is used when a file cannot be stored in its
+# original directory (such as /var/spool/cron/crontabs) after being
+# disabled.  This is a general function that can be used in any directory
+# and with any file.
+#
+# This function first creates a directory (based on the directory path
+# to the file) and a ".JASS" suffix.  For example, if the file to be
+# disabled resides in /var/spool/cron/crontabs, then a directory called
+# /var/spool/cron/crontabs.JASS could be created.  The disabled file
+# would be moved from the original directory to this new directory.
+# The standard suffix (.JASS.timestamp) is also appended to the file.
+#
+# Parameters to this function are:
+# $1     = Name of source file.
+#
+# ============================================================================
+
+disable_file()
+{
+   file_src="`clean_path ${1}`"
+
+   if [ "${file_src}" = "" ]; then
+      logError 'The source file was not provided.'
+      return
+   fi
+
+   if [ ! -f ${file_src} ]; then
+      # logNotice 'The source file (${file_src}) was not found.'
+      return
+   fi
+
+   dir_old="`dirname ${file_src}`"
+   dir_new="${dir_old}.JASS"
+   fil_old="`basename ${file_src}`"
+
+   if [ ! -d ${dir_new} ]; then
+
+      logNotice 'Creating backup directory, ${dir_new}'
+      mkdir_dashp ${dir_new} 1
+      if [ $? != 0 ]; then
+         logError 'FATAL: Directory, ${dir_new} could not be created.'
+         exit 1
+      fi
+
+   fi
+
+   if [ "${JASS_SAVE_BACKUP}" = "0" ]; then
+      JASS_SAVED_LIST="${dir_new} ${JASS_SAVED_LIST}"
+   fi
+
+   # Assign a new JASS_SUFFIX for the file name.  In order to prevent
+   # file overrides, this filename must be unique.
+
+   create_file_timestamp "${dir_new}/${fil_old}"
+
+   logNotice 'Moving ${file_src} to ${dir_new}/${fil_old}.${JASS_SUFFIX}'
+   move_a_file ${file_src} ${dir_new}/${fil_old}.${JASS_SUFFIX}
+}
+
+
+# ===========================================================================
+# Function: add_to_manifest
+#
+# Puts an entry in the JASS_RUN_MANIFEST file.
+# The manifest is potentially used for undo runs later, to back-out changes.
+#
+# Parameters:
+# $1	Manifest operator character, one of CDJRMNS (below)
+# $2	Command for X operator
+#	Source for CJMS operators
+#	Object for DRN operators
+# $3	Destination for CJMS operators
+# $4	Optional. If present, add to end of manifest line.
+#	Not sure what this is for.
+#
+# Operators:
+# C	A file was copied. $2 and $3 are original and copied
+#	file names, respectively.
+# D	A directory was created. $2 is the newly-created directory name,
+#	relative to root "/"
+# J	A new file was created, and did not previously exist. $2 is the
+#	original file name and $3 is the saved filename (including JASS_SUFFIX).
+# M	A file was moved. $2 and $3 are the original and moved filenames.
+# N	Unknown (legacy?)
+# R	A file was removed. $2 is the name of the removed file.
+# S	A symbolic link was created. $2 and $3 are the source and target
+#	filenames.
+# X	A command or commands was ran. $2 is the command or commands to
+#	undo the operation, enclosed in quotes.
+#
+# ===========================================================================
+
+add_to_manifest()
+{
+   man_op=${1}
+   man_src=${2}
+   man_dest=${3}
+   man_ck=${4}		# optional
+
+   man_fin=${JASS_SCRIPT}
+
+   case "${man_op}" in
+
+   [CcJjMmSs])
+      if [ -z "${man_src}" ]; then
+         logError 'Argument 1 (src) is missing for manifest operator, ${man_op}.'
+         return
+      elif [ -z "${man_dest}" ]; then
+         logError 'Argument 2 (dest) is missing for manifest operator, ${man_op}.'
+         return
+      fi
+      ;;
+
+   [DdRrNn])
+      if [ -z "${man_src}" ]; then
+         logError 'Argument 1 (object) is missing for manifest operator, ${man_op}.'
+         return
+      fi
+      ;;
+
+   [Xx])
+      if [ -z "${man_src}" ]; then
+         logError 'Argument 1 (command) is missing for manifest operator, ${man_op}.'
+         return
+      fi
+      ;;
+
+   *)
+      logError 'Invalid manifest operator: ${man_op}'
+      return
+      ;;
+
+   esac
+
+   if [ "${JASS_SAVE_BACKUP}" = "1" ]; then
+      if [ -z "${man_dest}" ]; then
+	 echo "${man_op}\t${man_fin}\t${man_src}" >> ${JASS_RUN_MANIFEST}
+      elif [ -z "${man_ck}" ]; then
+	 echo "${man_op}\t${man_fin}\t${man_src}\t${man_dest}" \
+	    >> ${JASS_RUN_MANIFEST}
+      else
+	 echo "${man_op}\t${man_fin}\t${man_src}\t${man_dest}\t${man_ck}" \
+	    >> ${JASS_RUN_MANIFEST}
+      fi
+   fi
+}
+
+
+# ===========================================================================
+# mkdir_dashp
+#
+# Does the same as "mkdir -p" and also logs the creation of any
+# intermediate directories in the manifest file.
+#
+# Parameters to this function are
+# $1		directory path to create
+# $2		(optional) If Blank, a 'D' entry will be added to the
+#               manifest, denoting a created directory.  If set to 1, an
+#               'N' entry will be placed in the manifest, denoting a
+#               directory holding only JASS backup files.
+#
+# ===========================================================================
+mkdir_dashp()
+{
+   # No args, do nothing.
+   [ -z "${1}" ] && return 0
+
+   cleandir="${2}"
+
+   # Directory exists, nothing to do.
+   [ -d ${1} ] && return 0
+
+   # Recursively build the parent path, then make directory and log it
+   mkdir_dashp `dirname ${1}` "${cleandir}"
+   [ $? != 0 ] && return 1
+
+   new_dir="`clean_path ${1}`"
+   logNotice 'Creating a new directory, ${new_dir}.'
+   mkdir ${new_dir}
+
+   if [ $? = 0 ] ; then
+      fix_s="`strip_path ${new_dir}`"
+      if [ "${cleandir}" = "1" ]; then
+	 add_to_manifest N ${fix_s}
+      else
+	 add_to_manifest D ${fix_s}
+      fi
+      return 0
+   else
+      logError 'Could not create directory ${new_dir}.'
+      return 1
+   fi
+}
+
+
+# ===========================================================================
+# create_a_file
+#
+# A combination of touch/chown/chmod to create a new regular file.
+# Usage is "create_a_file [-o user[:group]] [-m perms] file ..."
+# "user" and "user:group" can be any owner/group combination that
+# chown(1) accepts and "perms" can be any permission specification
+# that chmod(1) accepts.
+#
+# NOTE:  This function should not be used to adjust permissions or
+# ownership on a file that already exists.
+#
+# Parameters:
+# [-o user[:group]]		Follows syntax of chown(1) and accepts
+#				user and user:group
+# [-m perms]			Follows syntax of chmod(1) and accepts perms
+# /fully/qualified/path/file	The fully qualified path to the file
+#
+# ===========================================================================
+create_a_file()
+{
+   # Usage of this function is
+   # create_a_file [-o user[:group]] [-m perms] regular_files ...
+   # Note:  tried using getopts but it didn't work as desired
+
+   owner=""
+   perms=""
+   while : ; do
+      case "${1}" in
+      "")
+	 logError 'No file arguments to create_a_file.'
+	 return
+	 ;;
+      -o)
+	 shift
+	 if [ -z "${1}" ] ; then
+	    logError 'Owner/group missing for create_a_file.'
+	    return
+	 fi
+	 owner="${1}"
+	 shift
+	 ;;
+      -o*)
+	 owner=`echo "${1}" | cut -c2-`
+	 shift
+	 ;;
+      -m)
+	 shift
+	 if [ -z "${1}" ] ; then
+	    logError 'Permissions missing for create_a_file.'
+	    return
+	 fi
+	 perms="${1}"
+	 shift
+	 ;;
+      -m*)
+	 perms=`echo "${1}" | cut -c2-`
+	 shift
+	 ;;
+      --)
+	 shift
+	 break
+	 ;;
+      -*)
+         logOption="`echo "${1}" | cut -c-2`"
+         logError 'Unknown option ${logOption} to create_a_file.'
+	 return
+	 ;;
+      *)
+	 break
+	 ;;
+      esac
+   done
+
+   if [ -z "${1}" ] ; then
+      logError 'No file arguments to create_a_file.'
+      return
+   fi
+
+   # Create the new files with any ownership/permissions specified
+   for i in $* ; do
+      # if it exists already, skip it
+      [ -f ${i} ] && continue
+
+      srcFile="`clean_path ${i}`"
+      create_file_timestamp "${srcFile}"
+
+      dstFile="${srcFile}.${JASS_SUFFIX}"
+
+      # Create the placeholder file with new timestamp
+      touch ${dstFile}
+
+      # Create the new file with the right perms/owner and log it
+
+      logNotice 'Creating a new file, ${srcFile}.'
+      touch ${srcFile}
+
+      [ -n "${perms}" ] && chmod "${perms}" ${srcFile}
+      [ -n "${owner}" ] && chown "${owner}" ${srcFile}
+
+      fix_s="`strip_path ${srcFile}`"
+      fix_d="`strip_path ${dstFile}`"
+
+      add_to_manifest J ${fix_s} ${fix_d}
+
+      # Save the file in the saved file list regardless of whether
+      # this file should be saved for checksumming or for cleanup.
+
+      JASS_SAVED_LIST="${dstFile}|`checksum ${srcFile}` ${JASS_SAVED_LIST}"
+   done
+}
+
+
+# ===========================================================================
+# checksum()
+#
+# Computes a checksum on a given file using either the cksum(1) or digest(1)
+# programs.  On Solaris 2.5.1-9, the two checksum values produced by the
+# cksum command (first and second fields) are returned (separated by a colon
+# instead of whitespace [default]).  On Solaris 10, the value of the digest
+# command (MD5 algorithm) is returned.
+#
+# Parameters:
+# $1	filename to checksum
+#
+# ===========================================================================
+
+checksum()
+{
+   if check_os_min_revision 5.10 ; then
+      checksum_md5 "${1}"
+   else
+      checksum_crc "${1}"
+   fi
+}
+
+
+# ===========================================================================
+# create_file_timestamp()
+#
+# The purpose of this function is create a timestamp for a given file.
+# This function will determine if a file with the created timestamp
+# already exists.  If so, it will sleep one second in an attempt to
+# create a unique filename.  The only argument to this function is
+# the file to be stamped.
+#
+# Parameters:
+# $1	base file name for which a timestamp will be created.
+#
+# ===========================================================================
+
+create_file_timestamp()
+{
+   file_name="${1}"
+
+   if [ "${file_name}" = "" ]; then
+      return
+   fi
+
+   while :; do
+
+      # Create a candidate time stamp.
+
+      JASS_SUFFIX="JASS.`env LC_ALL=C date '+%EY%m%d%OH%OM%S'`"
+
+      # Determine if the file+timestamp is unique.
+
+      if [ ! -f ${file_name}.${JASS_SUFFIX} ]; then
+         break
+      fi
+      sleep 1
+   done
+}
+
+
+# ============================================================================
+# Function: check_os_min_revision
+#
+# The purpose of this function is determine if the current version of the
+# operating system is at least a specified version.  The result of this
+# function is an integer return code with the following meaning:
+#
+#    0                      : the version of the operating system is at
+#                             least the version specified.
+#
+#    1                      : the version of the operating system is less
+#                             than the version specified.
+#
+#    255                    : there is an error condition.
+#
+# Parameters:
+# $1	Minimum OS revision (uname -r)
+#
+# ============================================================================
+
+check_os_min_revision() {
+
+   returnValue=""
+
+   if [ "$1" = "" ]; then
+      logError 'No minimum OS version was specified to check_os_min_revision.'
+      return 255
+   fi
+
+   minRev=$1
+
+   # For now, this script only deals with minor revision versions.
+   # Since all of the Solaris OS major revision numbers are 5, this
+   # does not currently pose a problem, but it should be corrected
+   # if this ever changes.
+
+   curRevMinor=`echo ${JASS_OS_REVISION} | nawk -F. '{ print $2 }'`
+   minRevMinor=`echo ${minRev} | nawk -F. '{ print $2 }'`
+
+   if [ $curRevMinor -lt $minRevMinor ]; then
+      returnValue=1
+   elif [ $curRevMinor -ge $minRevMinor ]; then
+      returnValue=0
+   fi
+
+   return $returnValue
+}
+
+
+# ============================================================================
+# Function: check_os_revision
+#
+# The purpose of this function is twofold.  If there are two arguments
+# supplied, then this function will determine if the current version of the
+# operating system lies between the two version (inclusive).  If only one
+# argument is supplied, then the function will determine if the current
+# version of the operating system is exactly the version specified.  The
+# result of this function is an integer return code with the following
+# meaning:
+#
+#    0                      : the version of the operating system either
+#                             is an exact match or lies between the versions
+#                             specified
+#
+#    1                      : the version of the operating system is either
+#                             greater or less than than the maximum version
+#                             specified (or falls outside the range).
+#
+#    255                    : there is an error condition.
+#
+# Parameters:
+# $1	Minimum OS revision (uname -r)
+# $2	Optional Maximum OS revision (uname -r)
+#
+# ============================================================================
+
+check_os_revision() {
+
+   returnValue=""
+
+   if [ "$1" = "" ]; then
+      logError 'No minimum OS version was specified to check_os_revision.'
+      return 255
+   fi
+
+   minRev=$1
+   maxRev=$2
+   maxRevMinor=""
+
+   # For now, this script only deals with minor revision versions.
+   # Since all of the Solaris OS major revision numbers are 5, this
+   # does not currently pose a problem, but it should be corrected
+   # if this ever changes.
+
+   curRevMinor=`echo ${JASS_OS_REVISION} | nawk -F. '{ print $2 }'`
+   minRevMinor=`echo ${minRev} | nawk -F. '{ print $2 }'`
+
+   if [ "$maxRev" != "" ]; then
+      maxRevMinor=`echo ${maxRev} | nawk -F. '{ print $2 }'`
+
+      if [ $minRevMinor -ge $maxRevMinor ]; then
+         logWarning 'The argument order is reversed to check_os_revision.'
+      fi
+   fi
+
+   if [ $curRevMinor -lt $minRevMinor ]; then
+      returnValue=255
+   elif [ $curRevMinor -gt $minRevMinor ]; then
+      if [ "$maxRevMinor" != "" ]; then
+         if [ $curRevMinor -le $maxRevMinor ]; then
+            returnValue=0
+         else
+            returnValue=1
+         fi
+      else
+         returnValue=1
+      fi
+   else
+      returnValue=0
+   fi
+   return $returnValue
+}
+
+# ============================================================================
+# Function: check_readOnlyMounted
+#
+# This function determines whether or not the file specified is mounted on
+# a read-only filesystem.  If it is mounted read-only, it returns 0, otherwise
+# if it is not-readonly it returns 1.  On error it returns 255.
+#
+#    0         : The filesystem that file $1 is in is mounted read-only.
+#
+#    1         : The filesystem that file $1 is in is not mounted read-only.
+#
+#  255         : An error occurred.
+#
+# Parameters:
+# $1	A file to check
+#
+# ============================================================================
+
+check_readOnlyMounted()
+{
+   _file="$1"
+   if [ -z "${_file}" ]; then
+      return 255
+   fi
+
+   # mount -p is recorded as having a bug with cachefs.  This should still
+   # be acceptable.
+
+   if [ ! -d "${_file}" ]; then
+      _file=`dirname ${_file}`
+   fi
+
+   while [ 0 ]; do    # At some point, every file path ends in /
+      # We need to use tail because of overlay mounts. Thankfully, the
+      # documentation says we should be guaranteed order.
+      _mount=`mount -p | nawk '{print $3":"$7}' | grep "^${_file}:" \
+                | tail -1 2>/dev/null`
+      if [ ! -z "${_mount}" ]; then
+	_ro=`echo ${_mount} | nawk -F\: '{print $2}' | egrep '(^|,)ro(,|$)'`
+	if [ -z "${_ro}" ]; then
+	   # The mount did not have the ro option.
+	   return 1
+	else
+	   return 0
+	fi
+	# This would be odd, for sure.
+	return 255
+      fi
+      _file=`dirname ${_file}`
+   done
+   return 255
+}
+
+# ============================================================================
+# Function: warn_on_default_files
+#
+# This is a convenience function to issue logWarning commands about any files
+# in the SST distribution that have not been modified by the user.  Since
+# these files can be installed by SST, with unpredictable results if not fully
+# configured, users should check these files to make sure these are what they
+# expect.  Modifying the file, or having a custom version not shipped in the
+# distribution will produce no warning.
+#
+# Parameters to this function are:
+# ${1}	One or more files to check. Specify the fully-qualified installed
+#	target path relative to root "/", without any prefix.  For example,
+#	"/etc/motd"
+#
+# ============================================================================
+
+warn_on_default_files()
+{
+   if [ "${1}" = "" ]; then
+      return
+   fi
+
+   for file in `extractComments "${1}"`; do
+
+      # Get correct file based on precedence
+      pushfile="`get_expanded_file_name $file`"
+      pushfile="`clean_path ${pushfile}`"
+
+      # Unfortunately, pkgchk returns 0 if the file is not part
+      # of the package.  so we need to be clever to tell if it is part
+      # of the SUNWsst package.
+
+      # That cleverness is to combine the -q and -v options, which will
+      # not print anything on files which don't exist, but always print
+      # something if the files do exist in a package.
+
+      _found=`pkgchk -q -v -c -R ${JASS_ROOT_DIR} -p ${pushfile} 2>&1`
+      status=$?
+
+      if [ ${status} -eq 0 -a ! -z "${_found}" ]; then
+	 logNotice 'File ${pushfile} is being installed to ${file}.'
+	 logWarning 'You need to review the ${file} file to ensure it
+meets your specific access requirements for this system.'
+      fi
+   done
+}
+
+
+# ============================================================================
+# Function: check_and_log_change_needed
+#
+# This function will check and log an '=' separated parameter in a file.
+# If the new value is set, the global variable new_var will be set to it.
+# Otherwise, new_var will be set to the value currently existing in the
+# file.  If the current value is different from the old value, a log message
+# is printed, and the global variable change_needed is incremented.
+#
+# Arguments:
+#           $1 - The file name
+#           $2 - The keyword in the file
+#           $3 - The new value
+# Return:
+#           sets the global environment variable new_var to the new value,
+#              unless it is empty, in which case it is set to the value in
+#              the file, or "" if it is not set
+#           It also increments the global value 'change_needed' if the new
+#                 value is set and different than the current value
+#
+# Globals:
+#           change_needed
+#           new_var
+# ============================================================================
+check_and_log_change_needed()
+{
+   _file="$1"
+   _keyword="$2"
+   _new_val="$3"
+
+   if [ -z "${_file}" ]; then
+      logError 'Missing file in check_and_log_change_needed, ${_keyword}'
+   fi
+
+   _old_val=`nawk -F= '$1==keyword { print $2 }' keyword="${_keyword}" ${_file}`
+
+   if [ ! -z "${_new_val}" ]; then
+      if [ "${_new_val}" != "${_old_val}" ]; then
+	 # Increment the global here
+	 change_needed=`expr ${change_needed} + 1`
+
+	 if [ -z "${_old_val}" ]; then
+	    logMessage 'Changing ${_keyword} setting from unset to ${_new_val}.'
+	 else
+	    logMessage 'Changing ${_keyword} setting from ${_old_val} to ${_new_val}.'
+	 fi
+      fi
+      new_var="${_new_val}"
+   else
+      new_var="${_old_val}"
+   fi
+}
+
+
+# ============================================================================
+# Function: write_val_to_file
+#
+# This function will write an '=' separated name value pair to a file
+# If the value is null, nothing will be written.
+#
+# Arguments:
+#           $1 - The file name
+#           $2 - The keyword in the file
+#           $3 - The new value
+# Return:
+#           None
+# ============================================================================
+write_val_to_file()
+{
+   _file="$1"
+   _keyword="$2"
+   _new_val="$3"
+
+   if [ ! -z "${_new_val}" ]; then
+      echo "${_keyword}=${_new_val}" >> ${_file}
+   fi
+}
+
+
+# ============================================================================
+# Function: add_crontab_entry_if_missing()
+#
+# Add crontab line $3 to the crontab if program $2 is not in user $1's crontab.
+# Backup crontab file before modifying if $4 is zero.
+# Ignore crontab comment lines.
+#
+# Arguments:
+#	$1	user id of crontab to-be-modified
+#	$2	program to add to crontab (full pathname)
+#	$3	crontab line to add if $2 is not present in the crontab file,
+#               excluding comment lines.
+#	$4	if zero, call backup_file before modifying
+#		(else the file was created or already backup-ed)
+#
+# Return:
+#	1 if the crontab file was backed-up,
+#	else pass back input parameter $4 unmodified.
+#
+# Sample usage:
+#	root_crontab_backup_performed=0
+#	add_crontab_entry_if_missing 'root' \
+#	   '/usr/lib/acct/dodisk' '0 2 * * 4 /usr/lib/acct/dodisk' \
+#	   "$root_crontab_backup_performed"
+#	root_crontab_backup_performed=$?
+#
+# ============================================================================
+add_crontab_entry_if_missing()
+{
+   crontab_user="${1}"
+   crontab_program="${2}"
+   crontab_line="${3}"
+   crontab_file="${JASS_ROOT_DIR}var/spool/cron/crontabs/${crontab_user}"
+   crontab_backup_performed="${4}"
+
+   # Search for the program in a non-comment line:
+   egrep "^[^#].*${crontab_program}[ 	]|^[^#].*${crontab_program}$" \
+      "${crontab_file}" >/dev/null 2>&1
+   if [ $? -ne 0 ] ; then # line not found
+      if [ "$crontab_backup_performed" -eq 0 ] ; then
+         backup_file_in_safe_directory ${crontab_file}
+         crontab_backup_performed=1
+      fi
+
+      logNotice 'Adding crontab entry for ${crontab_program} to ${crontab_file}.'
+      echo "${crontab_line}" >>${crontab_file}
+
+      if [ "${JASS_ROOT_DIR}" = "/" ] ; then # inform cron of change
+         ( EDITOR=/usr/bin/touch; export EDITOR; crontab -e "${crontab_user}" )
+      fi
+
+   else
+      logNotice 'Crontab entry for ${crontab_program} in ${crontab_file} already exists.'
+   fi
+
+   return "$crontab_backup_performed"
+}
+
+
+# ============================================================================
+# Function: find_sst_run_with
+#
+# This function will attempt to find the most recent still active sst run
+# with a given  keyword value pair as specified
+#
+# Arguments:
+#           $1 - The keyword to be checked
+#           $2 - The value being searched for
+# Return:
+#           The timestamp of the most recent active run using that script and
+#           key/value pair, or "" if no such run was found.
+# ============================================================================
+find_sst_run_with()
+{
+   _keyword="$1"
+   _val="$2"
+
+   parent_dir=`dirname ${JASS_REPOSITORY}`
+   reverse_available=`undoable_dirs 1`
+   found_date=""
+
+   for date in ${reverse_available}; do
+      # We still need to check if this run used the script,
+      # and also if the key/val was set.
+
+      # There's a chicken and egg problem here with file names.
+      # Conceivably, someone could redefine these names, but we can't
+      # know that unless we can find the runs. Which we couldn't.
+
+      if get_stored_keyword_val "${_keyword}" "${date}/jass-values.txt"; then
+	 if [ "${RETURN_VALUE}" = "${_val}" ]; then
+	    found_date=$date
+	    break
+	 fi
+      fi
+   done
+   if [ -z "${found_date}" ]; then
+      echo ""
+   else
+      found_date=`echo ${found_date} | nawk -F/  '{print $NF}'`
+      echo "${found_date}"
+   fi
+}
+
+
+# ============================================================================
+# Function: get_stored_keyword_val
+#
+# This function will get a stored keyword value pair from a saved file.
+# The file used will default to the JASS_RUN_VALUES file, but can be
+# specified.  If the file is not found, or the keyword is not present it will
+# return an error, otherwise it will save the value to the variable
+# RETURN_VALUE and return 0
+#
+# Arguments:
+#           $1 - The keyword to be checked
+#           $2 - The repository name - blank is default
+# Return:
+#           0 - success. The keyword was found. RETURN_VALUE has been set to the
+#               value in the file
+#           1 - The file was not found
+#           2 - The keyword was not set in the file
+# Variables
+#           RETURN_VALUE
+# ============================================================================
+get_stored_keyword_val()
+{
+   _rep_key="$1"
+   _rep_file="$2"
+
+   if [ -z "${_rep_file}" ]; then
+      _rep_file=${JASS_RUN_VALUES}
+   fi
+
+   if [ ! -r ${_rep_file} ]; then
+      # A repository is not mandatory, do not log the problem
+      return 1
+   else
+      # The repository will use a flat file, = separated for now.
+      _rep_line=`grep "^${_rep_key}=" ${_rep_file}`
+      if [ -z "${_rep_line}" ]; then
+	 return 2
+      else
+	 RETURN_VALUE=`echo ${_rep_line} | nawk -F= '{print $2}'`
+	 return 0
+      fi
+   fi
+}
+
+
+# ============================================================================
+# Function: set_stored_keyword_val
+#
+# This function will set a keyword value pair to a saved file.
+# The file used will be the JASS_RUN_VALUES file.
+# An error will be returned if there is a problem writing to the file
+#
+# If a keyword that already exists in the file is being set, the old
+# value will be overridden.
+#
+# Arguments:
+#           $1 - The keyword to be set
+#           $2 - The value to be set
+# Return:
+#           0 - success.
+#           1 - The was a problem with the file
+# ============================================================================
+set_stored_keyword_val()
+{
+   _rep_key="$1"
+   _rep_val="$2"
+   _rep_file=${JASS_RUN_VALUES}
+
+   if [ ! -r ${_rep_file} ]; then
+      logError 'The Repository ${_rep_file} was not readable.'
+      return 1
+   elif [ ! -w ${_rep_file} ]; then
+      logError 'The Repository ${_rep_file} was not writable.'
+      return 1
+   fi
+
+   # The repository will use a flat file, = separated for now.
+   _rep_line=`grep "^${_rep_key}=" ${_rep_file}`
+   if [ ! -z "${_rep_line}" ]; then
+      rm -f "${_rep_file}.old"
+      cp "${_rep_file}" "${_rep_file}.old"
+      sed -e "s/^${_rep_key}=.*/${_rep_key}=${_rep_val}/" < "${_rep_file}.old" \
+        > "${_rep_file}"
+      rm -f "${_rep_file}.old"
+   else
+      echo "${_rep_key}=${_rep_val}" >> ${_rep_file}
+   fi
+   return 0
+}
+
+
+# ============================================================================
+# Function: add_option_to_ftpd_property
+#
+# This function is used to add an option to the SMF-enabled in.ftpd service
+# property value in Solaris 10 and newer versions of the OS.
+#
+# This function also writes to the JASS manifest file for an undo operation.
+# This function should be only called for hardening.
+#
+# Parameters:
+#    $1   option to add to the start command, "a" or "l"
+#         (for use ftpaccess(4) and log ftp session, respectively)
+#
+# returns:
+#    none
+# ============================================================================
+add_option_to_ftpd_property()
+{
+   svcName="svc:/network/ftp"
+   upgradeFile=""
+
+   opt="${1}"
+
+   if [ "${JASS_STANDALONE}" = "1" ] ; then
+         # check if the option is already in the property value
+      if is_service_installed "${svcName}" ; then
+         if is_option_enabled "${svcName}" "inetd_start/exec" "in.ftpd" \
+               "${opt}" ; then
+            logNotice 'Option -${opt} for in.ftpd is already enabled.'
+            continue
+         fi
+
+      else
+         logNotice 'Service ${svcName} does not exist on the system.'
+         continue
+      fi
+   fi
+
+   if [ "${upgradeFile}" = "" ] ; then
+      upgradeFile="${JASS_ROOT_DIR}/var/svc/profile/upgrade"
+      _write_smf_blk_begin ${upgradeFile}
+   fi
+
+   echo "if svcprop -q \"${svcName}\" ; then " >>${upgradeFile}
+   echo "   value=\"\"" >>${upgradeFile}
+
+   get_service_property_value 1 "${svcName}" "inetd_start/exec" ${upgradeFile}
+   echo "   if [ \"\${value}\" != \"\" ]; then" >>${upgradeFile}
+   echo "      value=\`echo \${value} | grep \"in.ftpd\"\`" >>${upgradeFile}
+   echo "   fi" >>${upgradeFile}
+   echo "   if [ \"\$value\"  = \"\" ] ; then" >>${upgradeFile}
+   echo "      echo \"SST: FMRI \\\"${svcName}\\\" is invalid.\"" >>${upgradeFile}
+   echo "   else" >>${upgradeFile}
+   echo "      tmp=\`echo \"\${value}\" | grep \"\\-${opt}\"\`" >>${upgradeFile}
+   echo "      if [ \"\${tmp}\" != \"\" ]; then" >>${upgradeFile}
+   echo "         echo \"SST: option \\\"\\-${opt}\\\" for in.ftpd is already enabled.\"" >>${upgradeFile}
+   echo "      else" >>${upgradeFile}
+   echo "         addOpt=\`echo \"\${value}\" | sed 's/in.ftpd/in.ftpd -${opt}/g'\`" >>${upgradeFile}
+
+   _set_service_property_value "${svcName}" "inetd_start/exec" "\${addOpt}" \
+      ${upgradeFile}
+   echo "         if [ \$? = 0 ]; then" >>${upgradeFile}
+   echo "            echo \"SST: service ${svcName} property value ${svcProp} set to \${addOpt}.\"" >>${upgradeFile}
+
+   if [ "${JASS_SAVE_BACKUP}" = "1" ]; then
+      manifest_file="${JASS_RUN_MANIFEST}"
+      if [ "${JASS_STANDALONE}" = "0" ] ; then
+         manifest_file=`echo "${manifest_file}" | sed 's/^\/a\//\//g'`
+      fi
+
+      # When in jumpstart mode, upgradeFile = /a/var/svc/profile/upgrade,
+      # while in standalone mode, upgrade file is /var/svc/profile/upgrade.
+      # Undo is always in standalone mode.
+      echo "            echo \"X\\t${JASS_SCRIPT}\\t_undo_service_property_value ${svcName} inetd_start/exec \\\"\$value\\\" /var/svc/profile/upgrade \" >>${manifest_file}" >>${upgradeFile}
+   fi
+
+   echo "         else" >>${upgradeFile}
+   echo "            echo \"SST: attempt to set service ${svcName} property value ${svcProp} to \${addOpt} failed.\"" >>${upgradeFile}
+   echo "         fi" >>${upgradeFile}
+   echo "      fi" >>${upgradeFile}
+   echo "   fi" >>${upgradeFile}
+   echo "else" >>${upgradeFile}
+   echo "   echo \"SST: Service ${_svcName} is not installed.\"" >>${upgradeFile}
+   echo "fi " >>${upgradeFile}
+
+   _write_smf_blk_end ${upgradeFile}
+}
+
+
+# ============================================================================
+# Function: is_service_installed()
+#
+# This function is used to verify if a SMF service is installed.
+# This is for use by Solaris 10 and later.
+# In Standalone mode, the verification is done through a SMF command.
+# In JumpStart mode, the verification is checked by searching the
+# service manifest .xml files.
+#
+# parameters:    $1   - FMRI of SMF service, in this format:
+#                       svc:/xxx/xxx/service:instance
+# return
+#                0    - the service is installed (standalone)
+#                       or the service manifest exists (JumpStart)
+#                1    - the service is not installed (standalone)
+#                       or no service manifest exists (JumpStart)
+#                       or unrecognized FMRI
+# ============================================================================
+is_service_installed()
+{
+   svcName="${1}"
+   retCode=0
+
+   if _is_bad_fmri "${svcName}" "is_service_installed" ; then
+      retCode=1
+
+   elif is_legacy_service ${svcName} ; then
+      # Legacy service--check for the existence of the rc file.
+      tmpName="`echo ${svcName} | sed 's/^lrc://g'`"
+      tmpName="${JASS_ROOT_DIR}$tmpName"
+      pathName="`dirname ${tmpName}  | sed 's/_/\./g'`"
+      fileName="`basename ${tmpName}`"
+
+      if [ ! -d ${pathName} ]; then
+         # directory does not exist, service not installed
+         retCode=1
+      else
+         fileName="${pathName}/${fileName}"
+         if [ ! -f ${fileName} ] ; then
+            # rc file does not exist, service not installed
+            retCode=1
+         fi
+       fi
+
+   else # SMF-aware service
+
+      if [ "${JASS_STANDALONE}" = "1" ]; then
+         # Standalone mode -- SMF can be used.
+        # 16 December 2011 Matt Warner
+        # Solaris 11 may have some attributes for a service, even if the service isn't completely installed
+        # so check for the general/complete property
+        if check_os_revision 5.11 ; then
+         svcprop -q -p general/complete "${svcName}"
+         retCode=`expr $? != 0`
+        else
+         svcprop -q "${svcName}"
+         retCode=`expr $? != 0`
+        fi
+      else # JumpStart mode -- can't use svcprop
+         SVCCFGTMP="/tmp/svccfg.$$.tmp"
+
+         # Get list of configured SMF services
+         rm -rf "${SVCCFGTMP}"
+         find ${JASS_ROOT_DIR}var/svc/manifest -name '*.xml' -exec \
+                  echo inventory {} \; > "${SVCCFGTMP}"
+         svcs=" `/usr/sbin/svccfg -f "${SVCCFGTMP}"` "
+         rm -rf "${SVCCFGTMP}"
+
+         # See if our SMF service is in a svc manifest .xml file
+         echo $svcs | grep " ${svcName} " > /dev/null
+         retCode=`expr $? != 0`
+      fi
+   fi
+
+   return ${retCode}
+}
+
+
+# ============================================================================
+# Function: is_service_running()
+#
+# This function is used to verify if a service is running for Solaris
+# 10 and newer versions of the OS. This function can only be called in
+# standalone mode.
+#
+# Parameters to this function are:
+# $1     FMRI of the service in terms of svc:/xxx/xxx/service:instance
+#
+# return
+#                0    - the service is running
+#                1    - the service is not running
+# ============================================================================
+is_service_running()
+{
+   svcName="${1}"
+   if _is_bad_fmri "${svcName}" "is_service_running" ; then
+      retCode=1
+      return $retCode
+   fi
+   retCode=1
+   if svcprop -q "${svcName}" ; then
+      svcState="`svcs -H  -o state ${svcName}`"
+      if [ $? = 0 ]; then
+         if [ "${svcState}" = "online" ]; then
+            retCode=0
+         fi
+      fi
+      # A state can be in transition, we should check restarter/next_state
+      svcState="`svcprop -c -p restarter/next_state ${svcName}`"
+      if [ $? = 0 ]; then
+	 # If we were willing to wait, we could get something more reliable.
+	 # But since the wait could be forever, lets accept the
+	 # possible false positive.  Moving to online is running.
+         if [ "${svcState}" = "online" ]; then
+            retCode=0
+         fi
+      fi
+
+   fi
+   return ${retCode}
+}
+
+
+# ============================================================================
+# Function: set_service_property_value
+#
+# This function is used to set SMF-enabled services property value in Solaris
+# 10 and newer versions of the OS.  This provides a single function that can
+# be used to set property value of services.
+# This function also write to JASS manifest file for undo operation.
+# This function should be only called in hardening
+#
+# Parameters:   $1   FMRI of the service
+#               $2   property
+#               $3   value to set
+# returns:
+#               none
+# ============================================================================
+
+set_service_property_value()
+{
+   svcName="${1}"
+   svcProp="${2}"
+   svcVal="${3}"
+
+
+   if _is_bad_fmri "${svcName}" "set_service_property_value" ; then
+      return
+   fi
+   if is_legacy_service "${svcName}" ; then
+      logError 'Parameter Error: set_service_property_value: Service ${svcName} is a legacy service.'
+      return
+   fi
+   upgradeFile="${JASS_ROOT_DIR}/var/svc/profile/upgrade"
+   if [ "${JASS_STANDALONE}" = "1" ] ; then
+      if is_service_installed "${svcName}" ; then
+         if  is_option_enabled ${svcName} "${svcProp}" "" "${svcVal}" ; then
+            logNotice 'Property ${svcProp} value is already {$svcVal}.'
+            return
+         fi
+      else
+         logNotice 'Service ${svcName} does not exist on the system.'
+         return
+      fi
+   fi
+   _write_smf_blk_begin ${upgradeFile}
+   write_svc_prop_to_upgrade_file "${svcName}" "${svcProp}" "${svcVal}" ${upgradeFile}
+   _write_smf_blk_end ${upgradeFile}
+}
+
+# ============================================================================
+# Function: restart_service_immediate
+# 15 Dec 2011, Matt Warner
+#
+# Function to immediately restart a service.
+#
+# Parameters:   $1   FMRI of the service
+# returns:      none.
+# ============================================================================
+restart_service_immediate() 
+{
+   serviceList="${*}"
+
+   for svcName in ${serviceList}; do
+     /usr/sbin/svcadm restart $svcName
+   done
+}
+
+# ============================================================================
+# Function: disable_service_immediate
+# 15 Dec 2011, Matt Warner
+#
+# Function to immediately disable the service. What makes this different from
+# the disable_service function, below, is that we don't need to wait for a reboot
+# for this to take effect. This helps prevent situations where someone
+# runs JASS/SST but doesn't reboot (after all, this *IS* Solaris, so why reboot?)
+#
+# The only exception to this is that if JASS/SST is being called from a system that is
+# still going through jumpstart (or AI in S11) then the running services aren't
+# the ones we want to modify. So instead we fall back to the original disable_service
+# function (the system is going to reboot after jumpstart finishes).
+#
+# Also, the creation of files as /var/svc/profile/upgrade (as is done below) isn't apparently
+# is not officially supported. Instead, it's relatively easy to create your
+# own service that deletes itself after running if you want to wait for a reboot.
+# But we leave modification of the original disable_service function to some other intrepid soul.
+#
+#
+# This function should be only called in hardening
+# Parameters:   $1   FMRI of the service
+# returns:      none.
+# ============================================================================
+disable_service_immediate()
+{
+   if [ "${JASS_STANDALONE}" == "1" ]; then
+   # we're not in jumpstart, so do the disabling of the service
+    serviceList="${*}"
+
+    for svcName in ${serviceList}; do
+      /usr/sbin/svcadm disable $svcName
+    done
+   else
+    echo "We appear to be running from JumpStart, reverting to original disable_service function"
+    disable_service "${*}"
+   fi
+}
+
+# ============================================================================
+# Function: disable_service
+#
+# This function is used to disable SMF-enabled services in Solaris
+# 10 and newer versions of the OS.  This provides a single function that can
+# be used to disable services.
+# This function also write to JASS manifest file for undo operation.
+#
+# This function should be only called in hardening
+# Parameters:   $1   FMRI of the service
+# returns:      none.
+# ============================================================================
+disable_service()
+{
+   serviceList="${*}"
+   upgradeFile=""
+
+   for svcName in ${serviceList}; do
+      #
+      # First do a series of sanity checks
+      #
+      lrc="`echo ${svcName} | nawk -F: '{ print $1}'`"
+      if [ "${lrc}" = "lrc" ]; then
+         tmpName="`echo ${svcName} | sed 's/^lrc://g'`"
+         tmpName="${JASS_ROOT_DIR}$tmpName"
+         pathName="`dirname ${tmpName}  | sed 's/_/\./g'`"
+         fileName="`basename ${tmpName}`"
+         disable_rc_file "${pathName}" "${fileName}"
+         continue
+      elif _is_bad_fmri "$svcName" "disable_service" ; then
+         continue
+      fi
+
+      if is_service_installed "${svcName}" ; then # ok
+         :
+      elif [ "${JASS_CHECK_MINIMIZED}" != "1" ]; then
+         # Warn on disabling non-installed services.  This finds errors from
+         # (a) old scripts checking for legacy services that no longer exist and
+         # (b) scripts checking for services that are not installed.
+         # Don't warn during minimization runs, which may have a lot of output.
+         logNotice 'Service ${svcName} is not installed.'
+         continue
+      fi
+
+      if [ "${JASS_STANDALONE}" = "1" ] ; then
+         if  is_service_enabled ${svcName} ; then
+            :
+         else
+            logNotice 'Service ${svcName} is already disabled.'
+            continue
+         fi
+      fi
+
+      #
+      # Disable service on next reboot
+      #
+      if [ "${upgradeFile}" = "" ] ; then
+         upgradeFile="${JASS_ROOT_DIR}/var/svc/profile/upgrade"
+         _write_smf_blk_begin ${upgradeFile}
+      fi
+
+      # Define manifest.
+      # When in jumpstart mode upgradeFile = /a/var/svc/profile/upgrade,
+      # while in standalone mode upgrade
+      # file is /var/svc/profile/upgrade. Undo is always in standalone mode.
+      #
+      manifest_file="${JASS_RUN_MANIFEST}"
+      if [ "${JASS_STANDALONE}" = "0" ] ; then
+         manifest_file=`echo "${manifest_file}" | sed 's/^\/a\//\//g'`
+      fi
+
+      # Check if general/enabled is already true. This is needed for service
+      # under inet control. The following is quoted from e-mail by Dave Miner.
+      # svcs -H -o state looks at the current state according to the restarter,
+      # which is stored in the restarter/state property on each service
+      # instance. At the time manifest-iport runs, inetd is not yet started,
+      # so restarter/state will be whatever state inetd last recorded prior to
+      # the reboot. By contrast, svc.startd is running at the time of
+      # manifest-import, so its services will have been updated such that any
+      # services that are disabled will be shown as such in the restarter/state
+      # property. Because this, we need to check both general/enable as well as
+      # svcs -H -o state
+      #
+
+      # I don't believe the use of svcadm enable -t causes any issues here.  We want to
+      # override temporary settings when we make the permanent Toolkit setting.
+
+      write_svc_prop_to_upgrade_file "${svcName}" "general/enabled" "false" \
+         ${upgradeFile}
+
+      echo "if svcprop -q \"${svcName}\" ; then " >> ${upgradeFile}
+      echo "   svcState=\"\`svcs -H -o state ${svcName}\`\"" >> ${upgradeFile}
+      echo "   if [ \$? = 0 ] ; then " >> ${upgradeFile}
+
+      # At this point, the svcState can be uninitialized which does not give us
+      # information about the true state of the service. As a result, undo Jass
+      # may not necessarily restore the original state.  Jass makes sure after
+      # reboot that the state is disabled.
+      #
+      echo "      if [ \"\${svcState}\" != \"disabled\" ]; then" >> ${upgradeFile}
+      #echo "         if [ \"\${svcState}\" != \"uninitialized\" ]; then" >> ${upgradeFile}
+      echo "            changeValue=1">>${upgradeFile}
+      #echo "         fi">>${upgradeFile}
+      echo "         svcadm -v  disable ${svcName}" >> ${upgradeFile}
+      echo "         if [ \$? = 0 ]; then " >> ${upgradeFile}
+      echo "            echo \"SST: Service ${svcName} is disabled.\"" >> ${upgradeFile}
+      if [ "${JASS_SAVE_BACKUP}" = "1" ]; then
+      echo "            if [ \"\${changeValue}\" = "1" ]; then" >> ${upgradeFile}
+      echo "               echo \"X\t${JASS_SCRIPT}\t_enable_or_disable_service ${svcName} /var/svc/profile/upgrade  1 \">>${manifest_file}" >> ${upgradeFile}
+      echo "            fi">>${upgradeFile}
+      fi
+      echo "         else">>${_upgradeFile}
+      echo "            echo \"SST: The attempt to disable ${svcName} failed.\"">>${upgradeFile}
+      echo "         fi" >> ${upgradeFile}
+      echo "      else">>${_upgradeFile}
+      echo "         echo \"SST: Service ${svcName} is already disabled.\"">>${upgradeFile}
+      echo "      fi" >> ${upgradeFile}
+      echo "   else">>${upgradeFile}
+      echo "      echo \"SST: cmd svc -H -o state ${svcName}, failed.\"">>${upgradeFile}
+      echo "   fi" >> ${upgradeFile}
+      echo "else">>${upgradeFile}
+      echo "   echo \"SST: Service ${svcName} is not installed. \"">>${upgradeFile}
+      echo "fi ">>${upgradeFile}
+   done
+
+   if [ "${upgradeFile}"  != "" ] ; then
+      _write_smf_blk_end ${upgradeFile}
+   fi
+}
+
+# ============================================================================
+# Function: enable_service
+#
+# This function is used to enable SMF-enabled services in Solaris
+# 10 and newer versions of the OS.  This provides a single function that can
+# be used to enable services.
+# This function also write to JASS manifest file for undo operation.
+# This function should be only called in hardening
+#
+# Parameters:   $1   FMRI of the service
+# returns:      none.
+# ============================================================================
+enable_service()
+{
+   serviceList="${*}"
+   upgradeFile=""
+   for svcName in ${serviceList}; do
+      if _is_bad_fmri "$svcName" "enable_service" ; then
+        continue
+      fi
+      if [ "${JASS_STANDALONE}" = "1" ] ; then
+         if is_service_enabled ${svcName} ; then
+            logNotice 'Service ${svcName} is already enabled.'
+            continue
+         fi
+      fi
+      if [ "${upgradeFile}" = "" ] ; then
+         upgradeFile="${JASS_ROOT_DIR}/var/svc/profile/upgrade"
+         _write_smf_blk_begin ${upgradeFile}
+      fi
+      # define manifest
+      # when in jumpstart mode upgradeFile = /a/var/svc/profile/upgrade, while in standalone mode upgrade
+      # file is /var/svc/profile/upgrade. undo is always in standalone mode
+      manifest_file="${JASS_RUN_MANIFEST}"
+      if [ "${JASS_STANDALONE}" = "0" ] ; then
+         manifest_file=`echo "${manifest_file}" | sed 's/^\/a\//\//g'`
+      fi
+      write_svc_prop_to_upgrade_file "${svcName}" "general/enabled" "true" ${upgradeFile}
+      echo "if svcprop -q \"${svcName}\" ; then " >> ${upgradeFile}
+      echo "   svcState=\"\`svcs -H -o state ${svcName}\`\"" >> ${upgradeFile}
+      echo "   if [ \$? = 0 ] ; then " >> ${upgradeFile}
+
+      # At this point, the svcState can be uninitialized which does not give us
+      # information about the true state of the service. As a result, undo Jass
+      # may not necessarily restore the original state.  Jass makes sure after
+      # reboot the state is enabled.
+      echo "      if [ \"\${svcState}\" = \"disabled\" ]; then" >> ${upgradeFile}
+      echo "         changeValue=1">>${upgradeFile}
+      echo "      else">>${_upgradeFile}
+      echo "         echo \"SST: Service ${svcName} is already enabled.\"">>${upgradeFile}
+      echo "      fi">>${upgradeFile}
+      echo "      svcadm -v  enable ${svcName}" >> ${upgradeFile}
+      echo "      if [ \$? = 0 ]; then " >> ${upgradeFile}
+      echo "         echo \"SST: Service ${svcName} is enabled.\"" >> ${upgradeFile}
+      if [ "${JASS_SAVE_BACKUP}" = "1" ]; then
+      echo "         if [ \"\${changeValue}\" = "1" ]; then" >> ${upgradeFile}
+      echo "            echo \"X\t${JASS_SCRIPT}\t_enable_or_disable_service ${svcName} /var/svc/profile/upgrade 0 \">>${manifest_file}" >> ${upgradeFile}
+      echo "         fi">>${upgradeFile}
+      fi
+      echo "      else">>${_upgradeFile}
+      echo "         echo \"SST: The attempt to enable ${svcName} failed.\"">>${upgradeFile}
+      echo "      fi" >> ${upgradeFile}
+      echo "   else">>${upgradeFile}
+      echo "      echo \"SST: cmd svc -H -o state ${svcName}, failed.\"">>${upgradeFile}
+      echo "   fi" >> ${upgradeFile}
+      echo "else">>${upgradeFile}
+      echo "   echo \"SST: Service ${svcName} is not installed. \"">>${upgradeFile}
+      echo "fi ">>${upgradeFile}
+   done
+   if [ "${upgradeFile}"  != "" ] ; then
+      _write_smf_blk_end ${upgradeFile}
+   fi
+}
+
+# ============================================================================
+# Function: is_user_account_login_not_set()
+#
+# This function is used to verify if a user login is not set in Solaris
+# 10 and newer versions of the OS.
+#
+# Parameters:   $1  - user id to be checked on
+# Return:    0 - user id login is not set
+#            1 - user id login is set
+# ============================================================================
+is_user_account_login_not_set()
+{
+    # Parameters to this function are:
+    # $1     = user id
+
+    user="${1}"
+    returnCode=1
+    status=`/usr/sbin/chroot ${JASS_ROOT_DIR} /usr/bin/passwd -s ${user} | nawk '{print $2}'`
+    if [ $? = 0 ]; then
+       if [ "${status}" = "NP" ]; then
+          returnCode=0
+       fi
+    fi
+    return ${returnCode}
+}
+
+# ============================================================================
+# Function: is_user_account_passworded()
+#
+# This function is used to verify if a user login has a password set in
+# Solaris 10 and newer versions of the OS.
+# Parameters:   $1  - user id to be checked on
+# Return:    0 - user id login has a password
+#            1 - user id login has no password
+# ============================================================================
+is_user_account_passworded()
+{
+    # Parameters to this function are:
+    # $1     = user id
+
+    user="${1}"
+    returnCode=1
+    status=`/usr/sbin/chroot ${JASS_ROOT_DIR} /usr/bin/passwd -s ${user}| nawk '{print $2}'`
+    if [ $? = 0 ]; then
+       if [ "${status}" = "PS" ]; then
+          returnCode=0
+       fi
+    fi
+    return ${returnCode}
+}
+
+# ============================================================================
+# Function: is_user_account_extant()
+#
+# This function is used to verify if a user exists in the passwd file of Solaris
+# 10 and newer versions of the OS.
+#
+# Parameters:   $1  - user id to be checked on
+# Return:    0 - user account exist
+#            1 - user account does not exist
+# ============================================================================
+is_user_account_extant()
+{
+    # Parameters to this function are:
+    # $1     = user id
+
+    user="${1}"
+    returnCode=1
+    users=`grep "^${user}"  $JASS_ROOT_DIR/etc/passwd`
+    for _usr in userList ; do
+       _usrId=`echo "${users}" | nawk -F: '{print $1}'`
+       if [ "${_usrId}" = "${user}" ]; then
+          returnCode=0
+       fi
+    done
+    return ${returnCode}
+}
+
+# ============================================================================
+# Function: is_user_account_locked()
+#
+# This function is used to verify if a user is locked in Solaris
+# 10 and newer versions of the OS.
+#
+# Parameters:   $1  - user id to be checked on
+# Return:    0 - user account is locked
+#            1 - user account is not locked
+# ============================================================================
+is_user_account_locked()
+{
+    # Parameters to this function are:
+    # $1     = user id
+
+    user="${1}"
+    returnCode=1
+    status=`/usr/sbin/chroot ${JASS_ROOT_DIR} /usr/bin/passwd -s ${user} | nawk '{print $2}'`
+    if [ $? = 0 ]; then
+       if [ "${status}" = "LK" ]; then
+          returnCode=0
+       fi
+    fi
+
+    return ${returnCode}
+}
+
+
+# ============================================================================
+# Function: lock_user_account()
+#
+# This function is used to lock user accounts in Solaris
+# 10 and newer versions of the OS.  This provides a single function that can
+# be used to disable user access  (and record their unlocking  commands).
+#
+# Parameters:   $1  - user id list to be locked.
+# Return:    none
+# ============================================================================
+lock_user_account()
+{
+   userList="${*}"
+
+   for user in ${userList}; do
+      if is_user_account_extant ${user}; then
+         :
+      else
+         logNotice 'User ${user} does not exist in password file.'
+         continue
+      fi
+      if  is_user_account_locked "${user}"  ; then
+         logNotice 'User ${user} is already locked.'
+         continue
+      fi
+      _lock_user_account ${user}
+      add_to_manifest X "_unlock_user_account ${user} "
+   done
+}
+
+
+# ============================================================================
+# Function: unlock_user_account()
+#
+# This function is used to unlock user accounts in Solaris
+# Parameters:   $  - user id list to be unlocked
+# Return:    none
+# ============================================================================
+unlock_user_account()
+{
+   userList="${*}"
+
+   for user in ${userList}; do
+      if  is_user_account_extant ${user}; then
+         :
+      else
+         logNotice 'User ${user} does not exist in password file.'
+         continue
+      fi
+      if  is_user_account_locked "${user}"; then
+         :
+      else
+         logNotice 'User ${user} is already unlocked.'
+         continue
+      fi
+      _unlock_user_account ${user}
+      add_to_manifest X "_lock_user_account ${user} "
+   done
+}
+
+
+# ============================================================================
+# Function:get_users_with_retries_set()
+#
+# This function is used to get those user accounts with a password
+# that have a user_attr entry with lock_after_retries set.
+# This code is common to both audit and finish scripts
+#
+# Parameters:   $1 - a list of users to filter out
+# Return:    A list of users with password and lock_after_retries set
+# Variables Used: ATTR_LINES
+#                 WARN_LIST
+#                 FIRST_LIST
+#                 USER
+#                 _lock_set
+# File Dependencies: /etc/user_attr
+#                    /etc/passwd
+# ============================================================================
+get_users_with_retries_set()
+{
+
+   _ignore_list="$1"
+
+   # We also want to know if every user has an entry in user_attr for locking.
+   # user_attr lines may use a final \ to indicate the next line is a
+   # continuation line.  The behavior on a comment interspersed there is
+   # unspecified.
+
+   # This sed command looks for lines with a trailing backslash, copies the
+   # next line in, removes the embedded newline and backslash, and restarts on
+   # the same line..
+
+   ATTR=${JASS_ROOT_DIR}etc/user_attr
+   PASSWORD_FILE=${JASS_ROOT_DIR}/etc/passwd
+
+   ATTR_LINES=`sed -e ':reparse
+         /\\$/{
+	 N
+	 s/\\\n//
+	 b reparse
+	 }' ${ATTR}`
+
+   FIRST_LIST=""
+
+   for USER in `grep -v "^#" ${PASSWORD_FILE} | nawk -F: '{print $1}'`; do
+
+      if is_user_account_passworded "${USER}"; then
+	 # we need to check its lock_after_retries value
+
+	 # each line can now be split further into ; delimited areas
+	 # egrep must be used here for better RE capabilities
+
+	 _lock_set=`printf "$ATTR_LINES" | grep "^${USER}:" | nawk -F: '{print $5}' | \
+	            egrep -c "(^|;)lock_after_retries=(([Yy][Ee][Ss])|([Nn][Oo]))"`
+
+	 if [ "${_lock_set}" = "1" ]; then
+	    FIRST_LIST="${USER} ${FIRST_LIST}"
+	 fi
+      fi
+   done
+   WARN_LIST="`get_lists_disjunction \"${FIRST_LIST}\" \"${_ignore_list}\"`"
+   echo "$WARN_LIST"
+}
+
+
+# ============================================================================
+# Function: change_mode()
+#
+# Given one or more files or directories, check each file to see if
+# it matches the given file permission, $1.  If not, change the file
+# permission to $1.
+#
+# Input:
+# $1		file permissions in octal chmod(1) format (e.g., 0600).
+# $2 . . .	one or more files to chmod
+#               Note: must be a regular or special file or directory
+#                     (not a soft link)
+#
+# Return:
+# 0		if the file(s) has (or was changed to) correct permissions
+# non-zero	if no file or file permission specified, or chmod failed
+#
+# ============================================================================
+change_mode()
+{
+   rc=0
+   if [ -z "$2" ] ; then
+      return 1
+   fi
+
+   desiredPermissions=$1
+   shift
+
+   while [ -n "$1" ] ; do
+      if [ ! -f "$1" -a ! -d "$1" -a ! -b "$1" -a ! -c "$1" ] ; then
+         logNotice "Path ${1} not found or is not a regular or special file or directory."
+         rc=1
+      else # file OK
+         oldPermissions=`get_file_permissions ${1}`
+
+         # Note: the following comparison must be numeric (-ne) as
+         # a comparision with 700, 0700, & 0700, for example, must all be equal
+         if [ "$oldPermissions" -ne "$desiredPermissions" ] ; then # change it
+            logNotice "Setting path ${1} permissions to ${desiredPermissions}."
+            chmod $desiredPermissions $1
+            if [ $? -eq 0 ] ; then
+               add_to_manifest X "chmod $oldPermissions ${1}"
+            else
+               logNotice "Setting path ${1} permissions to ${desiredPermissions} failed."
+               rc=1
+            fi
+
+         else
+            logNotice "Permissions for ${1} already set to ${desiredPermissions}."
+         fi
+      fi
+      shift
+   done
+
+   return $rc
+}
+
+
+# ============================================================================
+# Function: change_owner()
+#
+# Given one or more files or directories, check each file to see if
+# it matches the given file owner, $1.  If not, change the file
+# owner to $1.
+#
+# Input:
+# $1		file owner in chown(1) format (e.g., "root").
+#               For $1, "owner:group" may be used to change both
+#               the owner and group at the same time.  E.g., "root:root".
+# $2 . . .	one or more files to chown
+#               Note: must be a regular or special file or directory
+#                     (not a soft link)
+#
+# Return:
+# 0		if the file(s) has (or was changed to) correct ownership
+# non-zero	if no file or file permission specified, or chown failed
+#
+# ============================================================================
+change_owner()
+{
+   rc=0
+   if [ -z "$1" -o -z "$2" ] ; then
+      return 1
+   fi
+
+   # Get owner and group (if any)
+   desiredGroup=`echo $1 | nawk -F: '{print $2}'`
+   if [ -n "${desiredGroup}" ] ; then
+      desiredOwner=`echo $1 | nawk -F: '{print $1}'`
+      shift
+      groupFiles=$*
+
+   else
+      desiredOwner=$1
+      shift
+   fi
+
+   # Change each file, one at-a-time:
+   while [ -n "$1" ] ; do
+      if [ ! -f "$1" -a ! -d "$1" -a ! -b "$1" -a ! -c "$1" ] ; then
+         logNotice "Path ${1} not found or is not a regular or special file or directory."
+         rc=1
+      else # file OK
+         oldOwner=`get_file_owner ${1}`
+         if [ "$oldOwner" != "$desiredOwner" ] ; then # change it
+            logNotice "Setting path ${1} owner to ${desiredOwner}."
+            chown $desiredOwner $1
+            if [ $? -eq 0 ] ; then
+               add_to_manifest X "chown $oldOwner ${1}"
+            else
+               logNotice "Setting path ${1} owner to ${desiredOwner} failed."
+               rc=1
+            fi
+
+         else
+            logNotice "Owner for ${1} already set to ${desiredOwner}."
+         fi
+      fi
+      shift
+   done
+
+   # Change group if requested
+   if [ -n "${desiredGroup}" ] ; then
+      change_group ${desiredGroup} ${groupFiles}
+   fi
+
+   return $rc
+}
+
+
+# ============================================================================
+# Function: change_group()
+#
+# Given one or more files or directories, check each file to see if
+# it matches the given file group, $1.  If not, change the file
+# group to $1.
+#
+# Input:
+# $1		file group in chgrp(1) format (e.g., "root").
+# $2 . . .	one or more files to chgrp
+#               Note: must be a regular or special file or directory
+#                     (not a soft link)
+#
+# Return:
+# 0		if the file(s) has (or was changed to) correct group
+# non-zero	if no file or file permission specified, or chgrp failed
+#
+# ============================================================================
+change_group()
+{
+   rc=0
+   if [ -z "$1" -o -z "$2" ] ; then
+      return 1
+   fi
+
+   desiredGroup=$1
+   shift
+
+   while [ -n "$1" ] ; do
+      if [ ! -f "$1" -a ! -d "$1" -a ! -b "$1" -a ! -c "$1" ] ; then
+         logNotice "Path ${1} not found or is not a regular or special file or directory."
+         rc=1
+      else # file OK
+         oldGroup=`get_file_group ${1}`
+         if [ "$oldGroup" != "$desiredGroup" ] ; then # change it
+            logNotice "Setting path ${1} group to ${desiredGroup}."
+            chgrp $desiredGroup $1
+            if [ $? -eq 0 ] ; then
+               add_to_manifest X "chgrp $oldGroup ${1}"
+            else
+               logNotice "Setting path ${1} group to ${desiredGroup} failed."
+               rc=1
+            fi
+
+         else
+            logNotice "Group for ${1} already set to ${desiredGroup}."
+         fi
+      fi
+      shift
+   done
+
+   return $rc
+}
+
+# ============================================================================
+# Function: convert_inetd_service_to_fmri
+#
+# This function is used to convert an inetd service name to an FMRI used by 
+# the inetconv program.  To do this, the /etc/inet/inetd.conf file must be
+# parsed.  If the entry is not present, the conversion cannot be done.
+#
+# This function only operates on legacy inetd service names, not on FMRI's.
+# It will return a failure if an FRMI is given.
+#
+# Parameters:   $1  - service name to be converted
+# Return:    0 - success
+#            1 - failure
+#            Prints the converted entry name.
+# ============================================================================
+convert_inetd_service_to_fmri()
+{
+   
+   _convert_ret=1
+   _name="$1"
+
+   # Get the name out of the /etc/inet/inetd.conf file
+   INETD="${JASS_ROOT_DIR}/etc/inet/inetd.conf"
+
+   # We'll preference to un-commented lines.
+   _line=`grep "^[ 	]*${_name}[/# 	]" ${INETD} | tail -1`
+   if [ -z "${_line}" ]; then
+      _line=`grep "^[# 	]*${_name}[/# 	]" ${INETD} | tail -1`
+   fi
+   if [ -z "${_line}" ]; then
+      # No lines were found, so the conversion cannot be done
+      return 1
+   fi
+   # If someone did # tftp as a comment out, the field separation would
+   # be wrong.  
+   _line=`echo ${_line} | sed 's/^#//' | sed 's/\//_/g'`
+   _prot=`echo ${_line} | nawk '{print $3}'`
+   _svc=`echo ${_line} | nawk '{print $1}'`
+   _rpc=`echo ${_prot} | grep 'rpc'`
+   if [ $? -eq 0 ]; then
+      # It is an rpc service
+      _svcname="svc:/network/rpc-${_svc}/${_prot}:default"
+   else
+      _svcname="svc:/network/${_svc}/${_prot}:default"
+   fi
+   echo "${_svcname}"
+   return 0
+}
+
+  
+# ============================================================================
+# Function: update_inetconv_in_upgrade()
+#
+# This function is used to write an instruction to run inetconv in the upgrade
+# file.
+# Return:    0 - success
+#            1 - failure
+# ============================================================================
+update_inetconv_in_upgrade()
+{
+   # As a safety, nop this on s9 and earlier
+   if check_os_min_revision 5.10; then
+      if [ "${JASS_STANDALONE}" = "1" ] ; then
+	 upgradeFile="${JASS_ROOT_DIR}/var/svc/profile/upgrade"
+	 _write_smf_blk_begin ${upgradeFile}
+	 cat >> ${upgradeFile} <<-EOT
+		# Instructions added by Sun Security Toolkit: Community Edition
+		/usr/sbin/inetconv -f -i /etc/inet/inetd.conf
+		/usr/sbin/inetconv -e -i /etc/inet/inetd.conf
+		EOT
+
+	_write_smf_blk_end ${upgradeFile}
+	return 0
+      else
+	 return 1
+      fi
+   fi
+   return 0
+}

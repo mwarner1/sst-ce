@@ -1,0 +1,63 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)s15k-sms-override.fin	1.7	07/05/30 SMI"
+#
+# This script overrides the setting for jassSMSSecureFailover if
+# SMS 1.5 or later is installed on the SC.
+#
+
+SMS_V=${JASS_ROOT_DIR}opt/SUNWSMS/bin/smsversion
+SMS_SCMAN=${JASS_ROOT_DIR}etc/hostname.scman0
+
+if [ ! -f ${SMS_SCMAN} ]; then
+   logNotice "This script can only be run on a Sun Fire 15K SC."
+else
+   # Run these steps for SCs only
+      if [ ! -f ${SMS_V} ]; then
+         logNotice "${SMS_V} does not exist; this script cannot be run."
+      elif [ ! -x ${SMS_V} ]; then
+         logNotice "${SMS_V} not executable; this script cannot be run."
+      else
+         JASS_SMS_OVERRIDE=0
+         export JASS_SMS_OVERRIDE
+
+         # Static ARP support is only available on SMS 1.2 and later
+         sms_version=`${SMS_V} -t`
+         case "${sms_version}" in
+         1.2|1.3|1.4|1.4.1)
+            logMessage "This script is a no-op for SMS ${sms_version}"
+            ;;
+         *)
+            jassSMSSecureFailover=1
+            export jassSMSSecureFailover
+            JASS_SMS_OVERRIDE=1
+            export JASS_SMS_OVERRIDE
+
+            logMessage "Overriding jassSMSSecureFailover for SMS 1.5 and later"
+            ;;
+         esac
+      fi
+fi

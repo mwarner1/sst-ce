@@ -1,0 +1,138 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-process-accounting.fin	3.18	05/05/11 SMI"
+#
+# This script will enable Solaris process accounting if the software is
+# installed on the system.
+#
+
+CRONTAB_DIR=${JASS_ROOT_DIR}var/spool/cron/crontabs
+ROOT_CRONTAB=${CRONTAB_DIR}/root
+ADM_CRONTAB=${CRONTAB_DIR}/adm
+
+
+logMessage 'Enabling the function: Solaris Process Accounting'
+echo ""
+
+pkginfo -q -R ${JASS_ROOT_DIR} SUNWaccr
+accr=$?
+pkginfo -q -R ${JASS_ROOT_DIR} SUNWaccu
+accu=$?
+
+if [ "${accr}" = "1" -o "${accu}" = "1" ]; then
+
+   logNotice 'Solaris Process Accounting is not installed.  The packages SUNWaccr
+and SUNWaccu must be installed to use Solaris process accounting.'
+
+elif [ -f ${JASS_ROOT_DIR}etc/init.d/acct ]; then
+
+   #
+   # Create init.d links (acct is not SMF-enabled yet):
+   #
+
+   # Remove legacy link, if any, created from previous versions of this script:
+   if [ -r ${JASS_ROOT_DIR}etc/rc3.d/S99acct ]; then
+      logNotice 'Removing redundant ${JASS_ROOT_DIR}etc/rc3.d/S99acct link.'
+      rm -rf ${JASS_ROOT_DIR}etc/rc3.d/S99acct
+      add_to_manifest X "cd /etc/rc3.d; ln -s ../init.d/acct S99acct"
+   fi
+
+   if [ -r ${JASS_ROOT_DIR}etc/rc0.d/K22acct ]; then
+      logNotice '${JASS_ROOT_DIR}etc/rc0.d/K22acct already exists.  This file will
+not be overwritten.'
+   else
+      logMessage 'Linking ../init.d/acct to ${JASS_ROOT_DIR}etc/rc0.d/K22acct.'
+      make_link ../init.d/acct ${JASS_ROOT_DIR}etc/rc0.d/K22acct
+   fi
+
+   if [ -r ${JASS_ROOT_DIR}etc/rc3.d/S22acct ]; then
+      logNotice '${JASS_ROOT_DIR}etc/rc3.d/S22acct already exists.  This file will
+not be overwritten.'
+   else
+      logMessage 'Linking ../init.d/acct to ${JASS_ROOT_DIR}etc/rc3.d/S22acct.'
+      make_link ../init.d/acct ${JASS_ROOT_DIR}etc/rc3.d/S22acct
+   fi
+
+   #
+   # Add root crontab entry if not there
+   #
+
+   # Create root crontab file if it's not there:
+   if [ -f "${ROOT_CRONTAB}" ] ; then
+      root_crontab_backup_performed=0
+   else
+      create_a_file -m 0600 -o root:sys ${ROOT_CRONTAB}
+      echo ""
+      # Don't backup files we created:
+      root_crontab_backup_performed=1
+   fi
+
+   # Create root crontab entry, if it's not there:
+   add_crontab_entry_if_missing 'root' \
+      '/usr/lib/acct/dodisk' '0 2 * * 4 /usr/lib/acct/dodisk' \
+      "$root_crontab_backup_performed"
+   root_crontab_backup_performed=$?
+
+   #
+   # Add adm crontab entries if not there
+   #
+
+   # Create adm crontab file if it's not there:
+   if [ -f "${ADM_CRONTAB}" ] ; then
+      adm_crontab_backup_performed=0
+   else
+      create_a_file -m 0600 -o root:sys ${ADM_CRONTAB}
+      echo ""
+      # Don't backup files we created:
+      adm_crontab_backup_performed=1
+   fi
+
+   # Create adm crontab entries, if they're not there:
+   add_crontab_entry_if_missing 'adm' \
+      '/usr/lib/acct/ckpacct' '0 * * * * /usr/lib/acct/ckpacct' \
+      "$adm_crontab_backup_performed"
+   adm_crontab_backup_performed=$?
+   add_crontab_entry_if_missing 'adm' \
+      '/usr/lib/acct/runacct' \
+      '30 2 * * * /usr/lib/acct/runacct 2> /var/adm/acct/nite/fd2log' \
+      "$adm_crontab_backup_performed"
+   adm_crontab_backup_performed=$?
+   add_crontab_entry_if_missing 'adm' \
+      '/usr/lib/acct/monacct' '30 7 1 * * /usr/lib/acct/monacct' \
+      "$adm_crontab_backup_performed"
+   adm_crontab_backup_performed=$?
+
+   #
+   # Make sure accounting is enabled if we're booted to root
+   #
+   if [ "${JASS_ROOT_DIR}" = "/" ] ; then
+      /usr/lib/acct/startup
+   fi
+
+
+else
+   logFileNotFound "${JASS_ROOT_DIR}etc/init.d/acct"
+fi

@@ -1,0 +1,147 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-syslogd-listen.aud 1.10     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="syslog Service"
+servfil="disable-syslogd-listen.aud"
+
+DSYSLOG="${JASS_ROOT_DIR}etc/default/syslogd"
+ISYSLOG="${JASS_ROOT_DIR}etc/init.d/syslog"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The SYSLOG facility provides a mechanism for generating, transferring 
+   and storing system log information.  syslogd(1M) reads and forwards system
+   messages to the  appropriate  log files or users, depending upon the 
+   priority of a message and the system facility from which it originates.
+
+Rationale for Verification Check:
+
+   The syslogd service should not accept remote connections unless it is
+   acting as a log server for other systems.  In its default configuration,
+   syslogd accepts these types of connections.  This script is used to 
+   determine if syslogd has been configured to not accept remote connections
+   or messages.
+
+   For the Solaris OE version 9 and later, remote connections can be disabled
+   by setting the 'LOG_FROM_REMOTE' parameter to 'NO' in the ${DSYSLOG} file.
+   For the Solaris OE version 8, the '-t' parameter can be added to the
+   syslogd invokation line in the ${ISYSLOG} file.
+ 
+Determination of Compliance:
+
+   This check will indicate a failure if the syslogd service is configured to
+   accept remote log connections.  Note that for the Solaris OE version 9 and
+   higher, this script will check both conditions noted above as both could be
+   used to enable this functionality.  This script will also indicate a 
+   failure if the syslogd process is not running with the '-t' flag and the 
+   'LOG_FROM_REMOTE' parameter is not set to 'NO' (for the Solaris OE version 
+   9 and higher).
+"
+#-----------------------------------------------------------------------------
+
+servcmd="/usr/sbin/syslogd"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+actuallyDisabled=0
+lfrSet=0
+
+if check_os_min_revision 5.9 ; then
+   if check_fileExists ${DSYSLOG} 0; then
+      if check_fileContentsExist ${DSYSLOG} '^LOG_FROM_REMOTE=NO' 0; then
+         logNotice 'LOG_FROM_REMOTE is set to \\\"NO\\\" in ${DSYSLOG}.'
+         actuallyDisabled=1
+         lfrSet=1         
+      else
+         if check_fileContentsExist ${DSYSLOG} '^LOG_FROM_REMOTE=' 0; then
+            logNotice 'LOG_FROM_REMOTE is not set to \\\"NO\\\" in ${DSYSLOG}.'
+         else  
+            logNotice 'LOG_FROM_REMOTE is not defined in ${DSYSLOG}.'
+         fi
+      fi
+   else
+      logFileNotFound "${DSYSLOG}"
+   fi
+fi
+
+if check_os_min_revision 5.8 ; then
+   if check_fileExists ${ISYSLOG} 0 ; then
+      if check_fileContentsExist ${ISYSLOG} "${servcmd} -t" 0; then
+         logNotice 'syslogd is configured to use \\\"-t\\\" option in ${ISYSLOG}.'
+         actuallyDisabled=1
+      else
+         if [ ${lfrSet} -eq 0 ]; then
+            if check_fileContentsExist ${ISYSLOG} "${servcmd}" 0 ; then
+               logNotice 'syslogd is not configured to use \\\"-t\\\" option in ${ISYSLOG}.'
+            else
+               logNotice 'syslogd is not defined in ${ISYSLOG}.'
+            fi
+         fi
+      fi
+   else
+      logFileNotFound "${ISYSLOG}"
+   fi
+
+   if [ $actuallyDisabled -eq 1 ]; then
+      logSuccess "syslogd is configured to not accept logs from remote sources."
+   else
+      logFailure "syslogd is configured to accept logs from remote sources."
+      adjustScore 1
+   fi
+   
+   if check_processExists "${servcmd}" 0 ; then 
+      if check_processArgsMatch "${servcmd}" "-t" 0 ; then
+         logSuccess 'syslogd is running with the \\\"-t\\\" option.'
+      else
+         if [ ${lfrSet} -eq 0 ]; then
+            adjustScore 1
+            logFailure 'syslogd is not running with the \\\"-t\\\" option.'
+         else
+            logSuccess "syslogd is running with LOG_FROM_REMOTE=NO."
+         fi
+      fi
+   else
+      logNotice "syslogd is not running on the system."
+   fi
+   
+else
+   logInvalidOSRevision "5.8+"
+fi
+
+finish_audit

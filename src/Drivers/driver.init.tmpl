@@ -1,0 +1,614 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2008 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)driver.init.tmpl	3.54	08/08/21 SMI"
+#
+
+# ============================================================================
+# This variable is used to determine whether or not the contents of this file
+# have already been run.  If this file has already been run, then there is no
+# need to re-read it since the variables will not change since they either
+# set unconditionally or set only if they have not already been set.  This
+# check must be done here since this script can be called directly by Finish
+# scripts (such as when used in JumpStart mode).
+# ============================================================================
+
+if [ -z "${JASS_READ_DRIVER_INIT}" ]; then
+
+# ============================================================================
+# This variable defines the version of the JASS Toolkit being applied to
+# the system.  This variable cannot and should not be changed.
+# ============================================================================
+
+JASS_VERSION="__VERSION__"
+export JASS_VERSION
+
+# ============================================================================
+# This variable defines the package name of the JASS Toolkit.  This
+# cannot and should not be changed.
+# ============================================================================
+
+JASS_PKG="SUNWsst"
+export JASS_PKG
+
+# ============================================================================
+# Define the name of the JASS package file.  Used in JumpStart mode.
+# ============================================================================+
+JASS_PKG_FILENAME="__FULLNAME__.pkg"
+export JASS_PKG_FILENAME
+
+# ============================================================================
+# Define a default file creation mask to be used during the execution
+# of these scripts.
+# ============================================================================
+
+umask 022
+
+# ============================================================================
+# Define the PATH to be used for each of the driver and finish scripts.
+# ============================================================================
+
+PATH=/usr/bin:/usr/sbin
+export PATH
+
+# ============================================================================
+# In standalone mode, only the mount points are used directly.  When not in
+# this mode the _MOUNT variables will be used to NFS mount the mount points
+# for use.
+# ============================================================================
+
+if [ -z "${JASS_STANDALONE}" ]; then
+   JASS_STANDALONE=0
+fi
+export JASS_STANDALONE
+
+# ============================================================================
+# Obtain a fully qualified path (dirname) to the current program.  Note that
+# this must work for relative and absolute paths in both JumpStart and
+# standalone modes.  In standalone mode, jass-execute will automatically set
+# the current working directory correctly so we can just use that.  When using
+# JumpStart, a little more work is needed since we wish to set it to the 
+# SUNWsst package root (e.g., /opt/SUNWsst).
+# ============================================================================
+
+if [ -z "${CURRENT_CMD_DIR}" ]; then
+   if [ "${JASS_STANDALONE}" = "1" -o "${JASS_ROOT_DIR_SET}" = "1" ]; then
+      CURRENT_CMD_DIR="`pwd`"
+   else
+      oldDirectory="`pwd`"
+      newDirectory="`dirname $0`"
+      cd ${newDirectory}
+      # Instead of the previous setting of /Drivers in Jumpstart mode, use
+      #  the SUNWsst package root (e.g., /opt/SUNWsst) instead
+      cd ..
+      CURRENT_CMD_DIR="`pwd`"
+      cd ${oldDirectory}
+   fi
+fi
+
+# ****************************************************************************
+# Define localization settings.
+# ****************************************************************************
+
+TEXTDOMAIN="jass"
+export TEXTDOMAIN
+
+if [ -z "${TEXTDOMAINDIR}" ]; then
+   TEXTDOMAINDIR="${CURRENT_CMD_DIR}/lib/locale"
+fi
+export TEXTDOMAINDIR
+
+# ============================================================================
+# Define the root directory of the file system.  For Jumpstart installations,
+# this will generally be /a/.   Otherwise it will generally be /.  Attempt to
+# determine the root directory based using the SI_CONFIG_DIR indicator (if
+# set, then most likely using Jumpstart.
+#
+# NOTE: This variable should ALWAYS end with a '/'.  This is done to make the
+# script coding assumptions easier as well as to clean up output that had
+# otherwise included double slashes (e.g., //etc).
+# ============================================================================
+
+if [ -z "${JASS_ROOT_DIR}" ]; then
+   if [ -z "${SI_CONFIG_DIR}" ]; then
+      JASS_ROOT_DIR="/"
+   else
+      JASS_ROOT_DIR="/a/"
+   fi
+fi
+export JASS_ROOT_DIR
+
+# Perform a sanity check to ensure that the JASS_ROOT_DIR parameter ends
+# with a forward slash.  If not, add the forward slash character.
+
+if [ `echo "${JASS_ROOT_DIR}" | grep -c "\/$"` = 0 ]; then
+   JASS_ROOT_DIR="${JASS_ROOT_DIR}/"
+fi
+
+
+# ===========================================================================
+# Read the user-specified overrides file if it exists.  By default, the
+# JASS_USER_DIR variable will be set to the Drivers/ sub-directory of
+# this distribution.  The only way to override this default is by setting
+# the JASS_USER_DIR variable on the command line (or a parent script)
+# before calling an individual driver.
+# ===========================================================================
+
+if [ -z "${JASS_USER_DIR}" ]; then
+   JASS_USER_DIR="${CURRENT_CMD_DIR}/Drivers"
+fi
+export JASS_USER_DIR
+
+if [ -f ${JASS_USER_DIR}/user.init ]; then
+   . ${JASS_USER_DIR}/user.init
+fi
+
+# ============================================================================
+# Use the specified value as a placeholder for use within the scripts.
+# This variable is used to store the date and time when the Toolkit
+# was executed (for each run).  This value is constant throughout
+# the execution of a run.  This is necessary so that all of the files
+# changed and scripts used during a run can be identified.
+# ============================================================================
+
+if [ -z "${JASS_TIMESTAMP}" ]; then
+   JASS_TIMESTAMP="`env LC_ALL=C date '+%EY%m%d%OH%OM%S'`"
+fi
+export JASS_TIMESTAMP
+
+# ============================================================================
+# The following value defines how the Sun Security Toolkit: Community Edition will operate.
+# This parameter can take one of four values: APPLY, AUDIT, and
+# UNDO.  Normally, this parameter is set in standalone mode by the
+# jass-execute command.  In JumpStart installations, it should normally be
+# set to APPLY.
+# ============================================================================
+
+if [ -z "${JASS_MODE}" ]; then
+   JASS_MODE="APPLY"
+fi
+export JASS_MODE
+
+# ============================================================================
+# The following value defines the JASS verbosity level used when logging
+# information using the log*() functions.  This is currently only used
+# in the audit functionality (and in driver.run - shared functionality).
+#
+# If JASS_VERBOSITY is not at least 3 and the Toolkit is not being run in
+# audit mode, then reset this parameter to be 3.  JASS_VERBOSITY levels 0-2
+# are only supported in audit mode at this time.
+# ============================================================================
+
+if [ -z "${JASS_VERBOSITY}" ]; then
+   JASS_VERBOSITY="3"
+else
+   if [ ${JASS_VERBOSITY} -lt 0 -o ${JASS_VERBOSITY} -gt 4 ]; then
+      echo "[ERR ] "`gettext "Verbosity values must be between 0 and 4."`
+      exit 1
+   fi
+   if [ "${JASS_MODE}" != "AUDIT" -a ${JASS_VERBOSITY} -lt 3 ]; then
+      echo "[NOTE] "`gettext "The verbosity parameter must be either 3 or 4 in this mode."`
+      echo "[NOTE] "`gettext "Setting verbosity parameter to 3."`
+      JASS_VERBOSITY="3"
+   fi
+fi
+export JASS_VERBOSITY
+
+# ============================================================================
+# The following value controls the behavior of the check_minimized
+# function is audit mode.  If this parameter is set to "1", then the
+# check_minimized function operates as normal.  If this parameter is
+# set to "0", then it will return immediately without performing its
+# check.
+# ============================================================================
+
+if [ -z "${JASS_CHECK_MINIMIZED}" ]; then
+   JASS_CHECK_MINIMIZED="0"
+fi
+export JASS_CHECK_MINIMIZED
+
+# ============================================================================
+# Use the specified value to denote whether files/directories should be
+# saved before being modified.  Setting this variable to "0" will cause
+# the removal of pre-existing versions of files that are modified.  The
+# default value is to safe a backup version of each file touched.
+# ============================================================================
+
+if [ -z "${JASS_SAVE_BACKUP}" ]; then
+   JASS_SAVE_BACKUP="1"
+fi
+export JASS_SAVE_BACKUP
+
+# ============================================================================
+# Use the specified value as a placeholder for future use.  This variable
+# is used by the backup_file function to store the "current" backup suffix
+# for a given file.  Each time a file is saved using the backup_file
+# function, this variable is set to ".JASS.YYMMDDhhmmss"
+# This is provided for any Finish scripts to use if access to a saved copy
+# of a file is needed.
+# ============================================================================
+
+if [ -z "${JASS_SUFFIX}" ]; then
+   JASS_SUFFIX=""
+fi
+export JASS_SUFFIX
+
+# ============================================================================
+# The following set of variables are used as part of the execution
+# log and (future) backout modules.  These variables will store information
+# into JASS_REPOSITORY.  This will allow facilitate the determination
+# of scripts that were run, files that were installed and modified, etc.
+# for any given run.
+#
+# NOTE: These variables should not be changed.
+# ============================================================================
+
+if [ -z "${JASS_REPOSITORY}" ]; then
+   JASS_REPOSITORY="${JASS_ROOT_DIR}var/opt/${JASS_PKG}/run/${JASS_TIMESTAMP}"
+fi
+export JASS_REPOSITORY
+
+# ============================================================================
+
+if [ -z "${JASS_RUN_VERSION}" ]; then
+   JASS_RUN_VERSION="${JASS_REPOSITORY}/jass-version.txt"
+fi
+export JASS_RUN_VERSION
+
+# ============================================================================
+
+if [ -z "${JASS_RUN_MANIFEST}" ]; then
+   JASS_RUN_MANIFEST="${JASS_REPOSITORY}/jass-manifest.txt"
+fi
+export JASS_RUN_MANIFEST
+
+# ============================================================================
+
+if [ -z "${JASS_RUN_AUDIT_LOG}" ]; then
+   JASS_RUN_AUDIT_LOG="${JASS_REPOSITORY}/jass-audit-log.txt"
+fi
+export JASS_RUN_AUDIT_LOG
+
+# ============================================================================
+
+if [ -z "${JASS_RUN_CHECKSUM}" ]; then
+   JASS_RUN_CHECKSUM="${JASS_REPOSITORY}/jass-checksums.txt"
+fi
+export JASS_RUN_CHECKSUM
+
+# ============================================================================
+
+if [ -z "${JASS_RUN_CLEAN_LOG}" ]; then
+   JASS_RUN_CLEAN_LOG="${JASS_REPOSITORY}/jass-cleanup-log.txt"
+fi
+export JASS_RUN_CLEAN_LOG
+
+# ============================================================================
+
+
+if [ -z "${JASS_RUN_INSTALL_LOG}" ]; then
+   JASS_RUN_INSTALL_LOG="${JASS_REPOSITORY}/jass-install-log.txt"
+fi
+export JASS_RUN_INSTALL_LOG
+
+# ============================================================================
+
+if [ -z "${JASS_RUN_SCRIPT_LIST}" ]; then
+   JASS_RUN_SCRIPT_LIST="${JASS_REPOSITORY}/jass-script-list.txt"
+fi
+export JASS_RUN_SCRIPT_LIST
+
+# ============================================================================
+
+if [ -z "${JASS_RUN_UNDO_LOG}" ]; then
+   JASS_RUN_UNDO_LOG="${JASS_REPOSITORY}/jass-undo-log.txt"
+fi
+export JASS_RUN_UNDO_LOG
+
+
+# ============================================================================
+
+if [ -z "${JASS_RUN_VALUES}" ]; then
+   JASS_RUN_VALUES="${JASS_REPOSITORY}/jass-values.txt"
+fi
+export JASS_RUN_VALUES
+
+# ============================================================================
+if [ -z "${JASS_SCRIPT_ERROR_LOG}" ]; then
+   JASS_SCRIPT_ERROR_LOG="${JASS_REPOSITORY}/jass-script-errors.txt"
+fi
+export JASS_SCRIPT_ERROR_LOG
+
+
+# ============================================================================
+
+if [ -z "${JASS_SCRIPT_WARN_LOG}" ]; then
+   JASS_SCRIPT_WARN_LOG="${JASS_REPOSITORY}/jass-script-warnings.txt"
+fi
+export JASS_SCRIPT_WARN_LOG
+
+# ============================================================================
+
+if [ -z "${JASS_SCRIPT_FAIL_LOG}" ]; then
+   JASS_SCRIPT_FAIL_LOG="${JASS_REPOSITORY}/jass-script-failures.txt"
+fi
+export JASS_SCRIPT_FAIL_LOG
+
+# ============================================================================
+
+if [ -z "${JASS_SCRIPT_NOTE_LOG}" ]; then
+   JASS_SCRIPT_NOTE_LOG="${JASS_REPOSITORY}/jass-script-notes.txt"
+fi
+export JASS_SCRIPT_NOTE_LOG
+
+# ============================================================================
+# Define the configuration directory assuming it has not already been defined.
+# JASS_HOME_DIR is normally set by jass-execute in standalone mode.  For
+# JumpStart installations, this parameter may not be set, although the
+# JumpStart SI_CONFIG_DIR parameter serves as an acceptable substitute.  If
+# neither are defined, we cannot continue processing.
+# ============================================================================
+
+if [ -z "${JASS_HOME_DIR}" ]; then
+   if [ -z "${SI_CONFIG_DIR}" ]; then
+      echo "[ERR ] "`gettext "JASS_HOME_DIR is not be defined, exiting."`
+      exit 1
+   else
+      JASS_HOME_DIR="${SI_CONFIG_DIR}"
+   fi
+fi
+export JASS_HOME_DIR
+
+# ============================================================================
+# Define the host name of the system on which JASS is being installed.
+# ============================================================================
+
+if [ -z "${JASS_HOSTNAME}" ]; then
+   if [ -z "${SI_HOSTNAME}" ]; then
+      JASS_HOSTNAME="`uname -n`"
+   else
+      JASS_HOSTNAME="${SI_HOSTNAME}"
+   fi
+fi
+export JASS_HOSTNAME
+
+# ============================================================================
+# Define the location for the Finish scripts.
+# ============================================================================
+
+if [ -z "${JASS_FINISH_DIR}" ]; then
+   JASS_FINISH_DIR="${JASS_HOME_DIR}/Finish"
+fi
+export JASS_FINISH_DIR
+
+# ============================================================================
+# Define the location for the software packages.
+# ============================================================================
+
+if [ -z "${JASS_PACKAGE_DIR}" ]; then
+   if [ "${JASS_STANDALONE}" = "1" ]; then
+      JASS_PACKAGE_DIR="${JASS_HOME_DIR}/Packages"
+   else
+      JASS_PACKAGE_DIR="/tmp/jass-packages"
+   fi
+fi
+export JASS_PACKAGE_DIR
+
+# ============================================================================
+# Define the location for the patches.
+# ============================================================================
+
+if [ -z "${JASS_PATCH_DIR}" ]; then
+   if [ "${JASS_STANDALONE}" = "1" ]; then
+      JASS_PATCH_DIR="${JASS_HOME_DIR}/Patches"
+   else
+      JASS_PATCH_DIR="/tmp/jass-patches"
+   fi
+fi
+export JASS_PATCH_DIR
+
+# ============================================================================
+# Define the location for the personalized files.
+# ============================================================================
+
+if [ -z "${JASS_FILES_DIR}" ]; then
+   JASS_FILES_DIR="${JASS_HOME_DIR}/Files"
+fi
+export JASS_FILES_DIR
+
+# ============================================================================
+# Define the location for the Audit scripts.
+# ============================================================================
+
+if [ -z "${JASS_AUDIT_DIR}" ]; then
+   JASS_AUDIT_DIR="${JASS_HOME_DIR}/Audit"
+fi
+export JASS_AUDIT_DIR
+
+# ============================================================================
+# Define the operating environment revision.
+# ============================================================================
+
+if [ -z "${JASS_OS_REVISION}" ]; then
+   if [ -f ${JASS_ROOT_DIR}usr/bin/uname ]; then
+     JASS_OS_REVISION="`${JASS_ROOT_DIR}usr/bin/uname -r`"
+   else
+     echo "[ERR ] "`gettext "JASS_OS_REVISION is not defined, exiting."`
+     exit 1
+   fi
+fi
+export JASS_OS_REVISION
+
+# JASS_OS_ORDINAL can be correctly compared, alphabetically or algebraically,
+# between various releases.
+# For example for Solaris  release 5.5.1 < 5.10: ["050501" -lt "051000"]
+eval JASS_OS_ORDINAL=\`printf "%02d%02d%02d" \
+   `echo ${JASS_OS_REVISION} | sed 's/\./ /g' ` \`
+export JASS_OS_ORDINAL
+
+# Legacy:
+JASS_UNAME="${JASS_OS_REVISION}"
+export JASS_UNAME
+
+
+# ============================================================================
+# Define the operating environment type (Solaris or Trusted Solaris).
+# This function will either assign "Generic", "TS8" or "TS8_SE" to the
+# JASS_OS_TYPE parameter.
+# ============================================================================
+
+if [ -z "${JASS_OS_TYPE}" ]; then
+   if [ -f ${JASS_ROOT_DIR}usr/bin/uname ]; then
+     JASS_OS_TYPE="`${JASS_ROOT_DIR}usr/bin/uname -v`"
+   else
+     echo "[ERR ] "`gettext "JASS_OS_TYPE is not defined, exiting."`
+     exit 1
+   fi
+fi
+export JASS_OS_TYPE
+
+
+# ============================================================================
+# Define the zone name (for Solaris 10 and newer only).  This function will
+# assign a value of "global" to any Solaris OE revision prior to Solaris
+# X as well as when JASS is being used within a global zone for a Solaris
+# OE system.  Otherwise, this parameter will be set to the value as returned
+# by the /usr/bin/zonename command.
+# For Solaris 9 and earlier, which do not have Zones, JASS_ZONE_NAME is
+# set to "global".
+# ============================================================================
+
+if [ -z "${JASS_ZONE_NAME}" ]; then
+   if [ "${JASS_OS_ORDINAL}" -ge "051000" ]; then # Solaris 10+
+      if [ -x ${JASS_ROOT_DIR}usr/bin/zonename ]; then
+         JASS_ZONE_NAME="`${JASS_ROOT_DIR}usr/bin/zonename`"
+      else # Solaris Zones package not installed
+         JASS_ZONE_NAME="global"
+      fi
+
+   else # Solaris 9 or earlier
+      JASS_ZONE_NAME="global"
+   fi
+fi
+export JASS_ZONE_NAME
+
+# ============================================================================
+# Define the zone IP-type which can be either "shared" or "exclusive" (for
+# Solaris 10 and newer only).  The "exclusive" IP-type is new to Solaris
+# 10 Update 4 (8/07) and Solaris Nevada build 57 and later after the fix
+# for 6289221.  For exclusive-IP non-global zones the following commands
+# and services can now be run in a non-global zone that could not before:
+#
+#   * DHCP client
+#   * DHCP server
+#   * Routing daemon
+#   * IPsec
+#   * IPfilter
+#   * IP Multipathing (IPMP)
+#   * ndd commands
+#   * ifconfig (with set or modify capabilities)
+#
+# Source:
+# http://www.opensolaris.org/os/project/crossbow/faq/#ipinst_services
+# For the global zone and Solaris 9 and earlier JASS_ZONE_IP_TYPE is set
+# to "shared".
+# ============================================================================
+
+if [ -z "${JASS_ZONE_IP_TYPE}" ]; then
+   if [ "${JASS_ZONE_NAME}" != "global" ]; then
+      JASS_ZONE_IP_TYPE="`${JASS_ROOT_DIR}usr/sbin/zoneadm list -p|cut -d: -f7`"
+   else # Global zone or Solaris 9 or earlier
+      JASS_ZONE_IP_TYPE="shared"
+   fi
+fi
+export JASS_ZONE_IP_TYPE
+
+# ============================================================================
+# Define the home directory for the root account.
+# This is used by set-root-home-dir.fin for Solaris 10 and above.
+# Set to "/root" to setup a root home directory separate from "/".
+# Set to "/" to leave the root home directory unchanged.
+#
+# ============================================================================
+
+if [ -z "${JASS_ROOT_HOME_DIR}" ]; then
+   if [ "${JASS_OS_ORDINAL}" -ge "051000" ]; then # Solaris 10+
+      JASS_ROOT_HOME_DIR="/root"
+   else
+      JASS_ROOT_HOME_DIR="/"
+   fi
+fi
+export JASS_ROOT_HOME_DIR
+
+
+# ============================================================================
+# Define the disabling strategy for JASS.  This variable determines how
+# JASS disable services that have run control files.  If this variable
+# is set to "script", then the run control script will be moved aside.
+# If this variable is set to "conf", then the script's configuration file
+# will be moved aside.  Note that not all run control scripts use or have
+# a check for the existence of configuration files.  If this is the case,
+# then JASS will revert to "script" behavior for that specific script.
+# ============================================================================
+
+if [ -z "${JASS_DISABLE_MODE}" ]; then
+   if [ "${JASS_OS_ORDINAL}" -ge "050900" ]; then # Solaris 9+
+      JASS_DISABLE_MODE="conf"
+   else # Solaris 8 or earlier
+      JASS_DISABLE_MODE="script"
+   fi
+fi
+export JASS_DISABLE_MODE
+
+# ============================================================================
+# Define a variable that controls the display of information for more novice
+# users of the Toolkit.  This is used to provide additional, useful guidance
+# for those who may be less experienced.  This capability can be disabled by
+# those who no longer need such information by setting the JASS_NOVICE_USER
+# variable to "0" in the ${JASS_HOME_DIR}/Drivers/user.init file.
+# ============================================================================
+
+if [ -z "${JASS_NOVICE_USER}" ]; then
+   JASS_NOVICE_USER=1
+fi
+export JASS_NOVICE_USER
+
+# ============================================================================
+# Define the JASS Finish script specific variables.
+# ============================================================================
+
+if [ -f ${JASS_HOME_DIR}/Drivers/finish.init ]; then
+   . ${JASS_HOME_DIR}/Drivers/finish.init
+fi
+
+# ============================================================================
+
+# From the JASS_READ_DRIVER_INIT check above.
+
+   JASS_READ_DRIVER_INIT=1
+   export JASS_READ_DRIVER_INIT
+else
+   :
+fi

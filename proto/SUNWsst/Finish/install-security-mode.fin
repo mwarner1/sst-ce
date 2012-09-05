@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)install-security-mode.fin	3.7	05/04/12 SMI"
+#
+# This script enables the OpenBoot PROM (OBP) command protections.  This
+# script is only applicable on Sun SPARC-based systems.  This script is
+# not to be used in a completely unattended installation as an OBP password
+# must be entered and verified during the execution of this script.
+#
+# This script can only be used on SPARC-based systems.  It cannot be used
+# from within a non-global Solaris X zone.
+#
+
+logMessage "Enabling the EEPROM Security Mode."
+echo ""
+
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+
+   UNAME_P="`uname -p`"
+
+   if [ "${UNAME_P}" = "sparc" ]; then
+
+      EEPROM_SECURITY="`eeprom | grep security-mode |\
+         nawk -F= '{ print $2 }'`"
+
+      logMessage 'The EEPROM security-mode parameter is set as: ${EEPROM_SECURITY}.'
+      echo ""
+
+      if [ "${EEPROM_SECURITY}" = "none" ]; then
+
+         logMessage 'To improve the security of the system, the following command should be
+executed manually from the operating system.  For more information on this
+command and its possible values, refer to the eeprom(1M) manual entry.
+
+   eeprom \\\"security-mode=command\\\"'
+         echo ""
+
+         # eeprom "security-mode=command"
+      fi
+
+      EEPROM_BADLOGINS="`eeprom | grep security-#badlogins |\
+         nawk -F= '{ print $2 }'`"
+
+      logMessage 'The current number of EEPROM \\\"badlogins\\\" is ${EEPROM_BADLOGINS}.'
+      logMessage 'Setting the number of badlogins to \\\"0\\\".'
+
+      eeprom "security-#badlogins=0"
+
+   else
+      logNotice 'This script is not supported on this architecture, ${UNAME_P}.'
+   fi
+else
+   logNotGlobalZone
+fi

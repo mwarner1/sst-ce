@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)print-world-writable-objects.aud 1.8     05/04/05     SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="World Writable Objects"
+servfil="print-world-writable-objects.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script searches local filesystems in order to find filesystem objects
+   that are world-writable.  Objects in this state can be modified by any
+   user or service on the system.  As a result, the integrity of those files
+   may be in jeopardy.  It is crucial that world writable objects be
+   identified and their permissions corrected (if possible) to avoid
+   confidentiality, integrity or accountability problems.
+
+Determination of Compliance:
+
+   This script will return any matching objects (those that are world-
+   writable) along with a full (long) listing for further review.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+FIND_COMMAND="
+find ${JASS_ROOT_DIR} ! -local -prune -o ( ( -type f -o -type d ) -a -perm -0002 ) -print
+"
+EGREP_PATTERN="^${JASS_ROOT_DIR}system/contract/|^${JASS_ROOT_DIR}proc/"
+
+logMessage "# Searching for all filesystem objects that are world-writable.\n "
+
+for filename in `${FIND_COMMAND} | egrep -v "${EGREP_PATTERN}"` ; do
+   related="\n`gettext 'Object Listing for ${filename}:'`\n------------------------------\n"
+   related="${related}`ls -ld ${filename}`\n"
+   logFileExists ${filename} "" "${related}"
+done
+
+finish_audit

@@ -1,0 +1,1305 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)audit_public.funcs	1.29	05/07/14 SMI"
+#
+# This file contains all of the public interfaces to the validation functions
+# used by the Toolkit's audit functionality.  These functions should be
+# considered public in nature and used in audit scripts where needed.
+#
+
+##############################################################################
+# State Variables
+##############################################################################
+
+# The name of the current script being executed.
+SCRIPT_NAME=""
+export SCRIPT_NAME
+
+_minim_note="0"
+
+##############################################################################
+# Starts the audit process for an audit script.
+#
+#   This function sets the audit script state and logs the start of the
+#   audit script.
+#
+# Arguments:
+#
+#   scriptName             - the name of the audit script
+#   scriptDesc             - a description of the audit script
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the audit process is started successfully
+##############################################################################
+
+start_audit() {
+
+   scriptName="${1}"
+   scriptDesc="${2}"
+   relatedInfo="${3}"
+
+   if [ ! -z "${scriptName}" ]; then
+      SCRIPT_NAME="`echo ${scriptName} | sed 's/\.aud//g'`"
+   else
+      SCRIPT_NAME=`gettext "NOT SPECIFIED"`
+   fi
+
+   logMessage '------------------------------------------------------------------------------'
+
+   if [ ! -z "${scriptDesc}" ]; then
+      logFormattedMessage '${scriptDesc}'
+      logFormattedMessage '${relatedInfo}'
+   fi
+
+   logMessage '------------------------------------------------------------------------------\n '
+
+   SCRIPT_SCORE="0"
+   return 0
+
+}
+
+##############################################################################
+# Finishes the audit process for an individual audit script.
+#
+#   This function resets the audit script state and logs the
+#   completion of the audit script.
+#
+# Arguments:
+#
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the audit script process finishes successfully
+##############################################################################
+
+finish_audit() {
+
+   relatedInfo="${1}"
+
+   printMsg=0
+   if [ ${JASS_VERBOSITY} -ge 1 ]; then
+
+      if [ "${SCRIPT_SCORE}" = "0" ]; then
+         [ "${JASS_LOG_SUCCESS}" != "0" ] && \
+            printMsg=1
+      else
+         [ "${JASS_LOG_FAILURE}" != "0" ] && \
+            printMsg=1
+      fi
+
+      if [ ${printMsg} = 1 ]; then
+         logMessage "${JASS_MSG_SCRIPT_TOTAL}"
+         logScore 'Script Total:' "${SCRIPT_SCORE}"
+         if [ ! -z "${relatedInfo}" ]; then
+            logMessage "${relatedInfo}"
+         fi
+      fi
+   fi
+   return 0
+}
+
+##############################################################################
+# Checks for the existence of patches.
+#
+#   This function checks for the existence of a patch or patches.
+#   Either the major patch ID or a complete patch ID with a revision
+#   number can be specified.
+#
+# Arguments:
+#   patches                - the list of patches to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the patches exist
+#    1  if at least one of the patches does not exist
+###############################################################################
+
+check_patchExists() {
+   _check_patch 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of patches.
+#
+#   This function checks for the existence of a patch or patches.
+#   Either the major patch ID or a complete patch ID with a revision
+#   number can be specified.
+#
+# Arguments:
+#
+#   patches                - the list of patches to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the patches exist
+#    1  if at least one of the patches exists
+###############################################################################
+
+check_patchNotExists() {
+   _check_patch 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the existence of a software package.
+#
+# Arguments:
+#
+#   packages               - the list of packages to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the packages exist
+#    1  if at least one of the packages does not exist
+###############################################################################
+
+check_packageExists() {
+   _check_package 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a software package.
+#
+# Arguments:
+#
+#   packages               - the list of packages to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+
+check_packageNotExists() {
+   _check_package 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a software package.  This is a special case
+# function to be used when checking a system for minimization.  This function
+# is controlled by the JASS_CHECK_MINIMIZED = 1.  This should be used when the
+# existence of packages is not necessarily an error (when the system has not
+# been minimized.
+#
+# Arguments:
+#
+#   packages               - the list of packages to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+
+check_minimized() {
+   if [ "${JASS_CHECK_MINIMIZED}" = "1" ]; then
+      _check_package 1 "$1" "$2" "$3" "$4"
+      return $?
+   else
+      if [ "${_minim_note}" = "0" ]; then
+	 logNotice 'Minimization checks are disabled by JASS_CHECK_MINIMIZED.'
+	 _minim_note="1"
+      fi
+      return 0
+   fi
+}
+
+###############################################################################
+# Checks for the existence of a start script.
+#
+# Arguments:
+#
+#   startScripts           - the list of start scripts to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the scripts exist
+#    1  if at least one of the scripts does not exist
+###############################################################################
+
+check_startScriptExists () {
+   _check_startScript 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a start script.
+#
+# Arguments:
+#
+#   startScripts           - the list of start scripts to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the scripts exist
+#    1  if at least one of the scripts exists
+###############################################################################
+
+check_startScriptNotExists() {
+   _check_startScript 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the existence of a stop script.
+#
+# Arguments:
+#
+#   stopScripts            - the list of scripts to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the scripts exist
+#    1  if at least one of the scripts does not exist
+###############################################################################
+
+check_stopScriptExists () {
+   _check_stopScript 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a stop script.
+#
+# Arguments:
+#
+#   stopScripts            - the list of scripts to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the scripts exist
+#    1  if at least one of the scripts exists
+###############################################################################
+
+check_stopScriptNotExists() {
+   _check_stopScript 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the existence of a service configuration file.
+#
+# Arguments:
+#
+#   serviceConfigs         - the list of service config files to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service config files exist
+#    1  if at least one of the service config files does not exist
+###############################################################################
+
+check_serviceConfigExists () {
+   _check_serviceConfig 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a service configuration file.
+#
+# Arguments:
+#
+#   serviceConfigs         - the list of service config files to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the service config files exist
+#    1  if at least one of the service config files exists
+###############################################################################
+
+check_serviceConfigNotExists() {
+   _check_serviceConfig 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the existence of a running process.
+#
+#    The processName is a regular expression.
+#
+# Arguments:
+#
+#   processName            - the list of processes to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the processes are running
+#    1  if at least one of the processes is not running
+###############################################################################
+
+check_processExists () {
+   _check_process 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a running process.
+#
+#    The processName is a regular expression.
+#
+# Arguments:
+#
+#   processName            - the list of processes to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the processes are running
+#    1  if at least one of the processes is running
+###############################################################################
+
+check_processNotExists() {
+   _check_process 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for matching arguments for a running process.
+#
+#    The processName and argValue are regular expressions.
+#
+# Arguments:
+#
+#   processName            - the process to check
+#   argValue               - the argument list to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the process arguments are found
+#    1  if at least one of the process arguments are not found
+###############################################################################
+
+check_processArgsMatch () {
+   _check_processArgs 0 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks for non-matching arguments for a running process.
+#
+#    The processName and argValue are regular expressions.
+#
+# Arguments:
+#
+#   processName            - the process to check
+#   argValue               - the argument list to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the process arguments are found
+#    1  if at least one of the process arguments are found
+###############################################################################
+
+check_processArgsNoMatch() {
+   _check_processArgs 1 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks for the existence of a file.
+#
+# Arguments:
+#
+#   fileName               - the list of files to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the files exist
+#    1  if at least one of the files does not exist
+###############################################################################
+
+check_fileExists () {
+   _check_file 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a file.
+#
+# Arguments:
+#
+#   fileName               - the list of files to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the files exist
+#    1  if at least one of the files exists
+###############################################################################
+
+check_fileNotExists() {
+   _check_file 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the existence of specific contents in a file.
+#
+# Arguments:
+#
+#   fileName               - the files to check
+#   regExp                 - a regular expression of the contents to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the content exists in all of the files
+#    1  if the content does not exist in any of the files
+###############################################################################
+
+check_fileContentsExist() {
+   _check_fileContents 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of specific contents in a file.
+#
+# Arguments:
+#
+#   fileName               - list of files to check
+#   regExp                 - a regular expression of the contents to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the content does not exist in any of the files
+#    1  if the content exists in at least one of the files
+###############################################################################
+
+check_fileContentsNotExist() {
+   _check_fileContents 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for a matching file permissions mode for a file.
+#
+# Arguments:
+#
+#   fileName               - list of files to check
+#   fileMode               - the permission mode to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file permissions mode matches for all files
+#    1  if the file permissions mode does not match for at least one file
+###############################################################################
+
+check_fileModeMatch () {
+   _check_fileMode 0 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks for a non-matching file permissions mode for a file.
+#
+# Arguments:
+#
+#   fileName               - list of files to check
+#   fileMode               - the permission mode to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file permissions mode does not match for all files
+#    1  if the file permissions mode matches for at least one file
+###############################################################################
+
+check_fileModeNoMatch () {
+   _check_fileMode 1 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks for a matching file type for a file.
+#
+#    The file mode specification uses the operators of find(1)'s -type option.
+#
+# Arguments:
+#
+#   fileName               - list of files to check
+#   fileType               - the file type to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file type matches for all files
+#    1  if the file type does not match for at least one file
+###############################################################################
+
+check_fileTypeMatch() {
+
+   _check_fileType 0 "$1" "$2" "$3" "$4" "$5"
+   return $?
+
+}
+
+###############################################################################
+# Checks for a non-matching file type for a file.
+#
+#    The file mode specification uses the operators of find(1)'s -type option.
+#
+# Arguments:
+#
+#   fileName               - list of files to check
+#   fileType               - the file type to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file type does not match for all files
+#    1  if the file type matches for at least one file
+###############################################################################
+
+check_fileTypeNoMatch() {
+   _check_fileType 1 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks for a matching file owner of a file.
+#
+# Arguments:
+#
+#   fileName               - the files to check
+#   fileOwner              - the owner to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file owner matches for all files
+#    1  if the file owner does not match for at least one file
+###############################################################################
+
+check_fileOwnerMatch() {
+   _check_fileOwner 0 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks for a non-matching file permissions mode for a file.
+#
+# Arguments:
+#
+#   fileName               - list of files to check
+#   fileOwner              - the owner to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file owner does not match for all files
+#    1  if the file owner matches for at least one file
+###############################################################################
+
+check_fileOwnerNoMatch() {
+   _check_fileOwner 1 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks for a matching group owner for a filesystem object.
+#
+# Arguments:
+#
+#   fileName               - list of files to check
+#   fileGroup              - the group owner to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file group owner matches for all files
+#    1  if the file group owner does not match for at least one file
+###############################################################################
+
+check_fileGroupMatch() {
+   _check_fileGroup 0 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks for a non-matching file group owner for a file.
+#
+# Arguments:
+#
+#   fileName               - list of files to check
+#   fileGroup              - the group owner to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file group owner does not match for all files
+#    1  if the file group owner matches for at least one file
+###############################################################################
+
+check_fileGroupNoMatch() {
+   _check_fileGroup 1 "$1" "$2" "$3" "$4" "$5"
+   return $?
+}
+
+###############################################################################
+# Checks to determine file template is installed/matches on the system.
+#
+# Arguments:
+#
+#   fileName               - the files to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file template matches the target on the system.
+#    1  if the file template does not match the target on the system.
+###############################################################################
+
+check_fileTemplate() {
+   _check_fileTemplate "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# A convenience function for simpler logging of a common audit chore -
+# checking a keyword value pair in a file. The keyword must be the first non-
+# whitespace character on a line, separated from its value by a '='
+#
+# Conditions :
+#   the file being checked must exist. The behavior is undefined if it is not
+#
+# Arguments:
+#
+#   _audit_fileName               - the files to check
+#   _audit_keyword                - the keyword being checked
+#   _audit_value                  - the value being checked
+#
+# Returns:
+#         Nothing
+#
+###############################################################################
+check_keyword_value_pair() {
+
+   _audit_fileName="$1"
+   _audit_keyword="$2"
+   _audit_value="$3"
+
+   if check_fileContentsExist ${_audit_fileName} \
+      "^[ 	]*${_audit_keyword}=${_audit_value}" 1 ; then
+      logSuccess '${_audit_keyword} parameter is set to \\\"${_audit_value}\\\" in ${_audit_fileName}.'
+   else
+      if check_fileContentsExist ${_audit_fileName} \
+         "^[ 	]*${_audit_keyword}=" 0 ; then
+	 logFailure '${_audit_keyword} parameter is not set to \\\"${_audit_value}\\\" in ${_audit_fileName}.'
+      else
+         logFailure '${_audit_keyword} parameter is not defined in ${_audit_fileName}.'
+      fi
+   fi
+
+}
+
+
+###############################################################################
+# Check if crontab entry $2 is present in crontab file for user $1.
+#
+# Arguments:
+#   $1	User name of the crontab file owner
+#   $2	Program name to check in the crontab table
+#
+# Returns:
+#   0 if present, non-zero if the crontab entry or crontab file is missing
+#
+###############################################################################
+check_if_crontab_entry_present()
+{
+   CRONTAB_USER="${1}"
+   CRONTAB_PROGRAM="${2}"
+   CRONTAB_FILE="${CRONTAB_DIR}/${CRONTAB_USER}"
+
+
+   grep "${CRONTAB_PROGRAM}" "${CRONTAB_FILE}" >/dev/null 2>&1
+   if [ $? -eq 0 ] ; then
+      logSuccess 'Crontab entry for ${CRONTAB_PROGRAM} was found in file ${CRONTAB_FILE}.'
+      return 0
+   else
+
+      logFailure 'Crontab entry ${CRONTAB_PROGRAM} in ${CRONTAB_FILE} is missing.'
+      adjustScore 1
+      return 1
+   fi
+}
+
+
+###############################################################################
+# Checks for the existence of a running service.
+#
+#    The ServiceName is FMRI.
+#
+# Arguments:
+#
+#   serviceName            - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service are running
+#    1  if at least one of the service is not running
+###############################################################################
+
+check_serviceRunning () {
+   _check_service_running  0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a running service.
+#
+#    The ServiceName is a FMRI.
+#
+# Arguments:
+#
+#   serviceName            - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service are not running
+#    1  if at least one of the service is running
+###############################################################################
+
+check_serviceNotRunning () {
+   _check_service_running  1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the existence of a enabled service.
+#
+#    The ServiceName is a FMRI.
+#
+# Arguments:
+#
+#   serviceName            - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service are configured
+#    1  if at least one of the service is not configured
+###############################################################################
+
+check_serviceEnabled () {
+   _check_service_enabled  0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of a disabled service.
+#
+#    The ServiceName is a FMRI.
+#
+# Arguments:
+#
+#   serviceName            - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service are not configured
+#    1  if at least one of the service is configured
+###############################################################################
+
+check_serviceDisabled() {
+   _check_service_enabled 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the existence of an installed  service.
+#
+#    The ServiceName is a FMRI.
+#
+# Arguments:
+#
+#   serviceName            - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service are installed
+#    1  if at least one of the service is not installed
+###############################################################################
+
+check_serviceInstalled () {
+   _check_service_installed  0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for the non-existence of an installed  service.
+#
+#    The ServiceName is a FMRI.
+#
+# Arguments:
+#
+#   serviceName            - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service are not installed
+#    1  if at least one of the service is installed
+###############################################################################
+
+check_serviceNotInstalled() {
+   _check_service_installed 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for a service not installed.  This is a special case
+# function to be used when checking a system for minimization.  This function
+# is controlled by the JASS_CHECK_MINIMIZED = 1.  This should be used when the
+# existence of packages is not necessarily an error (when the system has not
+# been minimized.
+#
+# Arguments:
+#
+#   services               - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+
+check_minimized_service() {
+   if [ "${JASS_CHECK_MINIMIZED}" = "1" ]; then
+      _check_service_installed 1 "$1" "$2" "$3" "$4"
+      return $?
+   else
+      if [ "${_minim_note}" = "0" ]; then
+	 logNotice 'Minimization checks are disabled by JASS_CHECK_MINIMIZED.'
+	 _minim_note="1"
+      fi
+      return 0
+   fi
+}
+
+###############################################################################
+# Checks for if a service is installed.
+#
+# Arguments:
+#
+#   services               - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+
+check_serviceInstalled() {
+   _check_service_installed 0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for if a service is not installed.
+#
+# Arguments:
+#
+#   services               - the list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+
+check_serviceNotInstalled() {
+   _check_service_installed 1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for whether a user is locked from password file
+#
+#    The user is a FMRI.
+#
+# Arguments:
+#
+#   userList               - the list of users to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service are running
+#    1  if at least one of the service is not running
+###############################################################################
+
+check_userLocked () {
+   _check_user_locked  0 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for a user is unlocked from password file.
+#
+#    The user is a FMRI.
+#
+# Arguments:
+#
+#   userList               - the list of users to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if all of the service are not running
+#    1  if at least one of the service is running
+###############################################################################
+
+check_userNotLocked () {
+   _check_user_locked  1 "$1" "$2" "$3" "$4"
+   return $?
+}
+
+###############################################################################
+# Checks for if a service's option is enabled
+#
+# Arguments:
+#
+#   services               - the list of services to check
+#   property               - the property of the service
+#   pattern                - the pattern before the option
+#   option                 - the option
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+
+check_serviceOptionEnabled()
+{
+
+    _check_service_option 0 "$1" "$2" "$3" "$4" "$5" "$6" "$7"
+    return $?
+}
+
+###############################################################################
+# Checks for if a service's option is disabled
+#
+# Arguments:
+#
+#   services               - the list of services to check
+#   property               - the property of the service
+#   pattern                - the pattern before the option
+#   option                 - the option
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+check_serviceOptionDisabled ()
+{
+    _check_service_option 1 "$1" "$2" "$3" "$4" "$5" "$6" "$7"
+    return $?
+}
+
+###############################################################################
+# Checks for if a service's  property is enabled
+#
+# Arguments:
+#
+#   services               - the list of services to check
+#   property               - the property of the service
+#   value                  - the property value
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+check_servicePropEnabled ()
+{
+    _check_service_prop 0 "$1" "$2" "$3" "$4" "$5" "$6"
+    return $?
+}
+
+###############################################################################
+# Checks for if a service's  property is disabled
+#
+# Arguments:
+#
+#   services               - the list of services to check
+#   property               - the property of the service
+#   value                  - the property value
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if none of the packages exist
+#    1  if at least one of the packages exists
+###############################################################################
+check_servicePropDisabled ()
+{
+    _check_service_prop 1 "$1" "$2" "$3" "$4" "$5" "$6"
+    return $?
+}
+
+###############################################################################
+# Get a list of commands for a running service
+#
+# Arguments:
+#   svcName       -the service  in FMRI
+#
+# Returns:
+#
+#   ""  if no process associates with the service
+#   process list { pid user comm [pid user common] }
+###############################################################################
+get_cmdFromService ()
+{
+
+   svcName=${1}
+
+   # Get primary contract ID, if any (with whitespace, "-", & "*" filtered-out):
+   contractID="`svcs -H -o ctid ${svcName} | sed 's/[	* \-]*//g'`"
+
+   cmdList=""
+
+   if [ "${contractID}" != "" ]; then
+      processList="`pgrep -c ${contractID}`"
+
+      for pid in ${processList}; do
+         cmdList=${cmdList}" `ps -f -o pid,comm -p ${pid} | nawk '{print $2}'
+            | grep -v 'PID.*COMMAND'`"
+      done
+
+   fi
+
+   echo "${cmdList}"
+}

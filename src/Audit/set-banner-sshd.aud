@@ -1,0 +1,116 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-banner-sshd.aud 1.11     05/03/30 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="SSH Service Banner"
+servfil="set-banner-sshd.aud"
+
+SSHD_CONFIG="${JASS_ROOT_DIR}etc/ssh/sshd_config"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The sshd service is an implementation of the secure shell server.
+   sshd is a root process which listens for ssh requests on the SSH
+   port as indicated by the /etc/services files (see services(4)).
+
+   The sshd service banner is a file that is displayed on successful
+   login to the host using ssh.
+
+Rationale for Verification Check:
+
+   This script is designed to verify that the SSH service has a service
+   banner installed that matches the value defined by the JASS_BANNER_SSHD
+   parameter and that the value is an actual file that exists. 
+
+Determination of Compliance:
+
+   This script checks that the SSH service banner matches the value 
+   defined by the JASS_BANNER_SSHD parameter.  This script will indicate 
+   a failure if the service banner does not match or the service banner is
+   file which doesn't exist.  The value of the 
+   JASS_BANNER_SSHD parameter is:
+
+`printPretty \"${JASS_BANNER_SSHD}\"`
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.9 ; then
+   pkgExists=0
+   if check_os_min_revision 5.10 ; then
+      if check_serviceInstalled svc:/network/ssh:default 1 LOG ; then 
+         pkgExists=1
+      else
+         logNotice "Sun Secure Shell (svc:/network/ssh:defaut) is not installed."
+      fi
+   else
+
+      if check_packageExists SUNWsshdr 0  ; then
+         pkgExists=1;
+      else
+         logNotice "Sun Secure Shell (SUNWsshdr) does not appear to be installed."
+      fi
+   fi
+   if [ $pkgExists -eq 1 ] ; then
+      if check_fileExists ${SSHD_CONFIG} 1 ; then
+         if check_fileContentsExist ${SSHD_CONFIG} \
+            "^Banner ${JASS_BANNER_SSHD}" 1 ; then
+            logSuccess "SSH service banner matches value of JASS_BANNER_SSHD."
+
+            # Check that the banner file exists.
+            if check_fileExists ${JASS_BANNER_SSHD} 1; then
+              logSuccess "SSH service banner file exists."
+            else
+              logFileNotFound "${JASS_BANNER_SSHD}" 1
+            fi
+         else
+            if check_fileContentsExist ${SSHD_CONFIG} "^Banner " 0 ; then
+               logFailure "SSH service banner does not match value of JASS_BANNER_SSHD."
+            else
+               logFailure 'SSH service banner is not defined in ${SSHD_CONFIG}.'
+            fi
+         fi
+      else
+         logFileNotFound "${SSHD_CONFIG}" 1
+      fi 
+   fi
+else
+   logInvalidOSRevision "5.9+"
+fi
+
+finish_audit

@@ -1,0 +1,85 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-cronlog.aud	1.4	07/01/09 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Direct, Remote 'root' Login"
+servfil="enable-cronlog.aud"
+
+CRON="${JASS_ROOT_DIR}etc/default/cron"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The CRONLOG parameter in ${CRON} enables logging of every cron job
+   that gets executed on the system.  The log data is in file /var/cron/log,
+   which should be reviewed on a regular basis. 
+
+Rationale for Verification Check:
+
+   Logging cron jobs allows one to detect possible unauthorized use of
+   cron jobs.
+
+Determination of Compliance:
+
+   This script will indicate a failure if CRONLOG in ${CRON} is not set
+   to YES.  This script also reports incorrect permissions or ownership for
+   ${CRON}.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_fileExists "${CRON}" 1; then
+
+   check_fileOwnerMatch "${CRON}" 'root' 1 LOG
+   if check_os_min_revision 5.11 ; then
+      check_fileGroupMatch "${CRON}" 'sys' 1 LOG
+      check_fileModeNoMatch "${CRON}" "-100 -20 -10 -2 -1" 1 LOG
+   else
+      check_fileGroupMatch "${CRON}" 'bin' 1 LOG
+      check_fileModeNoMatch "${CRON}" "-20 -2" 1 LOG
+   fi
+
+   if check_fileContentsExist "${CRON}" "^CRONLOG[ 	]*=[ 	]*YES$" 1; then
+      logSuccess 'CRONLOG parameter is set in ${CRON}.'
+   else
+      logFailure 'CRONLOG parameter is not set in ${CRON}.'
+   fi
+else
+   logFileNotFound "${CRON}" 1
+fi
+
+finish_audit

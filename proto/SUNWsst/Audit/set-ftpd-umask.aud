@@ -1,0 +1,129 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-ftpd-umask.aud 1.12     05/05/09 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="FTP Service Banner"
+servfil="set-banner-ftpd.aud"
+
+FTPACCESS="${JASS_ROOT_DIR}etc/ftpd/ftpaccess"
+FTPD="${JASS_ROOT_DIR}etc/default/ftpd"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The File Transfer Protocol (FTP) service provides the ability for users 
+   to transfer files between systems.  This service is typically started by
+   inetd(1M) each time a connection is initiated.  This service provides 
+   various levels of access control based on the installed version of the 
+   Solaris OE.
+
+Rationale for Verification Check:
+
+   This script is designed to verify that the File Transfer Protocol (FTP)
+   service has its default file creation mask (umask) set to the value
+   defined by the JASS_FTPD_UMASK parameter. 
+
+   Note that the FTP service file creation mask is defined in one of two 
+   locations depending on the version of the Solaris OE.  For the Solaris OE
+   version 9 and higher, the value is stored in the 'defumask' parameter in 
+   the ${FTPACCESS} file.  For earlier versions, it is stored in the 'UMASK'
+   variable in the ${FTPD} file.
+
+Determination of Compliance:
+
+   This script checks that the FTP service banner matches the value defined 
+   by the JASS_FTPD_UMASK parameter.  This script will indicate a failure
+   if the file creation mask value does not match.  The value of the 
+   JASS_FTPD_UMASK parameter is ${JASS_FTPD_UMASK}.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+   if check_os_min_revision 5.9 ; then
+      pkgExists=0
+      if check_os_min_revision 5.10 ; then
+         if check_serviceInstalled svc:/network/ftp 1 LOG ; then
+            pkgExists=1
+         else
+            logNotice "FTP service (svc:/network/FTP:default) does not appear to be installed."
+         fi
+      else
+         if check_packageExists SUNWftpr 0 ; then
+            pkgExists=1
+         else
+            logNotice "Package SUNWftpr is not installed."
+         fi
+      fi
+      if [ $pkgExists -eq 1 ] ; then
+         if check_fileExists ${FTPACCESS} 1 ; then
+            if check_fileContentsExist ${FTPACCESS} \
+               "^defumask ${JASS_FTPD_UMASK}$" 1 ; then
+               logSuccess 'FTP service umask is set to ${JASS_FTPD_UMASK}.'
+            else
+               if check_fileContentsExist ${FTPACCESS} \
+                  "^defumask" 0 ; then
+                  logFailure 'FTP service umask is not set to ${JASS_FTPD_UMASK}.'
+               else
+                  logFailure 'FTP service umask is not defined in ${FTPACCESS}.'
+               fi
+            fi
+         else
+            logFileNotFound "${FTPACCESS}" 1
+         fi
+      fi
+   else
+      if check_fileExists ${FTPD} 1 ; then
+         if check_fileContentsExist ${FTPD} \
+            "^UMASK=${JASS_FTPD_UMASK}" 1 ; then
+            logSuccess 'FTP service umask is set to ${JASS_FTPD_UMASK}.'
+         else
+            if check_fileContentsExist ${FTPD} "^UMASK=" 0 ; then
+               logFailure 'FTP service umask is not set to ${JASS_FTPD_UMASK}.'
+            else
+               logFailure 'FTP service umask is not defined in ${FTPD}.'
+            fi
+         fi
+      else
+         logFileNotFound "${FTPD}" 1
+       fi 
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

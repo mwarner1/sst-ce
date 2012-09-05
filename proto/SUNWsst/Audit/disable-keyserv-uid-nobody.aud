@@ -1,0 +1,139 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-keyserv-uid-nobody.aud 1.8     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="'nobody' access to SecureRPC information"
+servfil="disable-keyserv-uid-nobody.aud"
+
+KEYSERV="${JASS_ROOT_DIR}etc/default/keyserv"
+RPC="${JASS_ROOT_DIR}etc/init.d/rpc"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The keyserv(1M) daemon is used for storing the private encryption key of
+   each user logged into the system.  These encryption keys are used for 
+   accessing secure  network  services such as secure NFS and NIS+.  
+
+Rationale for Verification Check:
+
+   The keyserv service can be configured to prevent the use of default keys
+   for the nobody account.  This is done in one of two ways depending on
+   the version of the Solaris OE used.  For the Solaris OE version 9 and
+   later, the ENABLE_NOBODY_KEYS parameter can be set to 'NO' in the file,
+   ${KEYSERV}.  For older releases, the '-d' parameter can be added to the
+   keyserv invokation line in the ${RPC} file.
+ 
+Determination of Compliance:
+
+   This check will indicate a failure if the keyserv service is not configured
+   to prevent the use of default keys for the nobody user.  Note that for the 
+   Solaris OE version 9 and higher, this script will check both conditions 
+   noted above as both could be used to enable this functionality.  This script
+   will also indicate a failure if the keyserv process is not running with
+   the '-d' flag and the 'ENABLE_NOBODY_KEYS' parameter is not set to 'NO' 
+   (for the Solaris OE version 9 and higher). 
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="/usr/sbin/keyserv"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+actuallyDisabled=0
+enkSet=0
+
+if check_os_min_revision 5.9 ; then
+   if check_fileExists ${KEYSERV} 0; then
+      if check_fileContentsExist ${KEYSERV} '^ENABLE_NOBODY_KEYS=NO' 0; then
+         logNotice 'ENABLE_NOBODY_KEYS is set to \\\"NO\\\" in ${KEYSERV}.'
+         actuallyDisabled=1
+         enkSet=1
+      else
+         if check_fileContentsExist ${KEYSERV} \
+            "^ENABLE_NOBODY_KEYS=" 0 ; then
+            logNotice 'ENABLE_NOBODY_KEYS is not set to \\\"NO\\\" in ${KEYSERV}.'
+         else
+            logNotice 'ENABLE_NOBODY_KEYS is not defined in ${KEYSERV}.'
+         fi
+      fi
+   else
+      logFileNotFound "${KEYSERV}"
+   fi
+fi
+
+if check_fileExists "${RPC}" 0 ; then
+   if check_fileContentsExist ${RPC} "${servcmd}[ 	]*.*[ 	]*-d" 0; then
+      actuallyDisabled=1
+      logNotice 'keyserv is configured to use the \\\"-d\\\" option in ${RPC}.'
+   else
+      if [ ${enkSet} -eq 0 ]; then
+         if check_fileContentsExist ${RPC} "${servcmd}" 0 ; then
+            logNotice 'keyserv is not configured to use the \\\"-d\\\" option in ${RPC}.'
+         else
+            logNotice 'keyserv is not defined in ${RPC}.'
+         fi
+      fi
+   fi
+else
+   logFileNotFound "${RPC}" 
+fi
+
+if [ $actuallyDisabled -eq 1 ]; then
+   logSuccess "keyserv is configured to disable anonymous access to SecureRPC."
+else
+   logFailure "keyserv is not configured to disable anonymous access to SecureRPC."
+   adjustScore 1
+fi
+
+if check_processExists "${servcmd}" 0 ; then 
+   if check_processArgsMatch "${servcmd}" "-d" 0 ; then
+      logSuccess 'keyserv is running with the \\\"-d\\\" option.'
+   else
+      if [ ${enkSet} -eq 0 ]; then
+         adjustScore 1
+         logFailure 'keyserv is not running with the \\\"-d\\\" option.'
+      else
+         logSuccess "keyserv is running with ENABLE_NOBODY_KEYS=NO."
+      fi
+   fi
+else
+   logNotice "keyserv is not running on the system."
+fi
+
+finish_audit

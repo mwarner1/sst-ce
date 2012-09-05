@@ -1,0 +1,105 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-failed-logins.aud	1.4	07/05/18 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Log all failed login attempts"
+servfil="%M"
+
+LOGIN="${JASS_ROOT_DIR}etc/default/login"
+LOGADM=${JASS_ROOT_DIR}etc/logadm.conf
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   If it exists, the file /var/adm/loginlog will capture failed login
+   attempts from login(1).  Only failed login attempts that exceed
+   SYSLOG_FAILED_LOGINS as defined in ${LOGIN} are logged by login(1).
+   The delay between failed logins is SLEEPTIME seconds, also in ${LOGIN}.
+   If not defined, the default is 5 failed attempts before logging.
+
+   The loginlog file should be reviewed on a regular basis.
+
+Rationale for Verification Check:
+
+   Setting SYSLOG_FAILED_LOGINS to 0 causes login(1) to log all failed login
+   attempts.  By default the loginlog file does not exist.  It must be
+   created manually before it is written to by login(1).
+   Setting SLEEPTIME to 4 seconds slows down password guessing attempts.
+
+Determination of Compliance:
+
+   This script reports a failure if the SYSLOG_FAILED_LOGINS parameter
+   in the ${LOGIN} file is not set to 0 or if the SLEEPTIME parameter
+   in the ${LOGIN} file is not set to 4.  It will also reports a failure if
+   an appropriate loginlog entry is not found in ${LOGADM}.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_fileExists ${LOGIN} 1 ; then
+   if check_fileContentsExist ${LOGIN} \
+         "^[ 	]*SYSLOG_FAILED_LOGINS=0" 1 ; then
+      logSuccess 'SYSLOG_FAILED_LOGINS parameter is set to 0.'
+
+   else
+      if check_fileContentsExist ${LOGIN} \
+            "^[ 	]*SYSLOG_FAILED_LOGINS=" 0 ; then
+         logFailure \
+            'SYSLOG_FAILED_LOGINS parameter is not set to 0 in ${LOGIN}.'
+      else
+         logFailure 'SYSLOG_FAILED_LOGINS parameter is not defined in ${LOGIN}.'
+      fi
+   fi
+
+   if check_fileContentsExist ${LOGIN} "^[ 	]*SLEEPTIME=4" 1 ; then
+      logSuccess 'SLEEPTIME parameter is set to 4.'
+
+   else
+      if check_fileContentsExist ${LOGIN} "^[ 	]*SLEEPTIME=" 0 ; then
+         logFailure 'SLEEPTIME parameter is not set to 4 in ${LOGIN}.'
+      else
+         logFailure 'SLEEPTIME parameter is not defined in ${LOGIN}.'
+      fi
+   fi
+
+   check_fileContentsExist "${LOGADM}" "^[ 	]*loginlog" 1 LOG 
+
+else
+   logFileNotFound ${LOGIN} 1
+fi
+
+finish_audit

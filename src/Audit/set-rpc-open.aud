@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-rpc-open.aud	1.2	06/10/23 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Remote Procedure Call (RPC) Service"
+servfil="set-rpc-open.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The rpcbind(1M) service converts Remote Procedure Call (RPC) program numbers
+   into universal addresses.  It must be running on the host to be able to make
+   RPC calls on a server on that machine.
+
+   When an RPC service is started, it tells rpcbind the address at which it is
+   listening, and the  RPC program numbers it is prepared to serve.  When a
+   client wishes to make an  RPC call to a given program number, it first
+   contacts rpcbind on the server machine to determine the address where RPC
+   requests should be sent.
+
+Rationale for Verification Check:
+
+   For certain applications, the RPC service must be able to respond to 
+   non-local requests.
+
+Determination of Compliance:
+
+   When Secure by Default is available, RPC will checked for whether
+   or not it is listening to external connections.  If it is not, a failure
+   will be indicated.
+
+   If SBD is not available, this script does nothing.
+"
+
+#-----------------------------------------------------------------------------
+
+
+svc="
+   svc:/network/rpc/bind:default
+   svc:/network/rpc/keyserv:default
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_sbd_available ; then
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   if check_serviceInstalled "svc:/network/rpc/bind:default" 0; then
+      check_servicePropEnabled "svc:/network/rpc/bind:default" \
+       "config/local_only" "false" 1 LOG
+   fi
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceEnabled "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceRunning "${svc}"  1 LOG
+   
+else
+   logNoSBD
+fi
+
+finish_audit

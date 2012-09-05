@@ -1,0 +1,422 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)add-client	3.13	05/04/12 SMI"
+#
+# This script is an attempt to simplify the process of adding new clients 
+# into the JumpStart environment.  This script several arguments: 
+# 
+# MANDATORY ARGUMENTS:
+#
+# 1. A host name (that must be resolvable in a name service or by 
+#    /etc/inet/hosts) specified by the "-c" option.
+#
+# 2. An operating system (that must be installed under ${jass_base_dir}/OS)
+#    If only one operating system is installed in this location, then
+#    it will be selected by default otherwise a version much be specified
+#    using the "-o" option.
+#
+# OPTIONAL ARGUMENTS:
+#
+# 1. The machine architecture of the target system (as determined by 
+#    "uname -m") and specified by the "-m" option.  If this parameter
+#    is not specified, "sun4u" is assumed.
+#
+# 2. The IP address of the JumpStart installation server.  If only one 
+#    network interface is installed on the system, then it will be 
+#    selected by default otherwise an IP address or host name must be 
+#    specified using the "-i" option.
+#
+# 3. The alternate sysidcfg file to use.  The directory in which this
+#    file is located can be passed to this program using the "-s"
+#    option.
+#
+# Calling this script with those arguments will make the necessary calls to 
+# "add_install_client".
+#
+
+jass_usage_msg="
+Usage: add-client -c client-host-name [-i install-server]
+                  [-m client-mach-class] [-o solaris-os-instance]
+                  [-s sysidcfg-dir]
+   or: add-client -v
+   or: add-client -? | -h
+
+Where the options are as follows:
+
+   [-c client-host-name]     The name of the JumpStart client to be installed.
+
+   [-h | -?]                 This help message.
+
+   [-i install-server]       The name of the JumpStart install server.  If this
+                             flag is not specified then a list of available
+                             install servers will be provided unless the system
+                             has only one network interface - in which case it 
+                             will be used.
+
+   [-m client-mach-class]    The machine class of the JumpStart client.  This
+                             value is the same format as the output of the
+                             'uname -m' command.
+
+   [-o solaris-os-instance]  The revision of the Solaris Operating Environment
+                             that is to be installed on the client.  If this
+                             flag is not specified, a list of available options
+                             will be provided unless only one instance is
+                             available - in which case it will be used.
+
+   [-s sysidcfg-dir]         A pathname to an alternate directory in which a
+                             system identification and configuration (sysidcfg)
+                             file is stored.  By default the value set to the
+                             directory, JASS_HOME/Sysidcfg/Solaris_VERSION/.
+                             If used, this path name should be specified to be
+                             relative to the JASS_HOME/Sysidcfg directory (such
+                             as Hosts/alpha where JASS_HOME/Sysidcfg/Hosts/alpha
+                             exists and contains a sysidcfg file.)
+
+   [-v]                      The version information for this program.
+
+"
+
+# ****************************************************************************
+# Explicitly define a path.
+# ****************************************************************************
+
+PATH=/usr/bin:/usr/sbin
+export PATH
+
+# ****************************************************************************
+# Obtain a fully qualified path to this script.
+# ****************************************************************************
+
+oldDirectory="`pwd`"
+newDirectory="`dirname $0`"
+cd ${newDirectory}
+jass_base_dir="`pwd`"
+
+if [ "`basename ${jass_base_dir}`" = "bin" ]; then
+   cd ..
+   jass_base_dir="`pwd`"
+fi
+
+cd ${oldDirectory}
+
+# ****************************************************************************
+# Define localization settings.
+# ****************************************************************************
+
+TEXTDOMAIN="add-client"
+TEXTDOMAINDIR="${jass_base_dir}/lib/locale"
+export TEXTDOMAIN TEXTDOMAINDIR
+
+# ****************************************************************************
+# Function: printUsage
+#
+# The purpose of this function is to display the usage information for this
+# program.  No other processing is done.
+# ****************************************************************************
+                                                                                                                             
+printUsage()
+{
+   gettext "${jass_usage_msg}"
+}
+
+# ****************************************************************************
+# Function: printVersion
+#
+# The purpose of this function is to display any version information about
+# this program.  No other processing is done.
+# ****************************************************************************
+                                                                                                                             
+printVersion()
+{
+   toolkitVersion="`grep JASS_VERSION= ${jass_base_dir}/Drivers/driver.init |\
+   nawk -F= '{ print $2 }' | sed 's/\"//g'`"
+   echo `gettext 'Version: '`"${toolkitVersion}"
+}
+
+# ****************************************************************************
+# Set default values for this program.
+# ****************************************************************************
+ 
+DEFAULT_MACH_CLASS="sun4u"
+ 
+# ****************************************************************************
+# Parse the command line arguments that were passed to this script.
+# ****************************************************************************
+                                                                                                                             
+while getopts c:h\?i:m:o:s:qv v; do
+   case ${v} in
+ 
+      c)
+         ADD_HOSTNAME="${OPTARG}"
+         ;;
+
+      \?|h)
+         printUsage
+         exit 0
+         ;;
+ 
+      i)
+         ADD_INST_SERVER="${OPTARG}"
+         ;;
+                                                                                                                             
+      m)
+         ADD_MACH_CLASS="${OPTARG}"
+         ;;
+                                                                                                                             
+      o)
+         ADD_OS_INSTANCE="${OPTARG}"
+         ;;
+                                                                                                                             
+      s)
+         ADD_SYSIDCFG_DIR="${OPTARG}"
+         ;;
+
+      v)
+         printVersion 
+         exit 0
+         ;;
+   esac
+done
+                                                                                                                             
+shift `expr $OPTIND - 1`
+
+# ****************************************************************************
+# Determine where the Solaris OE is stored.
+# ****************************************************************************
+
+jass_os_dir=${jass_base_dir}/OS
+export jass_os_dir
+
+if [ ! -d ${jass_os_dir} ]; then
+   eval echo `gettext 'Error: The OS directory was not found: ${jass_os_dir}\n'`
+   exit 1
+fi
+
+# ****************************************************************************
+# Verify the arguments passed to the program.  Get the name of the 
+# host to be installed.
+# ****************************************************************************
+
+jass_hostname="${ADD_HOSTNAME}"
+export jass_hostname
+
+if [ "${jass_hostname}" = "" ]; then
+   gettext "Error: A client host name was not specified.\n"
+   echo ""
+   gettext "${jass_usage_msg}"
+   exit 1
+fi
+
+# ****************************************************************************
+# Determine the Solaris OE to be installed.
+# ****************************************************************************
+
+jass_os="${ADD_OS_INSTANCE}"
+jass_os_revs=`( cd ${jass_os_dir}; ls )`
+
+os_error=1
+for os_rev in ${jass_os_revs}; do
+   if [ "${jass_os}" = "${os_rev}" ]; then
+      os_error=0
+      break
+   fi
+done
+
+if [ ${os_error} = 1 ]; then
+   if [ `echo ${jass_os_revs} | xargs -n 1 echo | wc -l` = 1 ]; then
+      if [ ! -z "${jass_os}" ]; then
+         eval echo `gettext 'Error: The OS was not found: \"${jass_os}\".\n'`
+         exit 1
+      fi
+      eval echo `gettext 'Selecting default operating system, \"${jass_os_revs}\".\n'`
+      jass_os="${jass_os_revs}"
+   else
+      gettext "Error: A client operating system was not selected or found.\n"
+      echo ""
+      gettext "${jass_usage_msg}" 
+      if [ -z "${jass_os_revs}" ]; then
+         gettext "Error: No Solaris OE revisions have been installed.\n"
+      else
+         gettext "Select one of the following Solaris OE revisions to install:\n"
+         for os_rev in ${jass_os_revs}; do
+            if [ -d ${jass_os_dir}/${os_rev} ]; then
+               echo "${os_rev}"
+            fi
+         done
+      fi
+      echo ""
+      exit 1
+   fi
+fi
+
+# ****************************************************************************
+# Determine the host architecture to be installed.
+# ****************************************************************************
+
+jass_host_arch="${ADD_MACH_CLASS}"
+export jass_host_arch
+
+if [ "${jass_host_arch}" = "" ]; then
+   eval echo `gettext 'Selecting default machine class, \"${DEFAULT_MACH_CLASS}\".\n'`
+   jass_host_arch="${DEFAULT_MACH_CLASS}"
+   export jass_host_arch
+fi
+
+# ****************************************************************************
+# Determine the IP interface to be used.
+# ****************************************************************************
+
+jass_ifs_list="`ifconfig -a | grep -v inet6 | nawk ' $1 ~ /inet/ { print $2 }' |\
+   grep -v '0.0.0.0' | grep -v '127.0.0.1'`"
+
+jass_install_host="${ADD_INST_SERVER}"
+export jass_install_host
+
+if [ "${jass_install_host}" = "" ]; then
+   if [ `echo ${jass_ifs_list} | xargs -n 1 echo | wc -l` = 1 ]; then
+      eval echo `gettext 'Selecting default system interface, \"${jass_ifs_list}\".\n'`
+      jass_install_host="${jass_ifs_list}"
+   else
+      gettext "${jass_usage_msg}"
+      gettext "Select the interface from which the client will be installed:\n"
+      echo "${jass_ifs_list}"
+      echo ""
+      exit 1
+   fi
+fi
+
+# ****************************************************************************
+# Convert the "jass_os" variable to a more suitable format.
+# ****************************************************************************
+
+# Now that all of the user supplied information has been determined,
+# construct the name of the Operating Environment directory.  For example,
+# if the directory under ${jass_base_dir}/OS is "Solaris_8.0_06-00", indicating
+# a Solaris 8 06/00 Server Edition of the media, then the ${jass_host_os_dir}
+# as determined should be "8".  Note that each OS is a littele different
+# with its naming convention hence the sed scripts below.
+
+usingTrusted=`echo ${jass_os} | sed -e 's/Solaris_[0-9].*//'`
+
+jass_host_os_dir=`echo ${jass_os} | \
+    nawk -F_ '
+          $1 ~ /Trusted/ { print $3; }
+          $1 ~ /Solaris/ { print $2; }
+          ' |\
+    sed 's/\.0$//g' | sed 's/^7$/2\.7/g'`
+    # sed 's/\([0-9]\)\([0-9]\)/\1\.\2/g' |\
+
+# From the jass_host_os_dir, construct the location to the actual
+# "Tools" directory where the "add_install_client" script is located.
+
+if [ "${jass_host_os_dir}" = "2.5.1" ]; then
+   jass_tools_dir=${jass_os_dir}/${jass_os}
+else
+   jass_tools_dir=${jass_os_dir}/${jass_os}/${usingTrusted}Solaris_${jass_host_os_dir}/Tools
+fi
+
+export jass_tools_dir
+
+if [ ! -d ${jass_tools_dir} ]; then
+   eval echo `gettext 'Error: The Tools directory was not found: ${jass_tools_dir}\n'`
+   exit 1
+fi
+
+cd ${jass_tools_dir}
+
+# ****************************************************************************
+# Determine if an alternate sysidcfg file was specified.
+# ****************************************************************************
+
+alternate_sysidcfg=""
+if [ "${ADD_SYSIDCFG_DIR}" != "" ]; then
+   if [ "${jass_host_os_dir}" = "2.5.1" ]; then
+      message="\nAlternate 'sysidcfg' files are not support on this version of
+the Solaris OE.  The default file for this version will be used.\n\n"
+      gettext "${message}"
+   else
+      alternate_sysidcfg="${jass_base_dir}/Sysidcfg/${ADD_SYSIDCFG_DIR}"
+
+      if [ ! -f ${alternate_sysidcfg}/sysidcfg ]; then
+         gettext "\nThe alternate sysidcfg file was not found:\n"
+         echo "   ${alternate_sysidcfg}/sysidcfg"
+         gettext "\nPlease verify the file name and re-run this program.\n"
+         exit 1
+      fi
+   fi
+fi
+
+# ****************************************************************************
+# Determine the appropriate "sysidcfg" that should be used and finally 
+# execute the "add_install_client" program with the appropriate arguments.
+# ****************************************************************************
+
+if [ -z "${alternate_sysidcfg}" ]; then
+   # Execute the actual "add_install_client" with the
+   # appropriate arguments.  Note that Solaris 2.5.1
+   # did not support the "-p" option.
+
+   jass_sysid_line=""
+   jass_sysid_dir=""
+
+   if [ "${jass_host_os_dir}" != "2.5.1" ]; then
+      jass_sysid_dir="${jass_base_dir}/Sysidcfg"
+      if [ "${jass_host_os_dir}" = "2.7" ]; then
+         jass_sysid_dir="${jass_sysid_dir}/Solaris_7"
+      else
+         jass_sysid_dir="${jass_sysid_dir}/Solaris_${jass_host_os_dir}"
+      fi
+   fi
+   
+   if [ "${jass_sysid_dir}" != "" ]; then
+      if [ ! -d ${jass_sysid_dir} ]; then
+         eval echo `gettext 'The directory was not found: ${jass_sysid_dir}\n'`
+         gettext "Trying default system configuration directory.\n"
+    
+         if [ ! -d ${jass_base_dir}/Sysidcfg ]; then
+            eval echo `gettext 'The directory was not found: ${jass_base_dir}/Sysidcfg\n'`
+            gettext "The installation will not be fully automated.\n"
+         else
+            jass_sysid_dir="${jass_base_dir}/Sysidcfg"
+         fi
+      fi
+   
+      jass_sysid_line="-p ${jass_install_host}:${jass_sysid_dir}"
+   fi
+else
+   jass_sysid_line="-p ${jass_install_host}:${alternate_sysidcfg}"
+fi
+
+# ****************************************************************************
+
+./add_install_client \
+		${jass_sysid_line} \
+		-c ${jass_install_host}:${jass_base_dir} \
+		${jass_hostname} \
+		${jass_host_arch}
+
+# ****************************************************************************
+

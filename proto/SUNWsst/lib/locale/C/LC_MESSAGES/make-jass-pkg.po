@@ -1,0 +1,114 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)make-jass-pkg.po 1.8     04/09/26     SMI"
+#
+domain "make-jass-pkg"
+#
+msgid  "\n"
+"Usage: make-jass-pkg [-b new-base-dir] [-e excl-list] [-m new-email-address]\n"
+"                     [-p package-name] [-q] [-t new-title]\n"
+"   or: make-jass-pkg -v\n"
+"   or: make-jass-pkg -? | -h\n"
+"\n"
+"Where the options are as follows:\n"
+"\n"
+"   [-b new-base-dir]         Specify an alternate installation base directory\n"
+"\n"
+"   [-e excl-list]            Exclude top level file or directories from the\n"
+"                             package.  This is done by specifying a '|'\n"
+"                             separated list as in 'a|b/c|d'.\n"
+"\n"
+"   [-h | -?]                 Display this help message.\n"
+"\n"
+"   [-m new-email-address]    Specify an e-mail address for support.\n"
+"\n"
+"   [-p package-name]         Specify a custom package name (default is \n"
+"                             JASScustm).\n"
+"\n"
+"   [-q]                      Quiet mode.  No messages are displayed.\n"
+"\n"
+"   [-t new-title]            Specify an alternative package title (default\n"
+"                             is \"Sun Security Toolkit: Community Edition\").\n"
+"\n"
+"   [-v]                      The version information for this program.\n"
+"\n"
+msgstr "\n"
+"Usage: make-jass-pkg [-b new-base-dir] [-e excl-list] [-m new-email-address]\n"
+"                     [-p package-name] [-q] [-t new-title]\n"
+"   or: make-jass-pkg -v\n"
+"   or: make-jass-pkg -? | -h\n"
+"\n"
+"Where the options are as follows:\n"
+"\n"
+"   [-b new-base-dir]         Specify an alternate installation base directory\n"
+"\n"
+"   [-e excl-list]            Exclude top level file or directories from the\n"
+"                             package.  This is done by specifying a '|'\n"
+"                             separated list as in 'a|b/c|d'.\n"
+"\n"
+"   [-h | -?]                 Display this help message.\n"
+"\n"
+"   [-m new-email-address]    Specify an e-mail address for support.\n"
+"\n"
+"   [-p package-name]         Specify a custom package name (default is \n"
+"                             JASScustm).\n"
+"\n"
+"   [-q]                      Quiet mode.  No messages are displayed.\n"
+"\n"
+"   [-t new-title]            Specify an alternative package title (default\n"
+"                             is \"Sun Security Toolkit: Community Edition\").\n"
+"\n"
+"   [-v]                      The version information for this program.\n"
+"\n"
+#
+msgid  "Possible syntax error in the exclude list."
+msgstr "Possible syntax error in the exclude list."
+#
+msgid  "Excluded file: ${_tmpFile}"
+msgstr "Excluded file: ${_tmpFile}"
+#
+msgid  "Excluded directory: ${_tmpDirectory}"
+msgstr "Excluded directory: ${_tmpDirectory}"
+#
+msgid  "Unknown File Type: ${tmpFile}"
+msgstr "Unknown File Type: ${tmpFile}"
+#
+msgid  "Creating the package's prototype file.  This may take a few minutes."
+msgstr "Creating the package's prototype file.  This may take a few minutes."
+#
+msgid  "Only one instance of this program can be run at a time."
+msgstr "Only one instance of this program can be run at a time."
+#
+msgid  "Creating the package's info file."
+msgstr "Creating the package's info file."
+#
+msgid  "Creating the package in a scratch directory."
+msgstr "Creating the package in a scratch directory."
+# 
+msgid  "Creating the package's stream format (package file)."
+msgstr "Creating the package's stream format (package file)."
+#
+msgid  "The package has been created as \"${PKG_NAME}\".pkg."
+msgstr "The package has been created as \"${PKG_NAME}\".pkg."

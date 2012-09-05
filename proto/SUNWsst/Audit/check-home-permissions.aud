@@ -1,0 +1,112 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)check-home-permissions.aud 1.2     07/08/08 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Check Home Directory Permissions"
+servfil="check-home-permissions.aud"
+
+SYSTEM_ACCOUNTS="root daemon bin sys adm lp uucp nuucp smmsp listen gdm webservd nobody noaccess nobody4"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   This purpose of this check is to verify that home directory permissions are
+   mode 0750 or greater (no group write access and no access outside group).
+
+Rationale for Verification Check:
+
+   Group or world-writable user home directories may enable malicious users to
+   steal or modify other users' data or to gain another user's system
+   privileges. Disabling 'read' and 'execute' access for users who are not
+   members of the same group (the 'other' access category) allows for
+   appropriate use of discretionary access control by each user.
+
+Determination of Compliance:
+
+   This script report a failure for any non-system account with permission
+   greater than mode 0750.
+"
+
+#-----------------------------------------------------------------------------
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage '# Checking home directory permissions.\n'
+
+infoList=`getent passwd | nawk -F: '{ print $1":"$6 }'`
+
+for info in ${infoList}; do
+   user=`echo ${info}    | nawk -F: '{ print $1 }'`
+   homeDir=`echo ${info} | nawk -F: '{ print $2 }'`
+
+   echo " ${SYSTEM_ACCOUNTS} " | fgrep " ${user} "  >/dev/null 2>&1
+   if [ $? -eq 0 ] ; then
+      logNotice 'Skipping system account ${user}.'
+      continue
+   fi
+
+   if [ "${homeDir}" = "/" ] ; then
+      # Root directory must have mode greater than 0750 (usually 0755)
+      logNotice 'User ${user} has a root (/) home directory; skipping.'
+      continue
+   fi
+
+   if check_fileExists ${homeDir} 0 ; then
+      if check_fileTypeMatch ${homeDir} "d" 0 ; then
+
+         ls -ld "${homeDir}" | nawk '{print $1 }' \
+            | egrep 'w....$|r..$|w.$|x$' >/dev/null 2>&1
+         if [ $? -eq 0 ] ; then
+            logFailure \
+'Home directory permissions for user ${user} are greater than mode 0750.'
+            adjustScore 1
+         fi
+
+      else
+         logWarning \
+            'Home directory ${homeDir} for user ${user} is not a directory.'
+      fi
+   else
+      logWarning 'Home directory ${homeDir} for user ${user} does not exist.'
+   fi
+done
+
+if [ "${SCRIPT_SCORE}" = "0" ] ; then
+   logSuccess 'No home directories found with permissions greater than mode 0750.'
+fi
+
+finish_audit

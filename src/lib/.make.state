@@ -1,0 +1,9 @@
+.MAKE_VERSION:	VERSION-1.0
+../../proto/SUNWsst/lib:
+	[ -d ../../proto/SUNWsst/lib ] || /bin/mkdir -p ../../proto/SUNWsst/lib
+.BUILT_LAST_MAKE_RUN:
+locale:
+	cd locale; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+pkg:
+	cd pkg; pwd; make install

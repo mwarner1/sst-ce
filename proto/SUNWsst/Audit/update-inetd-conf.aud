@@ -1,0 +1,311 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)update-inetd-conf.aud	1.28	05/07/11 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="inetd Services"
+servfil="update-inetd-conf.aud"
+
+INETD="${JASS_ROOT_DIR}etc/inet/inetd.conf"
+NETCONFIG="${JASS_ROOT_DIR}etc/netconfig"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Internet Services daemon, inetd(1M), listens for service requests on
+   those TCP or UDP ports associated with each of the services listed in its
+   configuration file, ${INETD}.  When a request arrives, inetd spawns the
+   server program associated with the service to process the request. In
+   Solaris 10, smf(5) is used to manage these services instead of ${INETD}
+
+Rationale for Verification Check:
+
+   The inetd service provides a capable for accessing a large number of
+   services.  While many of the services provided by inetd can be useful,
+   most are often not critical for system operation.  If a service provided
+   by inetd is not needed, then it should be disabled.
+
+Determination of Compliance:
+
+   This script will indicate a failure if any of the services listed in the
+   JASS_SVCS_DISABLE are enabled in ${INETD} file or are enabled via smf(5).
+   Similarly, this script will also indicate a failure if any service listed
+   in the JASS_SVCS_ENABLE is disabled in the ${INDETD} file is disabled via
+   smf(5).
+
+   Note that if a service is listed in both parameters, then the service
+   will be left enabled by the JASS_SVCS_ENABLE parameter.
+
+   The JASS_SVCS_DISABLE parameter is populated as follows:
+
+`printPretty \"${JASS_SVCS_DISABLE}\"`
+
+   The JASS_SVCS_ENABLE parameter is populated as follows:
+
+`printPretty \"${JASS_SVCS_ENABLE}\"`
+
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+disableSMFList=""
+enableSMFList=""
+disableInetList=""
+enableInetList=""
+
+if [ "${JASS_SVCS_ENABLE}" != "" ]; then
+   for svc in ${JASS_SVCS_ENABLE}; do
+      if _is_bad_fmri_nolog "$svc" ; then
+	 # This is a pre-smf service.  Add it to the Inet enable list
+	 enableInetList="${enableInetList} ${svc}"
+      else
+	 # This is an smf service.  Add it to the SMF enable list
+	 enableSMFList="${enableSMFList} ${svc}"
+      fi
+   done
+fi
+
+if [ "${JASS_SVCS_DISABLE}" != "" ]; then
+   for svc in ${JASS_SVCS_DISABLE}; do
+      if _is_bad_fmri_nolog "$svc" ; then
+	 # This is a pre-smf service.  Add it to the Inet disable list
+	 disableInetList="${disableInetList} ${svc}"
+      else
+	 # This is an smf service.  Add it to the SMF disable list
+	 disableSMFList="${disableSMFList} ${svc}"
+      fi
+   done
+fi
+
+# If code to automatically correct pre s10 services to S10 FMRI's is added,
+# this code will need to filter for duplicates.
+warnList="`get_lists_conjunction \"${JASS_SVCS_ENABLE}\" \"${JASS_SVCS_DISABLE}\"`"
+
+for svc in ${warnList} ; do
+   logNotice 'Service ${svc} was found in both DISABLE and ENABLE lists.'
+done
+
+if check_os_min_revision 5.10 ; then
+   # Filter out conflicts between entries in both the enable and
+   # disable lists.  Since "enables" always win, filter conflicts
+   # out of the disable list.
+
+   disableList="`get_lists_disjunction \"${disableSMFList}\" \"${enableSMFList}\"`"
+
+   logMessage "\n${JASS_MSG_SOFTWARE_INSTALLED}"
+   for svc in ${disableList} ; do
+       check_minimized_service "${svc}" 1 LOG
+   done
+   for svc in ${enableSMFList} ; do
+       check_minimized_service "${svc}" 1 LOG
+   done
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   for svc in ${disableList} ; do
+       check_serviceDisabled "${svc}" 1 LOG
+   done
+   for svc in ${enableSMFList} ; do
+       check_serviceEnabled "${svc}" 1 LOG
+   done
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   for svc in ${disableList} ; do
+       check_serviceNotRunning "${svc}" 1 LOG
+   done
+   for svc in ${enableSMFList} ; do
+       check_serviceRunning "${svc}" 1 LOG
+   done
+fi
+
+if check_fileExists "${NETCONFIG}" 1 LOG ; then
+   netConfig="`grep -v '^#' ${NETCONFIG} | nawk '{ print $1 }' |\
+      xargs echo | sed 's/ /|/g'`"
+   netConfig="${netConfig}|tli"
+else
+   netConfig=" "
+fi
+
+if check_fileExists ${INETD} 0; then
+
+   # Create the Enable/Disable Lists for the Services.
+   enableList="`echo ${enableInetList} | xargs -n 1 echo | sort -u`"
+   disableList=""
+   tmpDisableList=""
+
+   if [ -z "${disableInetList}" ]; then
+      if [ ! -z "${enableList}" ]; then
+         tmpDisableList="`nawk '{ print $1 }' ${INETD} |\
+           nawk -F/ '{ print $1 }' | grep -v '#' | sort -u`"
+      fi
+   else
+      tmpDisableList="`echo ${disableInetList} | xargs -n 1 echo | sort -u `"
+   fi
+
+   # Filter out conflicts between entries in both the enable and
+   # disable lists.  Since "enables" always win, filter conflicts
+   # out of the disable list.
+
+   disableList="`get_lists_disjunction \"${tmpDisableList}\" \"${enableList}\"`"
+
+   if check_os_min_revision 5.10; then
+      # A very messy case.  We need to first check and see if its FMRI
+      # analogue is in the enable list.
+      newList=""
+      for svc in ${disableList}; do
+	 _fmri=`convert_inetd_service_to_fmri ${svc}`
+	 if [ $? -eq 0 ]; then
+	    # Check for a variant of this being enabled
+	    _test="`get_lists_disjunction \"${_fmri}\" \"${enableList}\"`"
+	    # _test is empty if it is enabled under another name
+	    if [ -n "${_test}" ]; then
+	       newList="${svc} ${newList}"
+	    fi
+	 else
+	    # Unconvertible entries are safe are well
+	    newList="${svc} ${newList}"
+	 fi
+      done
+   else
+      # Pre solaris 10 we don't have to do this purging
+      newList="${disableList}"
+   fi
+
+
+   if [ ! -z "${newList}" ]; then
+      logMessage "\n# Checking that the following services are disabled.\n "
+   fi
+
+   for svc in ${newList}; do
+      check_fileContentsNotExist ${INETD} \
+         "^${svc}/[0-9\-]*[ 	]*.*[ 	]*(${netConfig})[ 	]*" 0
+      rpcCheck=$?
+      check_fileContentsNotExist ${INETD} \
+         "^${svc}[ 	]*.*[ 	]*(${netConfig})[ 	]*" 0
+      standardCheck=$?
+
+      if [ ${rpcCheck} -eq 0 -a ${standardCheck} -eq 0 ]; then
+         # This is a check to ensure that the service simply does not exist.
+         result=`grep "^#" ${INETD} | egrep "[# 	]${svc}.*[${netConfig}][ 	]*"`
+         if [ -z "${result}" ]; then
+            logNotice 'Service ${svc} does not exist in ${INETD}.'
+         else
+            logSuccess 'Service ${svc} is disabled in ${INETD}.'
+         fi
+      else
+         adjustScore 1
+         logFailure 'Service ${svc} is enabled in ${INETD}.'
+      fi
+
+      # That takes care of the legacy portion, but on Solaris 10 these
+      # services may have been converted via inetconv.  In that case, we
+      # need to check the new service as well.
+      if check_os_min_revision 5.10; then
+	 _fmri=`convert_inetd_service_to_fmri ${svc}`
+	 if [ $? -eq 0 ]; then
+	    # If we have already tested the service, we don't need to test
+	    # it again.  The ones we have already tested are in 
+	    # JASS_SVCS_DISABLE
+	    _test="`get_lists_disjunction \"${_fmri}\" \"${disableSMFList}\"`"
+	    if [ -n "${_test}" ]; then
+	       check_minimized_service "${_fmri}" 1 LOG
+	       if is_service_enabled ${_fmri}; then
+		  adjustScore 1
+		  logFailure 'The SMF version of ${svc}, ${_fmri} was enabled.'
+	       else
+		  logNotice 'The SMF version of ${svc}, ${_fmri} was not enabled.'
+	       fi
+	       check_serviceNotRunning "${_fmri}" 1 LOG
+	    fi
+	 fi
+      fi
+   done
+
+   if [ ! -z "${enableList}" ]; then
+      logMessage "\n# Checking that the following services are enabled.\n "
+   fi
+
+   svcListed=0
+   for svc in ${enableList}; do
+      svcListed=1
+      check_fileContentsExist ${INETD} \
+        "^${svc}/[0-9\-]*[ 	]*.*[ 	]*(${netConfig})[ 	]*" 0
+      rpcCheck=$?
+      check_fileContentsExist ${INETD} \
+      "^${svc}[ 	]*.*[ 	]*(${netConfig})[ 	]*" 0
+      standardCheck=$?
+      if [ $rpcCheck -eq 0 -o $standardCheck -eq 0 ]; then
+         logSuccess 'Service ${svc} is enabled in ${INETD}.'
+      else
+         # This is a check to ensure that the service simply does not exist.
+         result=`grep "^#" ${INETD} | grep "[# 	]${svc}.*[${netConfig}][ 	]*"`
+         if [ -z "${result}" ]; then
+            logNotice 'Service ${svc} does not exist in ${INETD}.'
+         else
+            adjustScore 1
+            logFailure 'Service ${svc} is disabled in ${INETD}.'
+         fi
+      fi
+
+      # Again, we need to check for a possible inetconv conversion
+      if check_os_min_revision 5.10; then
+	 _fmri=`convert_inetd_service_to_fmri ${svc}`
+	 if [ $? -eq 0 ]; then
+	    # If we have already tested the service, we don't need to test
+	    # it again.  The ones we have already tested are in 
+	    # JASS_SVCS_ENABLE
+	    _test="`get_lists_disjunction \"${_fmri}\" \"${enableSMFList}\"`"
+	    if [ -n "${_test}" ]; then
+	       check_minimized_service "${_fmri}" 1 LOG
+	       if is_service_enabled ${_fmri}; then
+		  logNotice 'The SMF version of ${svc}, ${_fmri} was enabled.'
+	       else
+		  adjustScore 1
+		  logFailure 'The SMF version of ${svc}, ${_fmri} was not enabled.'
+	       fi
+	       check_serviceRunning "${_fmri}" 1 LOG
+	    fi
+	 fi
+      fi
+
+
+   done
+
+   if [ $svcListed = 0 ]; then
+      logNotice "There are no ${INETD} services defined by the JASS_SVCS_ENABLE parameter."
+   fi
+
+else
+   logFileNotFound "${INETD}"
+fi
+finish_audit

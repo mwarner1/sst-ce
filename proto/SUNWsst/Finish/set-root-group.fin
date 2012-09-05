@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-root-group.fin 3.6     04/01/05     SMI"
+#
+# This script changes the root user's primary group to JASS_ROOT_GROUP from 
+# group identifier #1.  This is done to prevent the root user from sharing a 
+# common group with non-privileged users.  The root user's primary group is
+# set to '0' (root).
+#
+# The JASS Development Team would like to offer special thanks to Brian 
+# Birkinbine the suggestion of this functionality.
+#
+
+logMessage 'Changing the \\\"root\\\" account primary group to avoid sharing the same
+group identifier with other users.'
+echo ""
+
+if egrep -s "^root:x:0:${JASS_ROOT_GROUP}" ${JASS_PASSWD} 2>/dev/null ; then
+   : # The change has already been applied.
+else
+   backup_file ${JASS_PASSWD}
+   echo ""
+
+   logMessage 'Setting the \\\"root\\\" account primary group to ${JASS_ROOT_GROUP}.'
+
+   chroot ${JASS_ROOT_DIR} /usr/sbin/passmgmt -m -g ${JASS_ROOT_GROUP} root
+
+   chmod 444       ${JASS_PASSWD}
+   chown root:sys  ${JASS_PASSWD}
+fi

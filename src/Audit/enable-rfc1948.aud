@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)enable-rfc1948.aud 1.10     05/03/17     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="RFC 1948 Sequence Number Generation"
+servfil="enable-rfc1948.aud"
+
+INETINIT="${JASS_ROOT_DIR}etc/default/inetinit"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   The purpose of this script is to verify that the system is configured
+   and is in fact using RFC 1948 for its TCP sequence number generation
+   algorithm (unique-per-connection ID).  This is configured by setting
+   the 'TCP_STRONG_ISS' parameter to '2' in the ${INETINIT} file.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the system is not configured
+   to use RFC 1948 for its TCP sequence number generation.  Note that
+   this script checks both the stored configuration as well as the 
+   actual run-time setting.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+   if check_os_min_revision 5.6; then
+      if check_fileExists ${INETINIT} 1 ; then
+	 if check_fileContentsExist ${INETINIT} "^TCP_STRONG_ISS=2$" 1 ; then
+	    logSuccess 'TCP_STRONG_ISS is set to \\\"2\\\" in ${INETINIT}.'
+	 else
+	    if check_fileContentsExist ${INETINIT} "^TCP_STRONG_ISS=" 0 ; then
+	       logFailure 'TCP_STRONG_ISS is not set to \\\"2\\\" in ${INETINIT}.'
+	    else
+	       logFailure 'TCP_STRONG_ISS is not defined in ${INETINIT}.'
+	    fi
+	 fi
+      else
+	 logFileNotFound "${INETINIT}" 1
+      fi
+
+      if [ "`ndd -get /dev/tcp tcp_strong_iss`" = "2" ]; then
+	 logSuccess "System is running with tcp_strong_iss=2."
+      else
+	 adjustScore 1
+	 logFailure "System is not running with tcp_strong_iss=2."
+      fi
+
+   else
+      logInvalidOSRevision "5.6+"
+   fi
+else
+   logNotGlobalZone
+fi
+
+finish_audit

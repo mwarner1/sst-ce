@@ -1,0 +1,159 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-lp-localonly.aud		1.2	06/08/17 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Line Printer (LP) Service"
+servfil="set-lp-localonly.aud"
+
+CRONTAB="${JASS_ROOT_DIR}var/spool/cron/crontabs/lp"
+CRONDENY="${JASS_ROOT_DIR}etc/cron.d/cron.deny"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Line Printer (lp) service is used to process print jobs on the system.
+
+Rationale for Verification Check:
+
+   While the lp service can be a useful function, it may not be critical to
+   allow non-local users access to the local print service. If this facility 
+   is not needed, then it should be disabled.
+
+
+Determination of Compliance:
+
+   This script determines if the lp service is configured to respond to
+   non-local requests for print service.  This script will indicate a failure
+   if it is allowed to respond to non-local requests.  Where the ability to
+   restrict print requests to local users only is not available, this script will
+   check to see if the lp service is installed, configured or running
+   on the system.  This script will indicate a failure if the software is
+   installed, configured to run (via a run-control script) or actually running
+   on the system.  This script will also indicate a failure if the lp user
+   is permitted to use the cron facility or has a crontab file installed.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWpsr SUNWpsu SUNWpsf
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S80lp
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rcS.d/K39lp
+   ${JASS_ROOT_DIR}etc/rc0.d/K20lp
+   ${JASS_ROOT_DIR}etc/rc0.d/K39lp
+   ${JASS_ROOT_DIR}etc/rc1.d/K20lp
+   ${JASS_ROOT_DIR}etc/rc1.d/K39lp
+   ${JASS_ROOT_DIR}etc/rc2.d/K20lp
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/lib/lpsched
+"
+
+# LP, LPD, and IPP remote printing protocols, respectively:
+svc="
+   svc:/application/print/server:default
+   svc:/application/print/ipp-listener:default
+   svc:/application/print/rfc1179:default
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+if check_sbd_available; then
+   check_minimized_service "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   if check_serviceInstalled "svc:application/print/rfc1179:default" 0; then
+      check_servicePropEnabled "svc:application/print/rfc1179:default" \
+       "inetd/bind_addr" "localhost" 1 LOG
+   fi
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceDisabled "svc:/application/print/ipp-listener:default" \
+    1 LOG
+
+elif check_os_min_revision 5.10 ; then
+   check_minimized_service "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceDisabled "${svc}" 1 LOG
+
+
+   logMessage "# Checking if 'lp' is restricted from password file."
+   check_userLocked "lp" 1 LOG
+
+else
+   check_minimized            "$servpkg" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   check_startScriptNotExists "$servsrc" 1 LOG
+   check_stopScriptNotExists  "$servkrc" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists     "$servcmd" 1 LOG
+
+   logMessage "# Checking if 'lp' is restricted from using the cron facility."
+
+   if check_fileExists ${CRONDENY} 1 ; then
+      if check_fileContentsExist ${CRONDENY} "^lp$" 1 ; then
+         logSuccess 'Account \\\"lp\\\" is listed in ${CRONDENY}.'
+      else
+         logFailure 'Account \\\"lp\\\" is not listed in ${CRONDENY}.'
+      fi
+   else
+      logFileNotFound "${CRONDENY}" 1
+   fi
+
+   logMessage "# Checking if the 'lp' crontab has been removed."
+   check_fileNotExists ${CRONTAB} 1 LOG
+fi
+
+finish_audit

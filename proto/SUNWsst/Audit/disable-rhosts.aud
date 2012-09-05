@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-rhosts.aud 1.12     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="'rhosts' authentication"
+servfil="disable-rhosts.aud"
+
+PAM="${JASS_ROOT_DIR}etc/pam.conf"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The /etc/hosts.equiv and .rhosts files provide the 'remote authentication'
+   database for rlogin(1), rsh(1), rcp(1), and rcmd(3SOCKET).  The files 
+   specify remote hosts and users that are considered 'trusted'.  Trusted 
+   users are allowed to access the local system without supplying a password.
+
+Rationale for Verification Check:
+
+   While trusted remote authentication can be a useful function, it may not be
+   critical for system operation.  If this service is not needed, then it 
+   should be disabled.  Further, in place of using this capability with
+   clear-text protocols, it is strongly recommended that Secure Shell or 
+   similar products be used to provide higher levels of confidentiality, 
+   integrity and functionality.  
+
+   This script will check to verify that rhosts and hosts.equiv functionality
+   has been disabled on the system.  This is accomplished by removing or 
+   commenting out those entries in ${PAM} that include the PAM module
+   'pam_rhosts.auth.so.1'.
+
+Determination of Compliance:
+
+   This script determines if the rhosts and hosts.equiv functionality is
+   enabled.  This script will indicate a failure if this functionality 
+   is enabled using the 'pam_rhosts_auth.so.1' module in the ${PAM} file.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+
+   logMessage "# Checking if rhosts authentication is enabled.\n "
+
+   if check_fileExists ${PAM} 1 ; then
+      if check_fileContentsNotExist ${PAM} \
+         "^[rR][lL][oO][gG][iI][nN][ 	]*[aA][uU][tT][hH].*[ 	]*pam_rhosts_auth.so.1" 1 ; then
+         logSuccess "Service rlogin is not configured for rhosts authentication."
+      else
+         logFailure "Service rlogin is configured for rhosts authentication."
+      fi
+
+      if check_fileContentsNotExist ${PAM} \
+         "^[rR][sS][hH][ 	]*[aA][uU][tT][hH].*[ 	]*pam_rhosts_auth.so.1" 1 ; then
+         logSuccess "Service rsh is not configured for rhosts authentication."
+      else
+         logFailure "Service rsh is configured for rhosts authentication."
+      fi
+   else
+      logFileNotFound "${PAM}" 1
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

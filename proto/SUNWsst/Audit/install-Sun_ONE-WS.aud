@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)install-Sun_ONE-WS.aud 1.15     05/04/01 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Sun ONE Web Server"
+servfil="install-Sun_ONE-WS.aud"
+
+WS_DIR="${JASS_ROOT_DIR}opt/iWS6.0sp2"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script will attempt to determine if the Sun ONE Web Server software 
+   has been installed in accordance with the install-Sun_ONE-WS.fin Finish
+   script.  This script expects the software to be installed into the
+   ${WS_DIR} directory.
+
+   Note that this script checks only for the existence of the directory
+   specified by ${WS_DIR} and does not check for the actual existence
+   of the Sun ONE Web Server software.
+
+Determination of Compliance:
+
+   This script will determine a failure if the Sun ONE Web Server is not
+   installed on the system in accordance with the install-Sun_ONE-WS.fin
+   Finish script.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+if check_os_min_revision 5.10 ; then
+   logInvalidOSRevision "5.9-"
+elif check_fileExists "${WS_DIR}" 1; then
+   if check_fileTypeMatch "${WS_DIR}" "d" 1 ; then
+      logSuccess 'Object ${WS_DIR} is a directory.'
+   else
+      logFailure 'Object ${WS_DIR} is not a directory.'
+   fi
+else
+   logFileNotFound "${WS_DIR}" 1
+fi
+  
+finish_audit

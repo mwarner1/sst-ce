@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)check-include-nis-map.aud 1.1     06/12/21 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Check '+' Include NIS Map Entries"
+servfil="check-include-nis-map.aud"
+
+PASSWD="${JASS_ROOT_DIR}etc/passwd"
+SHADOW="${JASS_ROOT_DIR}etc/shadow"
+GROUP="${JASS_ROOT_DIR}etc/group"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The purpose of this check is to determine if there exist any legacy
+   '+' entries in the /etc/passwd, shadow, or group files to include the
+   NIS map.
+
+Rationale for Verification Check:
+
+   '+' entries in various files used to be markers for systems to insert
+   data from NIS maps at a certain point in a system configuration file.
+   These entries are no longer required on Solaris systems, but may exist
+   in files that have been imported from other platforms.  These entries
+   may provide an avenue for attackers to gain privileged access on the
+   system, and should be deleted if they exist.
+
+Determination of Compliance:
+
+   This check reports a failure for each /etc/passwd,
+   shadow, or group file that has a '+' entry.
+
+"
+
+#-----------------------------------------------------------------------------
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+for file in ${PASSWD} ${SHADOW} ${GROUP} ; do
+   if grep '^+' $file >/dev/null 2>&1 ; then
+      logFailure 'File ${file} has a \\\"+\\\" NIS include file entry.'
+      adjustScore 1
+   fi
+done
+
+if [ "${SCRIPT_SCORE}" = "0" ] ; then
+   logSuccess 'No files were found with a \\\"+\\\" NIS include file entry.'
+fi
+
+finish_audit

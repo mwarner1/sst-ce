@@ -1,0 +1,123 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)undo.run	3.20	05/06/29 SMI"
+#
+
+# ============================================================================
+# Main Routine
+# ============================================================================
+
+# Determine the name of this driver.
+
+DRV_NAME="`basename $0`"
+export DRV_NAME
+
+# Determine the current working directory.
+
+INI_DIR="`pwd`"
+
+# Determine the current directory of the driver.
+# First, change directory to the target, then using the
+# "pwd" command, gain the fully qualified path to the
+# file.  This is used to prevent certain issues with
+# relative pathnames when Finish scripts fail.
+
+DRV_DIR="`dirname $0`"
+export DRV_DIR
+
+cd ${DRV_DIR}
+DRV_DIR="`pwd`"
+
+# Determine if the initialization scripts have been run.
+# This is necessary to make sure all critical variables
+# have been defined.
+
+if [ "${JASS_OS_REVISION}" = "" ]; then
+   echo "[ERR ] "`gettext "The initialization scripts have not been executed."`
+   exit 1
+fi
+
+# Import the functions we need after we verify that the
+# initialization scripts have been run.
+
+. ${JASS_HOME_DIR}/Drivers/common_misc.funcs
+. ${JASS_HOME_DIR}/Drivers/common_log.funcs
+. ${JASS_HOME_DIR}/Drivers/driver_private.funcs
+. ${JASS_HOME_DIR}/Drivers/driver_public.funcs
+. ${JASS_HOME_DIR}/Drivers/audit_private.funcs
+. ${JASS_HOME_DIR}/Drivers/audit_public.funcs
+. ${JASS_HOME_DIR}/Drivers/undo.funcs
+
+if [ "${JASS_STANDALONE}" = "0" ]; then
+   if [ "${JASS_PACKAGE_MOUNT}" = "" ]; then
+      logError 'FATAL: JASS_PACKAGE_MOUNT has not been defined in user.init.'
+      exit 1
+   fi
+
+   if [ "${JASS_PATCH_MOUNT}" = "" ]; then
+      logError 'FATAL: JASS_PATCH_MOUNT has not been defined in user.init.'
+      exit 1
+   fi
+fi
+
+# Read in the user-specified functions file if it exists.
+
+if [ -f ${JASS_USER_DIR}/user.run ]; then
+   . ${JASS_USER_DIR}/user.run
+fi
+
+logBanner '${DRV_NAME}: Driver started.'
+
+# Print identification banner
+
+print_banner
+
+# Mount any necessary file systems.
+
+mount_filesystems
+
+# Perform the restoration
+
+logBanner '${DRV_NAME}: Performing UNDO of ${JASS_REPOSITORY}.'
+
+undo_ops ${JASS_RUN_MANIFEST}
+
+# Unmount any file systems previously mounted.
+
+unmount_filesystems
+
+# Warn if undo undid the root password set by set-root-password.fin.
+
+log_warning_if_root_password_not_set
+
+# Finish
+
+logBanner '${DRV_NAME}: Driver finished.'
+
+# Exit here instead of returning to undo.driver, as it may no longer exist
+# if package SUNWsst was removed.
+
+exit 0

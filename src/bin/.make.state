@@ -1,0 +1,24 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/bin:
+	[ -d ../../proto/SUNWsst/bin ] || /bin/mkdir -p ../../proto/SUNWsst/bin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/bin/add-client:
+	/usr/bin/cp -f add-client ../../proto/SUNWsst/bin/add-client
+	/usr/bin/chmod 555 ../../proto/SUNWsst/bin/add-client
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/bin/jass-check-sum:
+	/usr/bin/cp -f jass-check-sum ../../proto/SUNWsst/bin/jass-check-sum
+	/usr/bin/chmod 555 ../../proto/SUNWsst/bin/jass-check-sum
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/bin/jass-execute:
+	/usr/bin/cp -f jass-execute ../../proto/SUNWsst/bin/jass-execute
+	/usr/bin/chmod 555 ../../proto/SUNWsst/bin/jass-execute
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/bin/make-jass-pkg:
+	/usr/bin/cp -f make-jass-pkg ../../proto/SUNWsst/bin/make-jass-pkg
+	/usr/bin/chmod 555 ../../proto/SUNWsst/bin/make-jass-pkg
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/bin/rm-client:
+	/usr/bin/cp -f rm-client ../../proto/SUNWsst/bin/rm-client
+	/usr/bin/chmod 555 ../../proto/SUNWsst/bin/rm-client

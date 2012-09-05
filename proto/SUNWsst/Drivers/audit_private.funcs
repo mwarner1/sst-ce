@@ -1,0 +1,1941 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)audit_private.funcs	1.35	05/06/20 SMI"
+#
+# This file contains all of the validation functions used by the Toolkit's
+# audit functionality.  These functions should be considered private in
+# nature and not accessed directly by audit scripts.  The public functions
+# found in the audit_public.funcs file should be used instead.
+#
+
+###############################################################################
+# Determines if argument list is valid.
+#
+# Arguments:
+#
+#   funcName                 - name of the function calling this routine
+#   actualArgCount (integer) - the actual number of arguments
+#   minArgCount (integer)    - the minimum number of arguments possible
+#   maxArgCount (integer)    - the maximum number of arguments possible
+#
+# Returns:
+#    0  if the argument list is invalid
+#    1  if the argument list is valid
+###############################################################################
+
+is_invalid_argument_list() {
+   funcName="$1"
+   actualCount="$2"
+   minCount="$3"
+   maxCount="$4"
+   returnVal=1
+
+   if [ $# = 4 ]; then
+      if [ -z "${actualCount}" ]; then
+         logError '${funcName}: is_invalid_argument_list: actualCount must not be NULL.'
+         returnVal=0
+      elif [ "${actualCount}" = "0" ]; then
+         logDebug '${funcName}: No arguments passed to function.'
+         returnVal=0
+      elif [ -z "${minCount}" ]; then
+         logError '${funcName}: is_invalid_argument_list: minCount must not be NULL.'
+         returnVal=0
+      elif [ ${actualCount} -lt ${minCount} ]; then
+         logDebug '${funcName}: Too few arguments passed to function.'
+         returnVal=0
+      elif [ -z "${maxCount}" ]; then
+         logError '${funcName}: is_invalid_argument_list: maxCount must not be NULL.'
+         returnVal=0
+      elif [ ${actualCount} -gt ${maxCount} ]; then
+         logDebug '${funcName}: Too many arguments passed to function.'
+         returnVal=0
+      fi
+   else
+      logError '${funcName}: is_invalid_argument_list requires 4 arguments.'
+      returnVal=0
+   fi
+
+   return $returnVal
+}
+
+###############################################################################
+# Primary function for examining the existence of packages
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check package exists
+#                            1 = check package does NOT exist
+#   packageName            - list of packages to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the package exists or does not exist for all package
+#       (depends on condition)
+#    1  if the package exists or does not exist for at least
+#       one package (depends on condition)
+###############################################################################
+
+_check_package() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_package $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   packageName="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for package in ${packageName}; do
+      pkginfo -q -R ${JASS_ROOT_DIR} ${package}
+      if [ $? = 0 ]; then
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logPackageExists "$package" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else # handle the no match condition
+            [ $logResult -eq 1 ]   && logPackageNotExists "$package" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ] && logPackageExists "$package" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else # handle the no match condition
+            [ $logResult -eq 1 ] && logPackageNotExists "$package"  "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining the the existence of patches.
+#
+#   This function checks for the existence of a patch or patches.
+#   Either the major patch ID or a complete patch ID with a revision
+#   number can be specified.
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check patch exists
+#                            1 = check patch does NOT exist
+#   patches                - the list of patches to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#  255 if an error occurs or the supplied arguments are invalid
+#    0 if all or none of the patches exist (depends on condition)
+#    1 if at least one of the patches exists or does not exist (depends
+#       on condition)
+##############################################################################
+
+_check_patch()
+{
+   returnCode="255"
+
+   if is_invalid_argument_list check_startScript $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   patchName="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for patch in ${patchName}; do
+      is_patch_applied ${patch}
+      result=$?
+      if [ "${result}" = "0" ]; then
+         # patch is applied and is good version
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logPatchExists "$patch" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else # handle the no match condition
+            [ $logResult -eq 1 ]   && logPatchNotExists "$patch" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else
+         # patch is either not applied or is bad version
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ] && logPatchExists "$patch" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else # handle the no match condition
+            [ $logResult -eq 1 ] && logPatchNotExists "$patch" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining the existence of a start script
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check start script exists
+#                            1 = check start script does NOT exist
+#   fileName               - the start scripts to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the start script exists or does not exist for all start scripts
+#       (depends on condition)
+#    1  if the start script exists or does not exist for at least
+#       one start script (depends on condition)
+###############################################################################
+
+_check_startScript() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_startScript $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   fileName="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for file in $fileName; do
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logStartScriptExists "$file" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else # handle the no match condition
+            [ $logResult -eq 1 ]   && logStartScriptNotExists "$file" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else # NO match
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ] && logStartScriptExists "$file" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else # handle the no match condition
+            [ $logResult -eq 1 ] && logStartScriptNotExists "$file" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining the existence of a stop script
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check stop script exists
+#                            1 = check stop script does NOT exist
+#   fileName               - the stop scripts to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the stop script exists or does not exist for all stop scripts
+#       (depends on condition)
+#    1  if the stop script exists or does not exist for at least
+#       one stop script (depends on condition)
+###############################################################################
+
+_check_stopScript() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_stopScript $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   fileName="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   if [ "${JASS_KILL_SCRIPT_DISABLE}" != "1" ]; then
+      return ${returnCode}
+   fi
+
+   for file in $fileName; do
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logStopScriptExists "$file" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else # handle the no match condition
+            [ $logResult -eq 1 ]   && logStopScriptNotExists "$file" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else # NO match
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ] && logStopScriptExists "$file" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else # handle the no match condition
+            [ $logResult -eq 1 ] && logStopScriptNotExists "$file" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining the existence of a service configuration
+# file.  Typically these files are used by run control scripts to determine
+# whether a service should be started.
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check service configuration file exists
+#                            1 = check service configuration file does NOT exist
+#   fileName               - the service config files to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the service config files exists or does not exist for all
+#       service config files (depends on condition)
+#    1  if the service config file exists or does not exist for at least
+#       one service config file (depends on condition)
+###############################################################################
+
+_check_serviceConfig() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_serviceConfig $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   fileName="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for file in $fileName; do
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceConfigExists "$file" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else # handle the no match condition
+            [ $logResult -eq 1 ]   && logServiceConfigNotExists "$file" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else # NO match
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ] && logServiceConfigExists "$file" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else # handle the no match condition
+            [ $logResult -eq 1 ] && logServiceConfigNotExists "$file" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining the existence of running processes
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check process exists
+#                            1 = check process does NOT exist
+#   processName            - list of processes to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the process exists or does not exist
+#       (depends on condition)
+#    1  if the process exists or does not exist for at least one process
+#       (depends on condition)
+###############################################################################
+
+_check_process() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_process $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   processName="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   processes=""
+   processFound=0
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+   procOpt=" -eo";
+   if check_os_min_revision 5.10; then
+      procOpt=" -z ${JASS_ZONE_NAME} -o";
+   fi
+
+   for process in ${processName}; do
+      processes=`ps ${procOpt} pid,user,comm | egrep -- " ${process}$" | nawk '{ print $1":"$2":"$3 }'`
+
+      for process in $processes; do
+         pid="`echo ${process} | nawk -F: '{ print $1 }'`"
+         user="`echo ${process} | nawk -F: '{ print $2 }'`"
+         comm="`echo ${process} | nawk -F: '{ print $3 }'`"
+
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logProcessExists "$comm:$pid:$user" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else # handle the no match condition
+            [ $logResult -eq 1 ]   && logProcessNotExists "$comm:$pid:$user" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+         processFound=1
+      done
+
+      if [ ${processFound} -eq 0 ]; then
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ] && logProcessExists "$process" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else # handle the no match condition
+            [ $logResult -eq 1 ] && logProcessNotExists "$process"  "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining the existence of processes running
+# with specific arguments.
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check process arguments match
+#                            1 = check process arguments do NOT match
+#   processName            - the process to check
+#   regExp                 - the regular expression of the arguments to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the process exists or does not exist with the regExp specified
+#       (depends on condition)
+#    1  if the process exists or does not exist with the regExp specified
+#       for at least one process (depends on condition)
+###############################################################################
+
+_check_processArgs() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_processArgs $# 4 6 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   processName="$2"
+   regExp="$3"
+   vulnValue="$4"
+   logStatus="$5"
+   relatedInfo="$6"
+   processes=""
+   process=""
+   processFound=0
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   procOpt=" -eo";
+   if check_os_min_revision 5.10; then
+      procOpt=" -z ${JASS_ZONE_NAME} -o";
+   fi
+   process=`ps ${procOpt} comm,args | egrep -- "^${processName}"`
+
+   if [ "${process}" != "" ]; then
+      processes=`ps ${procOpt} comm,args | egrep -- "^${processName}" | egrep -- "${regExp}"`
+      if [ "${processes}" != "" ]; then
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logProcessArgsMatch "$processName" "$regExp" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else # handle the no match condition
+            [ $logResult -eq 1 ]   && logProcessArgsNoMatch "$processName" "$regExp" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ] && logProcessArgsMatch "$processName" "$regExp" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else # handle the no match condition
+            [ $logResult -eq 1 ] && logProcessArgsNoMatch "$processName" "$regExp" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   else
+      [ $logResult -eq 1 ] && logProcessNotFound "$processName" "$relatedInfo"
+   fi
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining the existence of a file
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check file exists
+#                            1 = check file does NOT exist
+#   fileName               - the files to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file exists or does not exist for all files
+#       (depends on condition)
+#    1  if the file exists or does not exist for at least
+#       one file (depends on condition)
+###############################################################################
+
+_check_file() {
+
+   returnCode=255
+
+   if is_invalid_argument_list check_file $# 3 5 ; then
+      return $returnCode
+   fi
+
+   condition="$1"
+   fileName="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for file in $fileName; do
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logFileExists "$file" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else # handle the no match condition
+            [ $logResult -eq 1 ]   && logFileNotExists "$file" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else # NO match
+         # handle the match condition
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ] && logFileExists "$file" "$vulnValue" "$relatedInfo"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else # handle the no match condition
+            [ $logResult -eq 1 ] && logFileNotExists "$file" "0" "$relatedInfo"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining the existence of specific contents
+# within a specified file.
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check file contents exist
+#                            1 = check file contents do NOT exist
+#   fileName               - the files to check
+#   regExp                 - the regular expression of the contents to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file contents exists or does not exist for all files
+#       (depends on condition)
+#    1  if the file contents exists or does not exist for at least
+#       one file (depends on condition)
+###############################################################################
+
+_check_fileContents() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_fileContents $# 4 6 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   fileName="$2"
+   regExp="$3"
+   vulnValue="$4"
+   logStatus="$5"
+   relatedInfo="$6"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for file in $fileName; do
+
+      # check that the file exists before checking its contents
+
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         if egrep -- "${regExp}" ${file} > /dev/null 2>&1; then
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ]   && logFileContentsExist "$file" "$regExp" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            else # handle the no match condition
+               [ $logResult -eq 1 ]   && logFileContentsNotExist "$file" "$regExp" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+	       returnCode=1
+            fi
+         else # NO match
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ] && logFileContentsExist "$file" "$regExp" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+               returnCode=1
+            else # handle the no match condition
+               [ $logResult -eq 1 ] && logFileContentsNotExist "$file" "$regExp" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            fi
+         fi
+      else
+         [ $logResult -eq 1 ] && logFileNotFound "$file" "$relatedInfo"
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function that checks file mode for a file.
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check file mode matches
+#                            1 = check file mode does NOT match
+#   fileName               - the files to check
+#   fileMode               - the file mode to check.  this parameter can be
+#                            a space separated list of file modes.
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file mode matches or does not match for all files
+#       (depends on condition)
+#    1  if the file mode matches or does not match for at least
+#       one file (depends on condition)
+###############################################################################
+
+_check_fileMode() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_fileMode $# 4 6 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   fileName="$2"
+   fileMode="$3"
+   vulnValue="$4"
+   logStatus="$5"
+   relatedInfo="$6"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   operator="-o"
+   findPrefix="("
+   findSuffix=")"
+   findString=""
+   passCount=0
+   for mde in ${fileMode}; do
+      if [ ${passCount} -eq 0 ]; then
+         findString="${findString} -perm ${mde}"
+      else
+         findString="${findString} ${operator} -perm ${mde}"
+      fi
+      passCount=`expr ${passCount} + 1`
+   done
+
+   # This is a small kludge to deal with a bug in the find(1) command
+   # that was first noticed on Solaris 2.6 (05/1998, unpatched).
+
+   if [ ${passCount} -gt 1 ]; then
+      findString="${findPrefix} ${findString} ${findSuffix}"
+   fi
+
+   for file in $fileName; do
+
+      # check that the file exists before checking its contents
+
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         if find ${file} -prune ${findString} -print 2>/dev/null | grep ${file} >/dev/null ; then
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ]   && logFileModeMatch "$file" "$fileMode" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            else # handle the no match condition
+               [ $logResult -eq 1 ]   && logFileModeNoMatch "$file" "$fileMode" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+	       returnCode=1
+            fi
+         else # NO match
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ] && logFileModeMatch "$file" "$fileMode" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+               returnCode=1
+            else # handle the no match condition
+               [ $logResult -eq 1 ] && logFileModeNoMatch "$file" "$fileMode" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            fi
+         fi
+      else
+         [ $logResult -eq 1 ] && logFileNotFound "$file" "$relatedInfo"
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function that checks file type for a file.
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check file type matches
+#                            1 = check file type does NOT match
+#   fileName               - the files to check
+#   fileType               - the file type to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file type matches or does not match for all files
+#       (depends on condition)
+#    1  if the file type matches or does not match for at least
+#       one file (depends on condition)
+###############################################################################
+
+_check_fileType() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_fileType $# 4 6 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   fileName="$2"
+   fileType="$3"
+   vulnValue="$4"
+   logStatus="$5"
+   relatedInfo="$6"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for file in $fileName; do
+
+      # check that the file exists before checking its contents
+
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         if find ${file} -prune -type ${fileType} -print 2>/dev/null | grep ${file} >/dev/null ; then
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ]   && logFileTypeMatch "$file" "$fileType" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            else # handle the no match condition
+               [ $logResult -eq 1 ]   && logFileTypeNoMatch "$file" "$fileType" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+	       returnCode=1
+            fi
+         else # NO match
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ] && logFileTypeMatch "$file" "$fileType" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+               returnCode=1
+            else # handle the no match condition
+               [ $logResult -eq 1 ] && logFileTypeNoMatch "$file" "$fileType" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            fi
+         fi
+      else
+         [ $logResult -eq 1 ] && logFileNotFound "$file" "$relatedInfo"
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function that checks file owner for a file.
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check file owner matches
+#                            1 = check file owner does NOT match
+#   fileName               - the files to check
+#   fileOwner              - the file owner to check.  this parameter can be
+#                            a space separated list of file owners.
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file owner matches or does not match for all files
+#       (depends on condition)
+#    1  if the file owner matches or does not match for at least
+#       one file (depends on condition)
+###############################################################################
+
+_check_fileOwner() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_fileOwner $# 4 6 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   fileName="$2"
+   fileOwner="$3"
+   vulnValue="$4"
+   logStatus="$5"
+   relatedInfo="$6"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   operator="-o"
+   findPrefix="("
+   findSuffix=")"
+   findString=""
+   passCount=0
+   for own in ${fileOwner}; do
+      if [ ${passCount} -eq 0 ]; then
+         findString="${findString} -user ${own}"
+      else
+         findString="${findString} ${operator} -user ${own}"
+      fi
+      passCount=`expr ${passCount} + 1`
+   done
+
+   # This is a small kludge to deal with a bug in the find(1) command
+   # that was first noticed on Solaris 2.6 (05/1998, unpatched).
+
+   if [ ${passCount} -gt 1 ]; then
+      findString="${findPrefix} ${findString} ${findSuffix}"
+   fi
+
+   for file in $fileName; do
+
+      # check that the file exists before checking its contents
+
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         if find ${file} -prune ${findString} -print 2>/dev/null | grep ${file} >/dev/null ; then
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ]   && logFileOwnerMatch "$file" "$fileOwner" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            else # handle the no match condition
+               [ $logResult -eq 1 ]   && logFileOwnerNoMatch "$file" "$fileOwner" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+	       returnCode=1
+            fi
+         else # NO match
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ] && logFileOwnerMatch "$file" "$fileOwner" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+               returnCode=1
+            else # handle the no match condition
+               [ $logResult -eq 1 ] && logFileOwnerNoMatch "$file" "$fileOwner" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            fi
+         fi
+      else
+         [ $logResult -eq 1 ] && logFileNotFound "$file" "$relatedInfo"
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function that checks file group owner for a file.
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for existence or not
+#                            0 = check file group matches
+#                            1 = check file group does NOT match
+#   fileName               - the files to check
+#   fileGroup              - the file group owner to check.  this parameter
+#                            can be a space separated list of group owners.
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file group owner matches or does not match for all files
+#       (depends on condition)
+#    1  if the file group owner matches or does not match for at least
+#       one file (depends on condition)
+###############################################################################
+
+_check_fileGroup() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list check_fileGroup $# 4 6 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   fileName="$2"
+   fileGroup="$3"
+   vulnValue="$4"
+   logStatus="$5"
+   relatedInfo="$6"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   operator="-o"
+   findPrefix="("
+   findSuffix=")"
+   findString=""
+   passCount=0
+   for grp in ${fileGroup}; do
+      if [ ${passCount} -eq 0 ]; then
+         findString="${findString} -group ${grp}"
+      else
+         findString="${findString} ${operator} -group ${grp}"
+      fi
+      passCount=`expr ${passCount} + 1`
+   done
+
+   # This is a small kludge to deal with a bug in the find(1) command
+   # that was first noticed on Solaris 2.6 (05/1998, unpatched).
+
+   if [ ${passCount} -gt 1 ]; then
+      findString="${findPrefix} ${findString} ${findSuffix}"
+   fi
+
+   for file in $fileName; do
+
+      # check that the file exists before checking its contents
+
+      if find ${file} -prune >/dev/null 2>&1 ; then
+         if find ${file} -prune ${findString} -print 2>/dev/null | grep ${file} >/dev/null ; then
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ]   && logFileGroupMatch "$file" "$fileGroup" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            else # handle the no match condition
+               [ $logResult -eq 1 ]   && logFileGroupNoMatch "$file" "$fileGroup" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+	       returnCode=1
+            fi
+         else # NO match
+            # handle the match condition
+            if [ $condition -eq 0 ]; then
+               [ $logResult -eq 1 ] && logFileGroupMatch "$file" "$fileGroup" "$vulnValue" "$relatedInfo"
+               adjustScore "$vulnValue"
+               returnCode=1
+            else # handle the no match condition
+               [ $logResult -eq 1 ] && logFileGroupNoMatch "$file" "$fileGroup" "0" "$relatedInfo"
+               [ $returnCode -ne 1 ] && returnCode=0
+            fi
+         fi
+      else
+         [ $logResult -eq 1 ] && logFileNotFound "$file" "$relatedInfo"
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function that checks the integrity of File Templates
+#
+# Arguments:
+#
+#   fileName               - the files to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the file template matches the target on the system.
+#    1  if the file template does not match the target on the system.
+###############################################################################
+
+_check_fileTemplate()
+{
+   returnCode="255"
+
+   if is_invalid_argument_list check_fileGroup $# 2 4 ; then
+      return ${returnCode}
+   fi
+
+   fileName="$1"
+   vulnValue="$2"
+   logStatus="$3"
+   relatedInfo="$4"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for file in `extractComments "$fileName"`; do
+
+      tmpFile="`clean_path ${file}`"
+
+      # Get correct file based on precedence
+      pushfile="`get_expanded_file_name $tmpFile`"
+
+      [ -z "${pushfile}" ] && continue
+
+      srcFile="`clean_path ${pushfile}`"
+      dstFile="`clean_path ${JASS_ROOT_DIR}${tmpFile}`"
+
+      # Do the magic
+      if [ -h ${srcFile} ]; then
+         check_fileTypeMatch ${dstFile} "l" "${vulnValue}" "${logStatus}"
+         diff ${srcFile} ${dstFile} >/dev/null 2>&1
+      elif [ -f ${srcFile} ]; then
+         check_fileTypeMatch ${dstFile} "f" "${vulnValue}" "${logStatus}"
+         diff ${srcFile} ${dstFile} >/dev/null 2>&1
+      elif [ -d ${srcFile} ]; then
+         check_fileTypeMatch ${dstFile} "d" "${vulnValue}" "${logStatus}"
+         diff -r ${srcFile} ${dstFile} >/dev/null 2>&1
+      fi
+      status=$?
+      if [ ${status} -eq 0 ]; then
+         [ $logResult -eq 1 ] && logSuccess 'Template ${tmpFile} matches target on system.'
+         [ $returnCode -ne 1 ] && returnCode=0
+      elif [ ${status} -eq 1 ]; then
+         [ $logResult -eq 1 ] && logFailure 'Template ${tmpFile} does not match target on system.'
+	 returnCode=1
+         adjustScore "${vulnValue}"
+      else
+         [ $logResult -eq 1 ] && logFailure 'Template ${tmpFile} does not exist on the system.'
+	 returnCode=1
+         adjustScore "${vulnValue}"
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Function normalizes MAC address for comparison.  Normalizing formats the
+# so each hex value is padded to two digits lowercase (ab:cd:ef:gh:ij:kl).
+# The function rejects invalid chars in the MAC address and those that have
+# the incorrect number of fields.
+#
+# Arguments:
+#
+#   mac - MAC address to normalize
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  if the mac address was normalized ok.
+#    1  if the mac address is invalid
+###############################################################################
+
+normalize_mac_address()
+{
+   returnCode="255"
+
+   if is_invalid_argument_list check_fileGroup $# 1 1 ; then
+      return ${returnCode}
+   fi
+
+   mac="$1"
+
+   # Should have 6 fields separated by a :
+   if echo "${mac}:Invalid_MAC_Address" | cut -f7 -d: | grep -v Invalid_MAC_Address >/dev/null  ; then
+      logNotice "$mac is not a valid mac format"
+      return 1
+   fi
+
+   # Check that characters in mac are valid
+   if echo "$mac" | egrep "[^a-fA-F0-9:]" >/dev/null ; then
+      logNotice "$mac contains invalid characters"
+      return 1
+   fi
+
+   # Apply mac normalization
+   echo $mac | nawk '
+BEGIN {
+  RS = ":"
+}
+{
+  printf ("%02.2s", $1)
+  if (NR < 6) printf ":"
+}'
+
+   return 0
+}
+
+
+##############################################################################
+# Get a list of (pid, user, and command) for a running service
+#
+# Arguments:
+#   svcName       -the service  in FMRI
+#
+# Returns:
+#
+#   ""  if no process associates with the service
+#   process list { pid user comm [pid user command] }
+###############################################################################
+
+_get_service_process_info ()
+{
+
+   svcName=${1}
+
+   # Get primary contract ID, if any (with whitespace, "-", & "*" filtered-out):
+   contractID="`svcs -H -o ctid ${svcName} | sed 's/[	* \-]*//g'`"
+
+   contractList=""
+
+   if [ "${contractID}" != "" ]; then
+      processList="`pgrep -c ${contractID}`"
+
+     for pid in ${processList}; do
+         contractList=${contractList}" `ps -f -o pid,user,comm -p ${pid} \
+            | grep -v 'PID.*USER.*COMMAND'`"
+      done
+
+   fi
+
+   echo  "${contractList}"
+}
+
+###############################################################################
+# Primary function for examining whether services are running or not
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for running (0)
+#                            or not running (1)
+#   svcList                - list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  run state matches $1:
+#       when $1=0, the services are running
+#       when $1=1, the services are not running
+#    1  run state does not match $1:
+#       when $1=1, the services are running
+#       when $1=0, the services are not running
+###############################################################################
+
+_check_service_running () {
+
+   returnCode="255"
+
+   if is_invalid_argument_list _check_service_running $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   svcList="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+   for svcName in ${svcList} ; do
+
+      # check existence of FMRI in SMF
+      is_service_installed ${svcName}
+      if [ $? -eq 1 ]; then
+         logNotice 'Service ${svcName} is not installed.'
+
+         # expect to be running
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceRunning "${svcName}" "${vulnValue}" "" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+
+         else    # expect to be not running
+            [ $logResult -eq 1 ]   && logServiceNotRunning "${svcName}" "0" "" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+
+         continue
+      fi
+
+      # check if it is legacy service
+      if  is_legacy_service ${svcName} ; then
+         logError 'Service ${svcName} is a legacy service.'
+         continue;
+      fi
+
+      # check if a service is running
+      if is_service_running ${svcName} ; then
+
+         #get process list of this service
+         processList=`_get_service_process_info ${svcName}`
+
+         # match condition that a service is expected running
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceRunning "${svcName}" "0" "${processList}" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+
+         else    # not match condition that a service is expected not running
+            [ $logResult -eq 1 ]   && logServiceNotRunning "${svcName}" "${vulnValue}" "${processList}" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else        # the service is not running
+         # not match condition that a service is expected running
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceRunning "${svcName}" "${vulnValue}" "" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+         else   # match, service is expected not running
+            [ $logResult -eq 1 ]   && logServiceNotRunning "${svcName}" "0" "" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining whether services are enabled or disabled
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for enabled (0)
+#                            or not enabled (1)
+#   svcList                - list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  enabled state matches $1:
+#       when $1=0, the services are enabled
+#       when $1=1, the services are not enabled
+#    1  enabled state does not match $1:
+#       when $1=1, the services are enabled
+#       when $1=0, the services are not enabled
+###############################################################################
+
+_check_service_enabled() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list _check_service_enabled $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   svcList="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for svcName in ${svcList} ; do
+
+      # check existence of FMRI in SMF
+      is_service_installed ${svcName}
+      if [ $? -eq 1 ]; then
+
+         logNotice 'Service ${svcName} is not installed.'
+
+         # not match condition, the service is expected enabled
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceEnabled "${svcName}" "${vulnValue}" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+
+         else  # match condition, the service is expected not enabled.
+            [ $logResult -eq 1 ]   && logServiceDisabled "${svcName}" "0" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+         continue
+      fi
+
+      #check legacy device
+      if is_legacy_service ${svcName} ; then
+         logError 'Service ${svcName} is a legacy service.'
+         continue;
+      fi
+
+      # check if a service is enabled
+      if is_service_enabled ${svcName} ; then
+
+         # match condition that a service is expected to enabled
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceEnabled "${svcName}" "0" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+
+         else # not match the service is expected disabled
+            [ $logResult -eq 1 ]   && logServiceDisabled "${svcName}" "${vulnValue}" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+
+      else    # a service is disabled
+         # not match condition that a service is expected to enabled
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceEnabled "${svcName}" "${vulnValue}" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+
+         else  #match, the service is expected disabled
+            [ $logResult -eq 1 ]   && logServiceDisabled "${svcName}" "0" "${realtedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining whether services are installed or not installed
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for installed (0)
+#                            or not installed (1)
+#   svcList                - list of services to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  installation state matches $1:
+#       when $1=0, the services are installed
+#       when $1=1, the services are not installed
+#    1  installation state does not match $1:
+#       when $1=1, the services are installed
+#       when $1=0, the services are not installed
+###############################################################################
+
+_check_service_installed() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list _check_service_installed $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   svcList="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for svcName in ${svcList} ; do
+
+      # check existence of FMRI in SMF
+      if is_service_installed ${svcName} ; then
+
+         # the service is expected to be installed.
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceInstalled "${svcName}" "0" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+         else
+            [ $logResult -eq 1 ]   && logServiceNotInstalled "${svcName}" "${vulnValue}" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+      else   # the service is not installed
+
+         # not match, the service is expected to be installed.
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logServiceInstalled "${svcName}" "${vulnValue}" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+
+         else  #match the service is expected to be installed.
+            [ $logResult -eq 1 ]   && logServiceNotInstalled  "${svcName}" "0" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+   return $returnCode
+}
+
+###############################################################################
+# Primary function for examining whether users are locked or not locked
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for locked (0)
+#                            or not locked (1)
+#   userList               - list of users to check
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  lock state matches $1:
+#       when $1=0, the users are locked
+#       when $1=1, the users are not locked
+#    1  lock state does not match $1:
+#       when $1=1, the users are locked
+#       when $1=0, the users are not locked
+###############################################################################
+
+_check_user_locked() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list _check_user_locked $# 3 5 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   userList="$2"
+   vulnValue="$3"
+   logStatus="$4"
+   relatedInfo="$5"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+
+   for user in ${userList} ; do
+
+      # check existence of user in password file
+      is_user_account_extant ${user}
+      if [ $? -eq 1 ]; then
+
+         logNotice 'User ${user} does not exist in password file.'
+         #  match condition, the user is expected locked
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logUserLocked "${user}" "0" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+
+         else  # no match condition, the user is expected unlocked.
+            [ $logResult -eq 1 ]   && logServiceNotLocked "${user}" "$vulnValue" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+         continue
+      fi
+
+      #check if user account is locked.
+      if is_user_account_locked ${user} ; then
+
+         # match condition that a user is expected to be locked
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logUserLocked "${user}" "0" "${relatedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+
+         else # not match the service is expected not to be locked
+            [ $logResult -eq 1 ]   && logUserNotLocked "${user}" "${vulnValue}" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+         fi
+
+      else    # a user is not locked
+         # not match condition that a user is expected to be locked.
+         if [ $condition -eq 0 ]; then
+            [ $logResult -eq 1 ]   && logUserLocked "${user}" "${vulnValue}" "${relatedInfo}"
+            adjustScore "$vulnValue"
+            returnCode=1
+
+         else  #match, the service is expected to be unlocked.
+            [ $logResult -eq 1 ]   && logUserNotLocked "${user}" "0" "${realtedInfo}"
+            [ $returnCode -ne 1 ] && returnCode=0
+         fi
+      fi
+   done
+   return $returnCode
+}
+
+###############################################################################
+#  Check if a service is enabled and SMF-ready
+#
+# Arguments:
+#
+#   svc                    - service
+#
+# Returns:
+#
+#  optEnabled:
+#                  0      - service exists
+#                  1      - service does not exist
+#                  2      - service is a legacy service (pre-SMF)
+###############################################################################
+
+__check_service_enabled()
+{
+
+
+   _check_svc="${1}"
+   optEnabled=0;
+   # check existence of FMRI in SMF
+   if is_service_installed ${_check_svc}  ; then
+      # check if the service is a legacy service
+      if is_legacy_service ${_check_svc} ; then
+         logError 'Service ${_check_svc} is a legacy service.'
+         optEnabled=2
+      fi
+   else
+      logNotice 'Service ${_check_svc} is not installed.'
+      optEnabled=1;
+   fi
+   return $optEnabled
+}
+
+###############################################################################
+# Return whether a service option is enabled or disabled
+#
+#
+# Environment variables that are inherited from caller:
+#         condition   0 expected option is disabled
+#                     1 expected option is enabled.
+#         svc         FMRI
+#         vulnvalue   0   does not count toward  error
+#         relatedInfo text pass through to log
+#
+# Arguments:
+#
+#          propType:
+#                      0   - property=value  type
+#                      1   - property option type
+#          thisProp    - property or a list of properties
+#
+# Returns:
+#    0  if the service option is disabled
+#    1  if the service option is enabled
+###############################################################################
+_option_disabled()
+{
+   _propType=${1}
+   _thisProp=${2}
+   # not match condition, the service is expected to be enabled.
+    if [ $condition -eq 0 ]; then
+       if [ $_propType -eq 0 ]; then
+          [ $logResult -eq 1 ]   && logServicePropEnabled "${svcName}" "${_thisProp}" "${propVal}" "${vulnValue}"  "${relatedInfo}"
+       else
+          [ $logResult -eq 1 ]   && logServiceOptionEnabled "${svcName}" "${_thisProp}" "${propSvc}" "${propOpt}" "${vulnValue}"  "${relatedInfo}"
+       fi
+       adjustScore "$vulnValue"
+       returnCode=1
+
+    else   # match condition that a service is expected to be disabled.
+       if [ $_propType -eq 0 ]; then
+          [ $logResult -eq 1 ]   && logServicePropDisabled "${svcName}" "${_thisProp}" "${propVal}" "0" "${relatedInfo}"
+       else
+          [ $logResult -eq 1 ]   && logServiceOptionDisabled "${svcName}" "${_thisProp}" "${propSvc}" "${propOpt}" "0" "${relatedInfo}"
+       fi
+       [ $returnCode -ne 1 ] && returnCode=0
+    fi
+}
+
+###############################################################################
+# handles condition that a option is enabled for a service
+#
+# Environment variables that are inherited from caller:
+#         condition   0 expected option is enabled.
+#                     1 expected option is disabled.
+#         svc         FMRI
+#         vulnvalue   0   does not count toward  error
+#         relatedInfo text pass through to log
+#
+# Arguments:
+#
+#          propType:
+#                      0   - property=value  type
+#                      1   - property option type
+#          thisProp    - property
+#
+# Returns:
+#    0  if the service option is enabled
+#    1  if the service option is disabled
+###############################################################################
+_option_enabled ()
+{
+   _prop=${1}
+   _thisProp=${2}
+   # not match condition, the service is expected to be disabled.
+   if [ $condition -eq 1 ]; then
+      if [ $_prop -eq 0 ]; then
+         [ $logResult -eq 1 ]   && logServicePropDisabled "${svcName}" "${_thisProp}" "${propVal}" "${vulnValue}"  "${relatedInfo}"
+      else
+         [ $logResult -eq 1 ]   && logServiceOptionDisabled "${svcName}" "${_thisProp}" "${propSvc}" "${propOpt}" "${vulnValue}"  "${relatedInfo}"
+      fi
+      adjustScore "$vulnValue"
+      returnCode=1
+
+   else   # match condition that a service is expected to be enabled.
+      if [ $_prop -eq 0 ]; then
+         [ $logResult -eq 1 ]   && logServicePropEnabled  "${svcName}" "${_thisProp}" "${propVal}" "0" "${relatedInfo}"
+      else
+         [ $logResult -eq 1 ]   && logServiceOptionEnabled  "${svcName}" "${_thisProp}" "${propSvc}" "${propOpt}" "0" "${relatedInfo}"
+      fi
+      [ $returnCode -ne 1 ] && returnCode=0
+   fi
+}
+
+##############################################################################
+# Examine whether services option is  enabled or disabled
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for enable (0)
+#                            or disable (1)
+#   svc                    - service
+#   propList               - list of properties to check
+#   propSvc                - property Service
+#   propSvcOpt             - property service option to be checked
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  services option matches $1:
+#       when $1=0, the services option is enabled
+#       when $1=1, the services option is not enabled
+#    1  services option does not match $1:
+#       when $1=1, the services option is enabled
+#       when $1=0, the services option is not enabled
+###############################################################################
+_check_service_option() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list _check_service_option $# 5 8 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   svcName="$2"
+   propList="$3"
+   propSvc="$4"
+   propOpt="$5"
+   vulnValue="$6"
+   logStatus="$7"
+   relatedInfo="$8"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+   __check_service_enabled ${svcName}
+   optEnabled=$?
+   if [ $optEnabled -eq 2 ]; then
+      :
+   elif [ $optEnabled -eq 1 ]; then
+        _option_disabled 1 "${propList}"
+   else
+      for prop in ${propList} ; do
+         if is_option_enabled "${svcName}" "${prop}" "${propSvc}" "${propOpt}" ; then
+            _option_enabled 1 ${prop}
+         else
+            _option_disabled  1  ${prop}
+         fi
+      done
+   fi
+   return $returnCode
+}
+
+##############################################################################
+# Examine whether services property is  enabled or disabled
+#
+# Arguments:
+#
+#   condition (integer)    - determines whether to check for enable (0)
+#                            or disable (1)
+#   svc                    - service
+#   propList               - list of properties to check
+#   propSvcOpt             - property service option to be checked
+#   vulnValue (integer)    - the vulnerability value
+#   logStatus (optional)   - logging status
+#                            Set to "LOG" if logging desired on failures
+#   relatedInfo (optional) - a related information string
+#
+# Returns:
+#
+#   255 if an error occurs or the supplied arguments are invalid
+#    0  property state matches $1:
+#       when $1=0, the property is enabled
+#       when $1=1, the property is not enabled
+#    1  property state does not match $1:
+#       when $1=1, the property is enabled
+#       when $1=0, the property is not enabled
+###############################################################################
+
+_check_service_prop() {
+
+   returnCode="255"
+
+   if is_invalid_argument_list _check_service_prop $# 5 7 ; then
+      return ${returnCode}
+   fi
+
+   condition="$1"
+   svcName="$2"
+   propList="$3"
+   propVal="$4"
+   vulnValue="$5"
+   logStatus="$6"
+   relatedInfo="$7"
+
+   logResult=`checkLogStatus "${logStatus}"`
+
+   if invalidVulnVal "${vulnValue}"; then
+      return ${returnCode}
+   fi
+   __check_service_enabled ${svcName}
+   optEnabled=$?
+   if [ $optEnabled -eq 2 ]; then
+      :
+   elif [ $optEnabled -eq 1 ]; then
+      _option_disabled 0 "${propList}"
+   else
+      for prop in ${propList} ; do
+         if is_option_enabled "${svcName}" "${prop}" "" "${propVal}" ; then
+            _option_enabled 0 ${prop}
+         else
+            _option_disabled 0 ${prop}
+         fi
+      done
+   fi
+   return $returnCode
+}

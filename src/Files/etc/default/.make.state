@@ -1,0 +1,8 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/default:
+	[ -d ../../../../proto/SUNWsst/Files/etc/default ] || /bin/mkdir -p ../../../../proto/SUNWsst/Files/etc/default
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/default/sendmail:
+	/usr/bin/cp -f sendmail ../../../../proto/SUNWsst/Files/etc/default/sendmail
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/default/sendmail

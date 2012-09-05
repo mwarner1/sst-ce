@@ -1,0 +1,106 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-syslogd-listen.fin	3.8	05/04/12 SMI"
+#
+# This script prevents the SYSLOG service from accepting remote log
+# messages.  This is done prior to Solaris 9 by adding the "-t" to
+# the 'syslogd' command line.  In Solaris 9+, this is accomplished
+# by setting the LOG_FROM_REMOTE variable to 'NO' in the
+# /etc/default/syslogd file.
+#
+# Note that this script prevents the daemon from listening on UDP
+# port 514.  This is useful for systems use SYSLOG services but do
+# not need to receive SYSLOG messages from other remote systems.
+
+logMessage "Disabling the function: SYSLOG (for external log receipt)"
+echo ""
+logNotice "Preventing the SYSLOG service from logging remote connections."
+logNotice "The service will no longer accept log messages from other systems."
+echo ""
+
+if check_os_min_revision 5.9 ; then
+   SYSLOG="${JASS_ROOT_DIR}etc/default/syslogd"
+   if [ ! -f ${SYSLOG} ]; then
+      create_a_file -m 644 -o root:sys ${SYSLOG}
+      echo ""
+   fi
+
+   oldValue=`grep '^LOG_FROM_REMOTE=' ${SYSLOG} | nawk -F= '{ print $2 }' 2>/dev/null`
+   if [ "${oldValue}" != "NO" ]; then
+
+      backup_file ${SYSLOG}
+      echo ""
+
+      logMessage 'Setting the \\\"LOG_FROM_REMOTE\\\" parameter to \\\"NO\\\" in ${SYSLOG}.'
+
+      cat ${SYSLOG}.${JASS_SUFFIX} |\
+         sed 's/#.*LOG_FROM_REMOTE=/LOG_FROM_REMOTE=/g' |\
+         sed "s/^LOG_FROM_REMOTE=.*$/LOG_FROM_REMOTE=NO/g" > ${SYSLOG}
+
+      # The following case is needed if the LOG_FROM_REMOTE line was not
+      # found in the file.
+
+      if [ `grep -c '^LOG_FROM_REMOTE=' ${SYSLOG}` = 0 ]; then
+         echo "LOG_FROM_REMOTE=NO" >> ${SYSLOG}
+      fi
+   fi
+   # Restart the service so that changes take effect
+   if check_os_min_revision 5.10; then
+    restart_service_immediate svc:/system/system-log:default
+   fi
+elif check_os_revision 5.8 ; then
+   SYSLOG=${JASS_ROOT_DIR}etc/init.d/syslog
+   if [ `grep "/usr/sbin/syslogd" ${SYSLOG} | grep -v '#' |\
+      grep "\-t" | wc -l` = 0 ]; then
+
+      backup_file ${SYSLOG}
+      echo ""
+
+      logMessage 'Adding the \\\"-t\\\" option to /usr/sbin/syslogd in ${SYSLOG}.'
+
+      cat ${SYSLOG}.${JASS_SUFFIX} |\
+         nawk ' $1 ~ /\/usr\/sbin\/syslogd/  {
+         n = split($0, a);
+         newl = a[1];
+         endl = "";
+         found_t = 0;
+         for (i = 2; i <= n; i++) {
+            if (a[i] ~ /\-t/) {
+               found_t = 1;
+            }
+            endl = endl" "a[i];
+         }
+         if (found_t == 0) {
+            newl = newl" -t";
+         }
+         newl = newl" "endl;
+         printf("%s\n", newl);
+         continue;
+      } { print; }' > ${SYSLOG}
+   fi
+else
+   logInvalidOSRevision "5.8+"
+fi

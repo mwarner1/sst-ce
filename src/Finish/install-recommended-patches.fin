@@ -1,0 +1,105 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-recommended-patches.fin 3.10     04/06/02     SMI"
+#
+# This script is responsible for installing a Sun Recommended and Security 
+# patch cluster from ${JASS_ROOT_DIR}${JASS_PATCH_DIR}.  These patch clusters
+# can be freely downloaded from sunsolve.sun.com.
+#
+
+logMessage "Installing Software: Solaris Recommended and Security Patch Cluster"
+echo ""
+
+errorCondition=0
+PATCH_OS_VERSION=""
+
+# Determine the current OS version in order to define which cluster to apply.
+
+case ${JASS_OS_REVISION} in
+
+   5.10)
+      PATCH_OS_VERSION="10"
+      ;;
+
+   5.9)
+      PATCH_OS_VERSION="9"
+      ;;
+
+   5.8)
+      if [ "`echo ${JASS_OS_TYPE} | cut -c1-3`" = "TS8" ]; then
+         PATCH_OS_VERSION="TS8"
+      else
+         PATCH_OS_VERSION="8"
+      fi
+      ;;
+
+   5.7)
+      PATCH_OS_VERSION="7"
+      ;;
+
+   5.6)
+      PATCH_OS_VERSION="2.6"
+      ;;
+
+   5.5.1)
+      PATCH_OS_VERSION="2.5.1"
+      ;;
+
+   *)
+      errorCondition=1
+      ;;
+
+esac
+
+if [ ${errorCondition} = 0 ]; then
+   PATCH_DIR="${JASS_ROOT_DIR}${JASS_PATCH_DIR}"
+
+   # Handle the special case for Solaris on Intel.
+
+   if [ "`uname -m`" = "i86pc" ]; then
+      PATCH_SERV_DIR="${PATCH_OS_VERSION}_x86"
+   else
+      PATCH_SERV_DIR="${PATCH_OS_VERSION}"
+   fi
+
+   PATCH_SERV_DIR="${PATCH_SERV_DIR}_Recommended"
+
+   if [ ! -d ${PATCH_DIR} ]; then
+      logNotice 'The patch directory, ${PATCH_DIR}, does not exist.'
+   else
+      if [ ! -d ${PATCH_DIR}/${PATCH_SERV_DIR} ]; then
+         logNotice 'The patch directory, ${PATCH_SERV_DIR}, does not exist.'
+      else
+         logMessage 'Installing the patches from the directory, ${PATCH_DIR}/${PATCH_SERV_DIR}.'
+         echo ""
+
+         add_patch ${JASS_REC_PATCH_OPTIONS} \
+            -M ${JASS_ROOT_DIR}${JASS_PATCH_DIR}/${PATCH_SERV_DIR} patch_order
+      fi
+   fi
+else
+   logInvalidOSRevision "5.5.1-5.10"
+fi

@@ -1,0 +1,120 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-ldm.fin 1.8     06/10/19     SMI"
+#
+# The purpose of this script is to install the LDoms software onto a JumpStart
+# client.  This is accomplished by installing the LDoms distribution in the
+# JASS_PACKAGES directory.
+#
+
+logMessage "Installing Software: Logical Domains (LDoms)"
+echo ""
+
+LDM_PKG=SUNWldm.v
+
+addedpkg=0
+
+pkg_possibilities="${LDM_PKG}.pkg ${LDM_PKG}"
+LDM_PKG_DIR="`clean_path ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}/`"
+
+ARCH="`uname -m`"
+case ${ARCH} in
+   sun4v)
+      capable=1
+      ;;
+
+   *)
+      capable=0
+      ;;
+esac
+
+if check_os_min_revision 5.10; then
+   if [ ${capable} = 1 ]; then
+
+      # This would be simpler if sh had a goto
+      while true; do
+	 if [ "${JASS_STANDALONE}" = "1" -o "${JASS_ROOT_DIR_SET}" = "1" ]; then
+	    # Standalone mode (including when "jass-execute -r rootDirectory" specified)
+	    if check_packageExists "${LDM_PKG}" 0; then
+	       logNotice "LDoms software is already installed"
+	       break
+	    fi
+	 fi
+
+	 for LDM_PKG_SRC in ${pkg_possibilities}; do
+	    LDM_PKG_SRC_DIR="`clean_path ${LDM_PKG_DIR}/${LDM_PKG_SRC}`"
+
+	    # A package can be either a directory, or a datastream.
+	    if [ -f ${LDM_PKG_SRC_DIR} ]; then
+	       logNotice 'Installing ${LDM_PKG} from the path ${LDM_PKG_SRC_DIR}'
+	       echo ""
+
+	       add_pkg -d ${LDM_PKG_SRC_DIR} ${LDM_PKG}
+	       addedpkg=1
+
+	       break
+	    elif [ -d ${LDM_PKG_SRC_DIR} ]; then
+	       # For directories, the name must match LDM_PKG
+	       if [ "${LDM_PKG}" = "${LDM_PKG_SRC}" ]; then
+		  logNotice 'Installing ${LDM_PKG} from the path ${LDM_PKG_DIR}'
+		  echo ""
+
+		  add_pkg -d ${LDM_PKG_DIR} ${LDM_PKG}
+		  addedpkg=1
+
+		  break
+	       else
+		  logNotice "Directory ${LDM_PKG_SRC_DIR} skipped, name is not ${LDM_PKG}"
+	       fi
+	    else
+	       logFileNotFound "${LDM_PKG_SRC_DIR}"
+	    fi
+	 done
+
+	 # Now, exit out of the while true loop
+	 break
+
+	 if [ $addedpkg != 0 ]; then
+	    # SUNWldm will NOT be removed by SST undo.  You must
+	    # instead manually remove the package.
+
+	    # add_to_manifest X "rm_pkg ${LDM_PKG}"
+
+	    # svcs must be disabled before they are removed. This is safe
+	    # since we are about to remove it.  I suppose this is broken for
+	    # -r undos though.
+	    # add_to_manifest X "svcadm disable svc:/ldoms/ldmd:default"
+	    :
+	 fi
+
+      done
+   else
+      logNotice 'This script is not supported on the ${ARCH} architecture.'
+   fi
+else
+   logInvalidOSRevision "5.10+"
+fi
+

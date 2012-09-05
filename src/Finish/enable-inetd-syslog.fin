@@ -1,0 +1,102 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-inetd-syslog.fin	3.10	05/04/12 SMI"
+#
+# This script configured the Internet Services Daemon (INETD) to log
+# all incoming connections.  That is, a log entry will be made via
+# SYSLOG if a connection is made to any service for which the INETD
+# daemon is listening.  Prior to Solaris 9, this was done by adding
+# the '-t' option to the 'inetd' command line.  In Solaris 9, this
+# is accomplished by setting the ENABLE_CONNECTION_LOGGING variable
+# in /etc/default/inetd to 'YES'.
+#
+
+logMessage "Configuring the Internet services daemon to log all incoming connections."
+echo ""
+if check_os_min_revision 5.10 ; then
+   set_service_property_value "svc:/network/inetd" "defaults/tcp_trace" "true"
+   restart_service_immediate svc:/network/inetd
+elif check_os_min_revision 5.9 ; then
+   INETD="${JASS_ROOT_DIR}etc/default/inetd"
+   if [ ! -f ${INETD} ]; then
+      create_a_file -m 644 -o root:sys ${INETD}
+      echo ""
+   fi
+
+   oldValue=`grep '^ENABLE_CONNECTION_LOGGING=' ${INETD} | nawk -F= '{ print $2 }' 2>/dev/null`
+   if [ "${oldValue}" != "YES" ]; then
+      backup_file ${INETD}
+      echo ""
+
+      logMessage 'Setting the \\\"ENABLE_CONNECTION_LOGGING\\\" variable to \\\"YES\\\" in ${INETD}.'
+
+      cat ${INETD}.${JASS_SUFFIX} |\
+         sed 's/#.*ENABLE_CONNECTION_LOGGING=/ENABLE_CONNECTION_LOGGING=/g' |\
+         sed "s/^ENABLE_CONNECTION_LOGGING=.*$/ENABLE_CONNECTION_LOGGING=YES/g" > ${INETD}
+
+      # The following case is needed if the ENABLE_CONNECTION_LOGGING line was not
+      # found in the file.
+
+      if [ `grep -c '^ENABLE_CONNECTION_LOGGING=' ${INETD}` = 0 ]; then
+         echo "ENABLE_CONNECTION_LOGGING=YES" >> ${INETD}
+      fi
+   fi
+else
+   INETSVC=${JASS_ROOT_DIR}etc/init.d/inetsvc
+   if [ -f ${INETSVC} ]; then
+      if [ `grep "/usr/sbin/inetd -s" ${INETSVC} | grep -c "\-t"` = 0 ]; then
+         backup_file ${INETSVC}
+         echo ""
+         logMessage 'Adding the \\\"-t\\\" option to /usr/sbin/inetd in ${INETSVC}.'
+
+         cat ${INETSVC}.${JASS_SUFFIX} |\
+            nawk ' $0 ~ /\/usr\/sbin\/inetd -s/ {
+               n = split($0, a);
+               newl = a[1];
+               found_t = 0;
+               for (i = 2; i <= n; i++) {
+                 if (a[i] ~ /\-t/) {
+                    found_t = 1;
+                 }
+                 if (a[i] !~ /\&/) {
+                    newl = newl" "a[i];
+                 }
+               }
+               if (found_t == 0) {
+                  newl = newl" -t";
+               }
+               newl = newl" &";
+               printf("%s\n", newl);
+               continue;
+            } { print; } ' > ${INETSVC}
+
+         chmod 744      ${INETSVC}
+         chown root:sys ${INETSVC}
+      fi
+   else
+      logFileNotFound "${INETSVC}"
+   fi
+fi

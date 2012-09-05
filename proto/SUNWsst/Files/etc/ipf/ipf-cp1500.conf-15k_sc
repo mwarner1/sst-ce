@@ -1,0 +1,151 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)ipf-cp1500.conf-15k_sc	1.14	07/05/23 SMI"
+#
+# This file is supplied as part of the Sun Security Toolkit: Community Edition and
+# is used to configure ipfilter rules. This file should be customized based
+# on individual site needs.
+#
+# For use on Sun Fire 12K/15K/20K/25K System Controllers with a CP1500 board,
+# which are identified with this uname -i string: SUNW,UltraSPARC-IIi-cEngine
+#
+
+# To load/reload rules use /usr/sbin/ipf -Fa -f /etc/ipf/ipf.conf
+
+block in log proto tcp from any to any
+block in log proto udp from any to any
+
+# Allow connections originating from local machine out
+pass out quick proto tcp from any to any flags S/SA keep state
+pass out quick proto udp from any to any keep state
+
+# Allow ssh (port 22)
+#  (these ip-addresses are also protected by tcp-wrappers)
+#  (if you change it here, you also need to change /etc/hosts.allow)
+pass in quick proto tcp from any to any port = 22
+
+# NTP synchronization:
+pass in quick proto udp from any to any port = 123
+
+# Required for SMS failover and virtual console services:
+pass in quick proto tcp from any to any port = 442 
+
+# If you are using NIS as your name service, you will need to
+# allow name resolution to pass through your firewall.  This is
+# not possible with ipnat.conf with the Sun Fire 12K/15K/20K/25K SC,
+# which is usually used for RPC services, which don't have fixed ports,
+# such as NIS (CR 6557663).
+# Instead, uncomment the following to open up the public interfaces on
+# CP1500 SCs, eri1 and hme0:
+# pass in on eri1 proto tcp from any to any keep state
+# pass in on eri1 proto udp from any to any keep state
+# pass in on hme0 proto tcp from any to any keep state
+# pass in on hme0 proto udp from any to any keep state
+
+# Enable underlying network devices for scman0 and scman1
+# on CP1500 (eri1 and hme0 are not used by scman on CP1500):
+pass in on hme1 proto tcp from any to any keep state
+pass in on hme1 proto udp from any to any keep state
+pass in on eri0 proto tcp from any to any keep state
+pass in on eri0 proto udp from any to any keep state
+pass in on eri2 proto tcp from any to any keep state
+pass in on eri2 proto udp from any to any keep state
+pass in on eri3 proto tcp from any to any keep state
+pass in on eri3 proto udp from any to any keep state
+pass in on eri4 proto tcp from any to any keep state
+pass in on eri4 proto udp from any to any keep state
+pass in on eri5 proto tcp from any to any keep state
+pass in on eri5 proto udp from any to any keep state
+pass in on eri6 proto tcp from any to any keep state
+pass in on eri6 proto udp from any to any keep state
+pass in on eri7 proto tcp from any to any keep state
+pass in on eri7 proto udp from any to any keep state
+pass in on eri8 proto tcp from any to any keep state
+pass in on eri8 proto udp from any to any keep state
+pass in on eri9 proto tcp from any to any keep state
+pass in on eri9 proto udp from any to any keep state
+pass in on eri10 proto tcp from any to any keep state
+pass in on eri10 proto udp from any to any keep state
+pass in on eri11 proto tcp from any to any keep state
+pass in on eri11 proto udp from any to any keep state
+pass in on eri12 proto tcp from any to any keep state
+pass in on eri12 proto udp from any to any keep state
+pass in on eri13 proto tcp from any to any keep state
+pass in on eri13 proto udp from any to any keep state
+pass in on eri14 proto tcp from any to any keep state
+pass in on eri14 proto udp from any to any keep state
+pass in on eri15 proto tcp from any to any keep state
+pass in on eri15 proto udp from any to any keep state
+pass in on eri16 proto tcp from any to any keep state
+pass in on eri16 proto udp from any to any keep state
+pass in on eri17 proto tcp from any to any keep state
+pass in on eri17 proto udp from any to any keep state
+pass in on eri18 proto tcp from any to any keep state
+pass in on eri18 proto udp from any to any keep state
+pass in on eri19 proto tcp from any to any keep state
+pass in on eri19 proto udp from any to any keep state
+
+# Allow connections with the other SC (scman1, aka I2 network)
+# This includes the Zoe daemon (55/tcp) used for SC failover communication.
+pass in on scman1 proto tcp from any to any keep state
+pass in on scman1 proto udp from any to any keep state
+
+#
+# Allow only necessary connections in from domains (scman0, aka I1 network )
+#
+
+# CVC Daemon provides virtual console services for domains:
+pass in on scman0 proto tcp from any to any port = 442
+
+# Syslog server for domains:
+pass in on scman0 proto udp from any to any port = 514
+
+# Dynamic Reconfiguration (DR) Operations.
+# The DCS daemon on the domain listens to the DCA client on the SC (665/tcp).
+# TCP Port 665 must be open on each domain for listening by the DCS server.
+# If ipfilter is enabled on a domain, add this line to the domain's
+# /etc/ipf/ipf.conf file:
+#      pass in on dman0 proto tcp from any to any port = 665
+# No additional line is needed for DCS/DCA SC/domain communication.
+
+
+# Optional SunMC Server
+# Uncomment this line if trap forwarding is needed by the SunMC server
+# to a domain.  Change 1161 to the actual port used
+# (161 or, if SEA snmpdx installed, typically 1161)
+#pass in on scman0 proto udp from any to any port = 161
+#pass in on scman0 proto udp from any to any port = 1161
+
+
+# Optional JumpStart Server for domains
+# Jumpstart requires BOOTP/DHCP (67, 68), TFTP (69), Sun RPC (111), NFS (2049),
+# and LOCKD (4045):
+# pass in on scman0 proto udp from any to any port = 67
+# pass in on scman0 proto udp from any to any port = 68
+# pass in on scman0 proto udp from any to any port = 69
+# pass in on scman0 proto udp from any to any port = 111
+# pass in on scman0 proto udp from any to any port = 2049
+# pass in on scman0 proto udp from any to any port = 4045
+

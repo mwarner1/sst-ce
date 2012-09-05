@@ -1,0 +1,115 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-md5.fin 3.11     05/04/05     SMI"
+#
+# Install the MD5 software for use with the BluePrint OnLine article titled:
+#   "The Solaris Fingerprint Database - A Security Tool for Solaris 
+#    Software and Files"
+#
+# The article is available from:
+#    http://www.sun.com/blueprints/0501/Fingerprint.pdf 
+#
+
+MD5_PKG="SUNBEmd5"
+MD5_DIR_LOC="`clean_path ${JASS_ROOT_DIR}${JASS_MD5_DIR}`"
+
+MD5_DIR_TAR="`clean_path ${MD5_DIR_LOC}/md5`"
+MD5_SRC_TAR="`clean_path ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}/md5.tar`"
+
+MD5_DIR_PKG="`clean_path ${MD5_DIR_LOC}/${MD5_PKG}`"
+MD5_SRC_PKG="`clean_path ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}/${MD5_PKG}.pkg`"
+
+logMessage "Installing Software: MD5"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   logMessage 'MD5 is provided by Solaris digest(1) command'
+elif check_os_revision 5.5.1 5.9 ; then
+   md5Installed=""
+
+   if [ -d ${MD5_DIR_LOC} ]; then
+
+      cd ${MD5_DIR_LOC}
+
+      # Determine if any versions have been previously installed.
+
+      if [ -d ${MD5_DIR_PKG} ] ; then
+         logMessage 'The MD5 package is already installed at ${MD5_DIR_PKG}.'
+         md5Installed="pkg"
+      fi
+
+      if [ -d ${MD5_DIR_TAR} ] ; then
+         logMessage 'The MD5 software is already installed at ${MD5_DIR_TAR}.'
+         md5Installed="tar"
+      fi
+
+      if [ "${md5Installed}" = "" ]; then
+
+         # Process Package Form of MD5 Distribution.
+
+         if [ -f ${MD5_SRC_PKG} ]; then
+            logMessage 'Installing the MD5 package into ${MD5_DIR_LOC}.'
+            mkdir_dashp     ${MD5_DIR_PKG}
+            chown root:root ${MD5_DIR_PKG}
+            chmod 700       ${MD5_DIR_PKG}
+            add_pkg -d ${MD5_SRC_PKG} ${MD5_PKG}
+
+            # add appropriate entry to manifest to remove JASS
+            add_to_manifest X "rm_pkg ${MD5_PKG}"
+            md5Installed="pkg"
+         fi
+      fi
+
+      if [ "${md5Installed}" = "" ]; then
+         if [ -f ${MD5_SRC_TAR}.Z ]; then
+            # Check for compressed TAR file (.tar.Z)
+            logMessage 'Installing the MD5 software into ${MD5_DIR_TAR}.'
+            zcat ${MD5_SRC_TAR}.Z | tar xpf -
+            chown -R root:root ${MD5_DIR_TAR}
+            chmod -R 700 ${MD5_DIR_TAR}
+            md5Installed="tar"
+         elif [ -f ${MD5_SRC_TAR} ]; then
+            # Check for TAR file (.tar)
+            logMessage 'Installing the MD5 software into ${MD5_DIR_TAR}.'
+            tar xpf ${MD5_SRC_TAR}
+            chown -R root:root ${MD5_DIR_TAR}
+            chmod -R 700 ${MD5_DIR_TAR}
+            md5Installed="tar"
+         fi
+      fi
+
+      if [ "${md5Installed}" = "" ]; then
+         logMessage "The MD5 program is not included as part of the distribution of the
+Sun Security Toolkit: Community Edition.  MD5 can however be obtained from the Sun
+BluePrints Tools site at http://www.sun.com/blueprints/tools/."
+      fi
+
+   else
+      logNotice 'The installation directory, ${MD5_DIR_LOC}, does not exist.'
+   fi
+else
+   logInvalidOSRevision "5.5.1-5.10"
+fi

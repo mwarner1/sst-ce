@@ -1,0 +1,130 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)minimize-Sun_ONE-WS.aud 1.10     05/03/30 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Minimize Sun ONE Web Server"
+servfil="minimize-Sun_ONE-WS.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script performs a package verification based on the minimization
+   Finish script, minimize-Sun_ONE-WS.fin.  The goal of this script is to 
+   remove those packages and software components that are not needed to 
+   support the successful operation of the Sun ONE Web Server.
+
+Determination of Compliance:
+
+   This check will indicate a failure if any of the non-essential packages
+   exist on the system.  The list of non-essential packages is derived from
+   the script referenced above.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+PACKAGES=""
+
+case ${JASS_OS_REVISION} in 
+
+   5.9)
+      PACKAGES="
+         SUNWadmr  SUNWatfsr SUNWatfsu SUNWauda  SUNWaudd  SUNWauddx
+         SUNWbsr   SUNWbsu   SUNWdfb   SUNWdtcor 
+         SUNWi15cs SUNWi1cs  SUNWinamd SUNWkey   SUNWkrbr  SUNWkrbu
+         SUNWluxop SUNWnamow SUNWnamox SUNWnfscr SUNWnfscu SUNWnfscx
+         SUNWnfssr SUNWnfssu SUNWnfssx SUNWnisr  SUNWnisu  SUNWpl5u
+         SUNWpl5v  SUNWqfed  SUNWrcmdr SUNWrcmds SUNWrmodu
+         SUNWroute SUNWsolnm SUNWtftp  SUNWxwmox
+         SUNWtftpr SUNWtnamd SUNWtnamr 
+         SUNWudf   SUNWudfr  SUNWudfrx SUNWxwdv  SUNWxwdvx SUNWxwmod
+         SUNWced   SUNWcedx  SUNWeridx SUNWged   SUNWgedx  SUNWqfedx
+         SUNWssad  SUNWssadx SUNWwsr2  SUNWluxox SUNWpiclx SUNWpiclu
+         SUNWpiclr SUNWeridx SUNWglmr  SUNWglmx  SUNWi2cr  SUNWi2cx
+         SUNWkmp2r SUNWkmp2x SMEvplr   SMEvplu   SUNWses   SUNWsesx
+         SUNWusb   SUNWusbu  SUNWusbx  SUNWsior  SUNWsiox
+         SUNWigsr  SUNWigsu  SUNWigsuc SUNWigsx  SUNWbzip
+         SUNWfcip  SUNWfcipx SUNWfcp   SUNWfcpx  SUNWfctl  SUNWfctlx
+         SUNWlldap SUNWmdi   SUNWmdix  
+         SUNWsndmr SUNWsndmu SUNWtnetc SUNWtnetd SUNWtnetr 
+         SUNWftpr  SUNWftpu  SUNWrcmdc
+      "
+   ;;
+
+   5.8)
+      PACKAGES="
+         SUNWadmr  SUNWatfsr SUNWatfsu SUNWauda  SUNWaudd  SUNWcg6
+         SUNWdfb   SUNWdtcor SUNWftpr  SUNWftpu  SUNWi15cs SUNWi1cs
+         SUNWigsr  SUNWigsu  SUNWkey   SUNWkmp2r SUNWluxop SUNWnamow
+         SUNWnamox SUNWnisr  SUNWnisu  SUNWpcelx SUNWpcmci SUNWpcmcu
+         SUNWpcmem SUNWpcser SUNWpl5u  SUNWpsdpr SUNWqfed  SUNWrmodu
+         SUNWses   SUNWsior  SUNWsndmr SUNWsndmu SUNWsolnm SUNWtleu
+         SUNWudf   SUNWudfr  SUNWusb   SUNWxwdv  SUNWxwkey SUNWxwmod
+      "
+   ;;
+
+   5.7) 
+      PACKAGES="
+         SUNWadmr  SUNWatfsr SUNWatfsu SUNWcg6   SUNWdfb   SUNWdtcor
+         SUNWftpr  SUNWftpu  SUNWkey   SUNWnisr  SUNWnisu  SUNWos86u
+         SUNWpcelx SUNWpcmci SUNWpcmcu SUNWpcmem SUNWpcser SUNWploc1
+         SUNWpsdpr SUNWqfed  SUNWsndmr SUNWsndmu SUNWsolnm SUNWter
+         SUNWudfr  SUNWxwdv  SUNWxwmod
+      "
+   ;;
+
+   5.6)
+      PACKAGES="
+         SUNWadmr  SUNWatfsr SUNWatfsu SUNWcg6   SUNWdfb   SUNWdtcor
+         SUNWensqr SUNWkey   SUNWkmp2r SUNWnisr  SUNWnisu  SUNWos86u
+         SUNWpcelx SUNWpcmci SUNWpcmcu SUNWpcmem SUNWpcser SUNWpsdpr
+         SUNWqfed  SUNWsior  SUNWsolnm SUNWxwdv  SUNWxwkey SUNWxwmod
+      "
+   ;;
+
+   *)
+      logInvalidOSRevision "5.6-5.9"
+   ;;
+
+esac
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+for pkg in ${PACKAGES}; do
+   check_minimized "${pkg}" 1 LOG
+done
+
+finish_audit

@@ -1,0 +1,1763 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)common_log.funcs	1.49	05/06/24 SMI"
+#
+# This file contains all of the logging functions used by the Toolkit's
+# functionality.  These functions should be considered public in nature and
+# can be used within audit or finish scripts.
+#
+
+##############################################################################
+# Common Messages
+##############################################################################
+
+JASS_MSG_SOFTWARE_INSTALLED="# The following checks are used to determine if the software is installed.
+ "
+export JASS_MSG_SOFTWARE_INSTALLED
+
+JASS_MSG_SOFTWARE_ENABLED="# The following checks are used to determine if the software is enabled.
+ "
+export JASS_MSG_SOFTWARE_ENABLED
+
+JASS_MSG_SOFTWARE_PATCHED="# The following checks are used to determine if the software is patched.
+ "
+export JASS_MSG_SOFTWARE_PATCHED
+
+JASS_MSG_SOFTWARE_CONFIGURED="# The following checks are used to determine if the software is configured.
+ "
+export JASS_MSG_SOFTWARE_CONFIGURED
+
+JASS_MSG_SOFTWARE_RUNNING="# The following checks are used to determine if the software is running.
+ "
+export JASS_MSG_SOFTWARE_RUNNING
+
+JASS_MSG_SCRIPT_TOTAL="
+# The following is the vulnerability total for this audit script.
+ "
+export JASS_MSG_SCRIPT_TOTAL
+
+JASS_MSG_DRIVER_TOTAL="
+# The following is the vulnerability total for this driver profile.
+ "
+export JASS_MSG_DRIVER_TOTAL
+
+JASS_MSG_GRAND_TOTAL="# The following is the vulnerability grand total for this run.
+ "
+export JASS_MSG_GRAND_TOTAL
+
+JASS_MSG_SUCCESS="[PASS]"
+export JASS_MSG_SUCCESS
+
+JASS_MSG_FAILURE="[FAIL]"
+export JASS_MSG_FAILURE
+
+JASS_MSG_WARNING="[WARN]"
+export JASS_MSG_WARNING
+
+JASS_MSG_NOTICE="[NOTE]"
+export JASS_MSG_NOTICE
+
+JASS_MSG_ERROR="[ERR ]"
+export JASS_MSG_ERROR
+
+JASS_MSG_SUMMARY="[SUMMARY]"
+export JASS_MSG_SUMMARY
+
+JASS_BANNER_SEPARATOR="=============================================================================="
+
+
+##############################################################################
+# The following parameters are used only to allow for setting of column widths
+# (logScore, logFinding) when the Toolkit is used in verbosity modes <= 2.
+##############################################################################
+
+if [ -z "${JASS_DISPLAY_TIME_LENGTH}" ]; then
+   JASS_DISPLAY_TIME_LENGTH="14"
+elif [ ${JASS_DISPLAY_TIME_LENGTH} -lt 8 ]; then
+   # The date must at least display the year, month and day.
+   JASS_DISPLAY_TIME_LENGTH="8"
+fi
+export JASS_DISPLAY_TIME_LENGTH
+
+if [ -z "${JASS_DISPLAY_HOST_LENGTH}" ]; then
+   JASS_DISPLAY_HOST_LENGTH="`uname -n | wc -c | nawk '{ print $1 }'`"
+elif [ ${JASS_DISPLAY_HOST_LENGTH} -lt 1 ]; then
+   # A host must have at least a one character name.
+   JASS_DISPLAY_HOST_LENGTH="1"
+fi
+export JASS_DISPLAY_HOST_LENGTH
+
+if [ -z "${JASS_DISPLAY_SCRIPT_LENGTH}" ]; then
+   JASS_DISPLAY_SCRIPT_LENGTH="30"
+elif [ ${JASS_DISPLAY_SCRIPT_LENGTH} -lt 12 ]; then
+   # The length of the command "jass-execute" is 12.
+   JASS_DISPLAY_SCRIPT_LENGTH="12"
+fi
+export JASS_DISPLAY_SCRIPT_LENGTH
+
+
+##############################################################################
+# Logs vulnerability scoring information
+#
+# Arguments:
+#
+#    _logMessage  - score description (text to log)
+#    _actualScore - score value
+#
+# Returns: nothing
+##############################################################################
+
+logScore()
+{
+   _logMessage="${1}"
+   _actualScore="${2}"
+
+   if [ ${JASS_VERBOSITY} -lt 3 ]; then
+      if [ "${JASS_DISPLAY_TIMESTAMP}" = "1" ]; then
+         printf "%-${JASS_DISPLAY_TIME_LENGTH}s " "`echo ${JASS_TIMESTAMP} | cut -c1-${JASS_DISPLAY_TIME_LENGTH}`"
+      fi
+      if [ "${JASS_DISPLAY_HOSTNAME}" = "1" ]; then
+         printf "%-${JASS_DISPLAY_HOST_LENGTH}s " "`echo ${JASS_HOSTNAME} | cut -c1-${JASS_DISPLAY_HOST_LENGTH}`"
+      fi
+      if [ "${JASS_DISPLAY_SCRIPTNAME}" = "1" ]; then
+         printf "%-${JASS_DISPLAY_SCRIPT_LENGTH}s " "`echo ${SCRIPT_NAME} | cut -c1-${JASS_DISPLAY_SCRIPT_LENGTH}`"
+      fi
+   fi
+
+   suffix="`gettext "Errors"`"
+   if [ "${_actualScore}" = "0" ]; then
+      prefix="${JASS_MSG_SUCCESS}"
+   else
+      prefix="${JASS_MSG_FAILURE}"
+      if [ "${_actualScore}" = "1" ]; then
+         suffix="`gettext "Error"`"
+      fi
+   fi
+   logString="${prefix} `gettext "${_logMessage}"` ${_actualScore} ${suffix}"
+   printf "%s\n" "${logString}"
+}
+
+##############################################################################
+# Logs vulnerability finding information
+#
+# Notes:
+#
+#    This function assumes that the value of _logMessage has already
+#    been translated.
+#
+# Arguments:
+#
+#   _logMessage - finding data (text) to log
+#
+# Imported Variables:
+#   _print_find - If set to 1, the normal behavior of printing nothing
+#                 at verbosity 1 is overridden, and instead the message
+#                 string is printed.
+#
+# Returns: nothing
+##############################################################################
+
+logFinding()
+{
+   _logMessage=`printPrettyPath "${*}"`
+
+   if [ ${JASS_VERBOSITY} -ge 2 -o "${_print_find}" = "1" ]; then
+      # _print_find is used as an override to always print a finding.
+      if [ ${JASS_VERBOSITY} -lt 3 ]; then
+         if [ "${JASS_DISPLAY_TIMESTAMP}" = "1" ]; then
+            printf "%-${JASS_DISPLAY_TIME_LENGTH}s " "`echo ${JASS_TIMESTAMP} | cut -c1-${JASS_DISPLAY_TIME_LENGTH}`"
+         fi
+         if [ "${JASS_DISPLAY_HOSTNAME}" = "1" ]; then
+            printf "%-${JASS_DISPLAY_HOST_LENGTH}s " "`echo ${JASS_HOSTNAME} | cut -c1-${JASS_DISPLAY_HOST_LENGTH}`"
+         fi
+         if [ "${JASS_DISPLAY_SCRIPTNAME}" = "1" ]; then
+            printf "%-${JASS_DISPLAY_SCRIPT_LENGTH}s " "`echo ${SCRIPT_NAME} | cut -c1-${JASS_DISPLAY_SCRIPT_LENGTH}`"
+         fi
+      fi
+      eval printf "%s\\\n" "\"${_logMessage}\""
+   fi
+}
+
+
+##############################################################################
+# logSummary()
+# Log summary information.
+# Set return code based whether there's any errors or failures.
+#
+# Arguments:
+# $1	The driver name to check against the log files
+# $2	The total number of scripts run
+#
+# Return value:
+# 0	No errors or failures
+# 1	Execution error
+# 2	Security violation(s) detected
+#
+##############################################################################
+logSummary()
+{
+   _driver="$1"
+   _count="$2"
+   _print_find=1
+
+   if [ "${JASS_LOG_SUMMARY}" != "0" ]; then
+
+      # This is used to override the fact that logFinding prints
+      # nothing at verbosity 1.  Using this variable makes logFinding
+      # more complicated, but avoids code duplication
+
+      prefix="${JASS_MSG_SUMMARY}"
+
+      logBanner
+
+      _msg='Results Summary for ${JASS_MODE} run of ${_driver}'
+      logFinding "${prefix} `gettext "${_msg}"`"
+
+      _msg='The run completed with a total of ${_count}'
+      _scripts='scripts run.'
+      if [ ${_count} -eq 1 ]; then
+	 _scripts='script run.'
+      fi
+
+      logFinding "${prefix} `gettext "${_msg}"` `gettext "${_scripts}"`"
+
+      _eScore=`get_driver_report ${JASS_SCRIPT_ERROR_LOG} ${_driver}`
+      _wScore=`get_driver_report ${JASS_SCRIPT_WARN_LOG} ${_driver}`
+      _fScore=`get_driver_report ${JASS_SCRIPT_FAIL_LOG} ${_driver}`
+      _nScore=`get_driver_report ${JASS_SCRIPT_NOTE_LOG} ${_driver}`
+
+      # Make the scores line up when printed.
+      _eScoreP=`printf "%3d" ${_eScore}`
+      _wScoreP=`printf "%3d" ${_wScore}`
+      _fScoreP=`printf "%3d" ${_fScore}`
+      _nScoreP=`printf "%3d" ${_nScore}`
+
+      errorS='There were  Errors   in ${_eScoreP} Scripts'
+      eLog='Error Scripts listed in:'
+      if [ "${_eScore}" = "1" ]; then
+	 errorS='There was an Error   in ${_eScoreP} Script'
+      fi
+
+      warnS='There were  Warnings in ${_wScoreP} Scripts'
+      wLog='Warning Scripts listed in:'
+      if [ "${_wScore}" = "1" ]; then
+	 warnS='There was a Warning  in ${_wScoreP} Script'
+      fi
+
+      noteS='There were  Notes    in ${_nScoreP} Scripts'
+      nLog='Notes Scripts listed in:'
+      if [ "${_nScore}" = "1" ]; then
+	 noteS='There was a Note     in ${_nScoreP} Script'
+      fi
+
+      failS='There were  Failures in ${_fScoreP} Scripts'
+      fLog='Failure Scripts listed in:'
+      if [ "${_fScore}" = "1" ]; then
+	 failS='There was a Failure  in ${_fScoreP} Script'
+      fi
+
+      logFinding "${prefix} `gettext "${failS}"`"
+
+      logFinding "${prefix} `gettext "${errorS}"`"
+
+      logFinding "${prefix} `gettext "${warnS}"`"
+
+      logFinding "${prefix} `gettext "${noteS}"`"
+
+      if [ ${JASS_VERBOSITY} -gt 2 ]; then
+	 printf "\n"
+      fi
+
+      if [ "${_fScore}" != "0" ]; then
+	 logFinding "${prefix} `gettext "${fLog}"`"
+	 logFinding "\t${JASS_SCRIPT_FAIL_LOG}"
+      fi
+
+      if [ "${_eScore}" != "0" ]; then
+	 logFinding "${prefix} `gettext "${eLog}"`"
+	 logFinding "\t${JASS_SCRIPT_ERROR_LOG}"
+      fi
+
+      if [ "${_wScore}" != "0" ]; then
+	 logFinding "${prefix} `gettext "${wLog}"`"
+	 logFinding "\t${JASS_SCRIPT_WARN_LOG}"
+      fi
+
+      if [ "${_nScore}" != "0" ]; then
+	 logFinding "${prefix} `gettext "${nLog}"`"
+	 logFinding "\t${JASS_SCRIPT_NOTE_LOG}"
+      fi
+
+      logBanner
+   fi
+   _print_find=""
+
+   # Set return code, based on $_fScore and $_eScore:
+   if [ -n "$_eScore" -a "$_eScore" != "0" ] ; then
+      return 1 # execution error
+   elif [ -n "$_fScore" -a "$_fScore" != "0" ] ; then
+      return 2 # fatal security violation detected
+   else
+      return 0 # ok
+   fi
+}
+
+
+##############################################################################
+# Logs success finding information
+#
+# Arguments:
+#
+#    _logMessage - success finding data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logSuccess()
+{
+   _logMessage="${*}"
+
+   if [ "${JASS_LOG_SUCCESS}" != "0" ]; then
+      logFinding "${JASS_MSG_SUCCESS} `gettext "${_logMessage}"`"
+   fi
+}
+
+##############################################################################
+# Logs failure finding information
+#
+# Arguments:
+#
+#    _logMessage - failure finding data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logFailure()
+{
+   _logMessage="${*}"
+   _failure=1
+
+   if [ "${JASS_LOG_FAILURE}" != "0" ]; then
+      logFinding "${JASS_MSG_FAILURE} `gettext "${_logMessage}"`"
+   fi
+}
+
+##############################################################################
+# Logs warning finding information
+#
+# Arguments:
+#
+#    _logMessage - warning finding data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logWarning()
+{
+   _logMessage="${*}"
+   _warn=1
+
+   if [ "${JASS_LOG_WARNING}" != "0" ]; then
+      logFinding "${JASS_MSG_WARNING} `gettext "${_logMessage}"`"
+   fi
+}
+
+##############################################################################
+# Logs notice finding information
+#
+# Arguments:
+#
+#    _logMessage - notice finding data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logNotice()
+{
+   _logMessage="${*}"
+   _notice=1
+
+   if [ "${JASS_LOG_NOTICE}" != "0" ]; then
+      logFinding "${JASS_MSG_NOTICE} `gettext "${_logMessage}"`"
+   fi
+}
+
+##############################################################################
+# Logs error finding information
+#
+# Arguments:
+#
+#    _logMessage - error finding data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logError()
+{
+   _logMessage="${*}"
+   _error=1
+
+   if [ "${JASS_LOG_ERROR}" != "0" ]; then
+      logFinding "${JASS_MSG_ERROR} `gettext "${_logMessage}"`"
+   fi
+}
+
+##############################################################################
+# Logs vulnerability message information
+#
+# Arguments:
+#
+#   _logMessage - message data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logMessage()
+{
+   _logMessage="${*}"
+
+   if [ ! -z "${_logMessage}" ]; then
+      if [ ${JASS_VERBOSITY} -ge 3 ]; then
+         logString="`gettext "${_logMessage}"`"
+         eval printf "%s\\\n" "\"${logString}\""
+      fi
+   fi
+}
+
+##############################################################################
+# Logs formatted vulnerability message information
+#
+# Arguments:
+#
+#   _logMessage - message data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logFormattedMessage()
+{
+   _logMessage=`printPrettyPath "${*}"`
+
+   if [ ! -z "${_logMessage}" ]; then
+      if [ ${JASS_VERBOSITY} -ge 3 ]; then
+         logString="`gettext "${_logMessage}"`"
+         eval printf "%s\\\n" "\"${logString}\"" | fmt -w 75 | sed 's/^/# /g'
+      fi
+   fi
+}
+
+##############################################################################
+# Logs banners and related information
+#
+# Arguments:
+#
+#    _logMessage - banner data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logBanner()
+{
+   _logMessage="${*}"
+
+   if [ "${JASS_LOG_BANNER}" != "0" ]; then
+      if [ ${JASS_VERBOSITY} -ge 3 ]; then
+         printf "\n${JASS_BANNER_SEPARATOR}\n"
+         if [ ! -z "${_logMessage}" ]; then
+            logString="`gettext "${_logMessage}"`"
+            eval printf "%s\\\n" "\"${logString}\""
+            printf "${JASS_BANNER_SEPARATOR}\n\n"
+         fi
+      fi
+   fi
+}
+
+##############################################################################
+# Logs debugging information
+#
+# Arguments:
+#
+#   _logMessage - debugging data (text) to log
+#
+# Returns: nothing
+##############################################################################
+
+logDebug()
+{
+   _logMessage="${*}"
+
+   if [ "${JASS_VERBOSITY}" = "4" ]; then
+      logString="`gettext "${_logMessage}"`"
+      eval printf "%s\\\n" "\"${logString}\""
+   fi
+}
+
+##############################################################################
+# Logs The fact that a script failed to a permanent file
+#
+# Arguments:
+#
+#   _type  - The specific type of failure, used to determine the log.
+#   _count - How many errors occurred.  If 0, no recording is made.
+#
+# Returns: nothing
+#          but will log a failure if it occurs internally
+##############################################################################
+
+logScriptFailure()
+{
+   _type="$1"
+   _count="$2"
+   _log_file=""
+
+   if [ "${_count}" != "0" ]; then
+      case "${_type}" in
+	 error)    _log_file="${JASS_SCRIPT_ERROR_LOG}";;
+	 warning)  _log_file="${JASS_SCRIPT_WARN_LOG}";;
+	 failure)  _log_file="${JASS_SCRIPT_FAIL_LOG}";;
+	 note)     _log_file="${JASS_SCRIPT_NOTE_LOG}";;
+	 *)        logFailure "Invalid Failure mode in logScriptFailure - ${_type}."
+	           return 1;;
+      esac
+
+      echo "${JASS_SCRIPT}" >> ${_log_file}
+   fi
+   return 0
+}
+
+##############################################################################
+# Logs information for the existence of a patch.
+#
+# Arguments:
+#
+#   _logPatchID                - the patch ID
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logPatchExists() {
+   _logPatchID="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Patch ID ${_logPatchID} or higher is installed.'
+   else
+      logFailure 'Patch ID ${_logPatchID} or higher is not installed.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information for the non-existence of a patch.
+#
+# Arguments:
+#
+#   _logPatchID                - the patch ID
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logPatchNotExists() {
+   _logPatchID="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Patch ID ${_logPatchID} or higher is not installed.'
+   else
+      logFailure 'Patch ID ${_logPatchID} or higher is installed.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs informations about the existence of a package.
+#
+# Arguments:
+#
+#   _logPackageName            - the name of the package
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logPackageExists() {
+   _logPackageName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Package ${_logPackageName} is installed.'
+   else
+      logFailure 'Package ${_logPackageName} is not installed.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs informations about the non-existence of a package.
+#
+# Arguments:
+#
+#   _logPackageName            - the name of the package
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logPackageNotExists() {
+   _logPackageName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Package ${_logPackageName} is not installed.'
+   else
+      logFailure 'Package ${_logPackageName} is installed.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the existence of a start script.
+#
+# Arguments:
+#
+#   _logStartScriptName        - the start script absolute path or name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logStartScriptExists() {
+   _logStartScriptName="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Start Script ${_logStartScriptName} was found.'
+   else
+      logFailure 'Start Script ${_logStartScriptName} was not found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the non-existence of a start script.
+#
+# Arguments:
+#
+#   _logStartScriptName        - the start script absolute path or name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logStartScriptNotExists() {
+   _logStartScriptName="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Start Script ${_logStartScriptName} was not found.'
+   else
+      logFailure 'Start Script ${_logStartScriptName} was found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the existence of a stop script.
+#
+# Arguments:
+#
+#   _logStopScriptName         - the stop script absolute path or name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logStopScriptExists() {
+   _logStopScriptName="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Stop Script ${_logStopScriptName} was found.'
+   else
+      logFailure 'Stop Script ${_logStopScriptName} was not found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the non-existence of a stop script.
+#
+# Arguments:
+#
+#   _logStopScriptName         - the stop script absolute path or name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logStopScriptNotExists() {
+   _logStopScriptName="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Stop Script ${_logStopScriptName} was not found.'
+   else
+      logFailure 'Stop Script ${_logStopScriptName} was found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the existence of a process.
+#
+# Arguments:
+#
+#   _logProcessName            - the process identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logProcessExists() {
+   _logProcessName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Process ${_logProcessName} was found.'
+   else
+      logFailure 'Process ${_logProcessName} was not found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the non-existence of a process.
+#
+# Arguments:
+#
+#   _logProcessName            - the process identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logProcessNotExists() {
+   _logProcessName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Process ${_logProcessName} was not found.'
+   else
+      logFailure 'Process ${_logProcessName} was found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the existence of a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of the file
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileExists() {
+   _logFileName="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ -z "${_logVulnValue}" ]; then
+      logNotice 'File ${_logFileName} was found.'
+   elif [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} was found.'
+   else
+      logFailure 'File ${_logFileName} was not found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the non-existence of a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of the file
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileNotExists() {
+   _logFileName="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} was not found.'
+   else
+      logFailure 'File ${_logFileName} was found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the existence of specific contents in a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of a file to check
+#   _logRexExp                 - a regular expression to check the file contents
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileContentsExist() {
+   _logFileName="`clean_path ${1}`"
+   _logRexExp="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} has content matching ${_logRexExp}.'
+   else
+      logFailure 'File ${_logFileName} does not have content matching ${_logRexExp}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the non-existence of specific contents in a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of a file to check
+#   _logRexExp                 - a regular expression to check file contents
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileContentsNotExist() {
+   _logFileName="`clean_path ${1}`"
+   _logRexExp="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} does not have content matching ${_logRexExp}.'
+   else
+      logFailure 'File ${_logFileName} has content matching ${_logRexExp}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about matching file permissions of a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of a file to check
+#   _logFileMode               - the file permissions to check
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileModeMatch() {
+   _logFileName="`clean_path ${1}`"
+   _tmpFileMode="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   _logFileMode="`echo ${_tmpFileMode} | sed 's/ /\//g'`"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} has mode ${_logFileMode}.'
+   else
+      logFailure 'File ${_logFileName} does not have mode ${_logFileMode}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about non-matching file permissions of a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of a file to check
+#   _logFileMode               - the file permissions to check
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileModeNoMatch() {
+   _logFileName="`clean_path ${1}`"
+   _tmpFileMode="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   _logFileMode="`echo ${_tmpFileMode} | sed 's/ /\//g'`"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} does not have mode ${_logFileMode}.'
+   else
+      logFailure 'File ${_logFileName} has mode ${_logFileMode}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the matching file type.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of the file
+#   _logFileType               - the file type
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileTypeMatch() {
+   _logFileName="`clean_path ${1}`"
+   _logFileType="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   fileTypeName=""
+   case ${_logFileType} in
+      b) fileTypeName="block special file"      ;;
+      c) fileTypeName="character special file"  ;;
+      d) fileTypeName="directory"               ;;
+      D) fileTypeName="door"                    ;;
+      f) fileTypeName="regular file"            ;;
+      l) fileTypeName="symbolic link"           ;;
+      p) fileTypeName="fifo (named pipe)"       ;;
+      s) fileTypeName="socket"                  ;;
+      *) fileTypeName="undefined (${fileType})" ;;
+   esac
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} is a ${fileTypeName}.'
+   else
+      logFailure 'File ${_logFileName} is not a ${fileTypeName}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about the non-matching file type.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of the file
+#   _logFileType               - the file type
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileTypeNoMatch() {
+   _logFileName="`clean_path ${1}`"
+   _logFileType="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   fileTypeName=""
+   case ${fileType} in
+      b) fileTypeName="block special file"      ;;
+      c) fileTypeName="character special file"  ;;
+      d) fileTypeName="directory"               ;;
+      D) fileTypeName="door"                    ;;
+      f) fileTypeName="regular file"            ;;
+      l) fileTypeName="symbolic link"           ;;
+      p) fileTypeName="fifo (named pipe)"       ;;
+      s) fileTypeName="socket"                  ;;
+      *) fileTypeName="undefined (${fileType})" ;;
+   esac
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} is not a ${fileTypeName}.'
+   else
+      logFailure 'File ${_logFileName} is a ${fileTypeName}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about matching process arguments.
+#
+# Arguments:
+#
+#   _logProcessName            - the process identifier
+#   _logArgValue               - the associated process arguments
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logProcessArgsMatch() {
+   _logProcessName="${1}"
+   _logArgValue="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Process ${_logProcessName} found with argument ${_logArgValue}.'
+   else
+      logFailure 'Process ${_logProcessName} not found with argument ${_logArgValue}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about non-matching process arguments.
+#
+# Arguments:
+#
+#   _logProcessName            - the process identifier
+#   _logArgValue               - the associated process arguments
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logProcessArgsNoMatch() {
+   _logProcessName="${1}"
+   _logArgValue="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Process ${_logProcessName} not found with argument ${_logArgValue}.'
+   else
+      logFailure 'Process ${_logProcessName} found with argument ${_logArgValue}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information for a non-existent file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of the file
+#   _logVulnValue              - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileNotFound() {
+   _logFileName="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ -z "${_logVulnValue}" ]; then
+      logNotice 'File ${_logFileName} was not found.'
+   elif [ "${_logVulnValue}" != "0" ]; then
+      logFailure 'File ${_logFileName} was not found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information for a non-existent running process.
+#
+# Arguments:
+#
+#   _logProcessName            - the name of the process
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logProcessNotFound() {
+   _logProcessName="${1}"
+   _logRelatedInfo="${2}"
+
+   logFailure 'Process ${_logProcessName} was not found.'
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information for existing service configuration files.
+#
+# Arguments:
+#
+#   _logServiceConfig          - the name of service config file
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logServiceConfigExists() {
+   _logServiceConfig="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service Config File ${_logServiceConfig} was found.'
+   else
+      logFailure 'Service Config File ${_logServiceConfig} was not found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information for non-existent service configuration files.
+#
+# Arguments:
+#
+#   _logServiceConfig          - the name of service config file
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logServiceConfigNotExists() {
+   _logServiceConfig="`clean_path ${1}`"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service Config File ${_logServiceConfig} was not found.'
+   else
+      logFailure 'Service Config File ${_logServiceConfig} was found.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about matching owner of a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of a file to check
+#   _logFileOwner              - the owner to check
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileOwnerMatch() {
+   _logFileName="`clean_path ${1}`"
+   _tmpFileOwner="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   _logFileOwner="`echo ${_tmpFileOwner} | sed 's/ /\//g'`"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} has owner ${_logFileOwner}.'
+   else
+      logFailure 'File ${_logFileName} does not have owner ${_logFileOwner}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about non-matching owner of a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of a file to check
+#   _logFileOwner              - the owner to check
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileOwnerNoMatch() {
+   _logFileName="`clean_path ${1}`"
+   _tmpFileOwner="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   _logFileOwner="`echo ${_tmpFileOwner} | sed 's/ /\//g'`"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} does not have owner ${_logFileOwner}.'
+   else
+      logFailure 'File ${_logFileName} has owner ${_logFileOwner}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about matching group of a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of a file to check
+#   _logFileGroup              - the group to check
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileGroupMatch() {
+   _logFileName="`clean_path ${1}`"
+   _tmpFileGroup="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   _logFileGroup="`echo ${_tmpFileGroup} | sed 's/ /\//g'`"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} has group ${_logFileGroup}.'
+   else
+      logFailure 'File ${_logFileName} does not have group ${_logFileGroup}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about non-matching group of a file.
+#
+# Arguments:
+#
+#   _logFileName               - the absolute path of a file to check
+#   _logFileGroup              - the group to check
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+
+logFileGroupNoMatch() {
+   _logFileName="`clean_path ${1}`"
+   _tmpFileGroup="${2}"
+   _logVulnValue="${3}"
+   _logRelatedInfo="${4}"
+
+   _logFileGroup="`echo ${_tmpFileGroup} | sed 's/ /\//g'`"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'File ${_logFileName} does not have group ${_logFileGroup}.'
+   else
+      logFailure 'File ${_logFileName} has group ${_logFileGroup}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about script that is not designed for target OS version.
+#
+# Arguments:
+#
+#   _logValidRange               - text describing valid OS revisions
+#        pattern for _logValidRange are:
+#                  5.X-       - For Solaris version 5.X and prior.
+#                  5.X+       - For Solaris version 5.X and later.
+#                  5.X-5.Y    - For Solaris version 5.X-5.Y .
+#
+# Returns: nothing
+##############################################################################
+
+logInvalidOSRevision() {
+   _logValidRange="${*}"
+   _logPattern=`echo ${_logValidRang}|grep "+"`
+
+   if [ "${_logPattern}" = "" ]; then
+      # not version 5.x and later
+      _logPattern=`echo ${_logValidRange} | grep "-"`
+      if [ "${_logPattern}" != "" ]; then
+         _logPattern=`echo ${_logValidRange} | nawk -F- '{print $2}'`
+         # version 5.x and prior ?
+         if [ "${_logPattern}" != "" ]; then
+            logNotice 'This script is only applicable for Solaris version ${_logValidRange}.'
+         else
+            _logValidRange=`echo ${_logValidRange} | nawk -F- '{print $1}'`
+            logNotice 'This script is only applicable for Solaris version ${_logValidRange} and prior.'
+         fi
+      else
+         logNotice 'This script is only applicable for Solaris version ${_logValidRange}.'
+      fi
+   else
+      _logPattern=`echo ${_logValidRange} | nawk -F+ '{print $2}'`
+
+      if [ "${_logPattern}" = "" ]; then
+         _logValidRange=`echo ${_logValidRange} | nawk -F+ '{print $1}'`
+         logNotice 'This script is only applicable for Solaris version ${_logValidRange} and later.'
+      else
+         logNotice 'This script is only applicable for Solaris version ${_logValidRange} and prior.'
+      fi
+   fi
+
+}
+
+##############################################################################
+# Logs information about an invalid setting for JASS_DISABLE_MODE
+#
+# Arguments:
+#
+#   _logDisableValue             - text describing valid OS revisions
+#
+# Returns: nothing
+##############################################################################
+
+logInvalidDisableMode() {
+   logError 'The JASS_DISABLE_MODE parameter has an invalid value: ${JASS_DISABLE_MODE}.'
+   logError 'The value must be either \"script\" or \"conf\".'
+}
+
+##############################################################################
+# Logs information about script that is not designed to be used outside of
+# a Solaris OE global zone.
+#
+# Arguments:
+#
+#   None
+#
+# Returns: nothing
+##############################################################################
+
+logNotGlobalZone() {
+   logNotice 'This script cannot be used outside of the global zone.'
+}
+
+
+##############################################################################
+# Log a list of (pid, user, and command)
+#      for processes that are associated with the service.
+#
+# Arguments:
+#
+#   _logServiceName            - the Service identifier/name in SMF FMRI
+#   -logPassFail               - expect pass or fail
+#   -logProcesList             - a list of {pid user command}
+#
+# Returns: nothing
+##############################################################################
+logServiceProcessList ()
+{
+
+   _logServiceName="${1}"
+   _logPassFail="${2}"
+   _logProcessList="${3}"
+
+   j=0
+   processName=""
+   pid=""
+   comm=""
+   for prc in ${_logProcessList};  do
+      if [ $j -eq 0 ]; then
+         pid="${prc}"
+         j=1
+      elif [ $j -eq 1 ]; then
+         processName="${prc}"
+         j=2
+      else
+         comm="${prc}"
+         if [ "${_logPassFail}" = "0" ]; then
+            logSuccess 'Service ${_logServiceName} was found running
+(pid ${pid}, user ${processName}, command ${comm}).'
+         else
+            logFailure 'Service ${_logServiceName} was found running
+(pid ${pid}, user ${processName}, command ${comm}).'
+         fi
+         j=0
+      fi
+   done
+}
+
+##############################################################################
+# Logs information about whether a SMF service is running.
+#
+# Arguments:
+#
+#   _logServiceName            - the Service identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logProcessList (optional) - a related information string
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServiceRunning()
+{
+
+   _logServiceName="${1}"
+   _logVulnValue="${2}"
+   _logProcessList="${3}"
+   _logRelatedInfo="${4}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      if [ "$_logProcessList" = "" ]; then
+         logSuccess 'Service ${_logServiceName} was running.'
+      else
+         logServiceProcessList ${_logServiceName}  "0" "${_logProcessList}"
+      fi
+   else
+      logFailure 'Service ${_logServiceName} was not running.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about whether a SMF service is not running.
+#
+# Arguments:
+#
+#   _logServiceName            - the Service identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logProcessList (optional) - a related information string
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServiceNotRunning() {
+
+   _logServiceName="${1}"
+   _logVulnValue="${2}"
+   _logProcessList="${3}"
+   _logRelatedInfo="${4}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service ${_logServiceName} was not running.'
+   else
+      if [ "$_logProcessList" = "" ]; then
+         logFailure 'Service ${_logServiceName} was running.'
+      else
+         logServiceProcessList "${_logServiceName}" "${_logVulnValue}" "${_logProcessList}"
+      fi
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about whether a SMF service is enabled.
+#
+# Arguments:
+#
+#   _logServiceName            - the Service identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServiceEnabled()
+{
+
+   _logServiceName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service ${_logServiceName} was enabled.'
+   else
+      logFailure 'Service ${_logServiceName} was not enabled.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about whether a SMF service is disabled.
+#
+# Arguments:
+#
+#   _logServiceName            - the Service identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServiceDisabled() {
+
+   _logServiceName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service ${_logServiceName} was not enabled.'
+   else
+      logFailure 'Service ${_logServiceName} was enabled.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about whether a SMF service is installed.
+#
+# Arguments:
+#
+#   _logServiceName            - the Service identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServiceInstalled() {
+
+   _logServiceName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service ${_logServiceName} was installed.'
+   else
+      logFailure 'Service ${_logServiceName} was not installed.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about whether a SMF service is not installed.
+#
+# Arguments:
+#
+#   _logServiceName            - the Service identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServiceNotInstalled() {
+
+   _logServiceName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service ${_logServiceName} was not installed.'
+   else
+      logFailure 'Service ${_logServiceName} was installed.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about a user account is  locked.
+#
+# Arguments:
+#
+#   _logUserName            - the user identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logUserLocked()
+{
+
+   _logUserName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'User ${_logUserName} was locked.'
+   else
+      logFailure 'User ${_logUserName} was not locked.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about a user account is not locked.
+#
+# Arguments:
+#
+#   _logUserName            - the user identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logUserNotLocked() {
+
+   _logUserName="${1}"
+   _logVulnValue="${2}"
+   _logRelatedInfo="${3}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess '${_logUserName} was not locked.'
+   else
+      logFailure 'Service ${_logUserName} was locked.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about an option of property is disabled.
+#
+# Arguments:
+#
+#   _logSvc                    - the Service identifier/name
+#   _logProp                   - the Service Property identifier/name
+#   _logPropOpt                - the Service Property Option identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServicePropDisabled() {
+
+   _logSvc="${1}"
+   _logProp="${2}"
+   _logPropOpt="${3}"
+   _logVulnValue="${4}"
+   _logRelatedInfo="${5}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service ${_logSvc} property ${_logProp} was not ${_logPropOpt}.'
+   else
+      logFailure 'Service ${_logSvc} property ${_logProp} was ${_logPropOpt}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about an option of property is enabled.
+#
+# Arguments:
+#
+#   _logSvc                    - the Service identifier/name
+#   _logProp                   - the Service Property identifier/name
+#   _logPropOpt                - the Service Property Option identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServicePropEnabled() {
+
+   _logSvc="${1}"
+   _logProp="${2}"
+   _logPropOpt="${3}"
+   _logVulnValue="${4}"
+   _logRelatedInfo="${5}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess '${_logSvc} property ${_logProp} was ${_logPropOpt}.'
+   else
+      logFailure '${_logSvc} property ${_logProp} was not ${_logPropOpt}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about an option of property's service is enabled.
+#
+# Arguments:
+#
+#   _logSvc                    - the Service identifier/name
+#   _logProp                   - the Service Property identifier/name
+#   _logPropServ               - the Service Property' service  identifier/name
+#   _logPropOpt                - the Service Property Option identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServiceOptionEnabled() {
+
+   _logSvc="${1}"
+   _logProp="${2}"
+   _logPropSvc="${3}"
+   _logPropOpt="${4}"
+   _logVulnValue="${5}"
+   _logRelatedInfo="${6}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service ${_logPropSvc} of ${_logSvc} property ${_logProp} has option ${_logPropOpt}.'
+   else
+      logFailure 'Service ${_logPropSvc} of ${_logSvc} property ${_logProp} does not have option ${_logPropOpt}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}
+
+##############################################################################
+# Logs information about an option of property's service is disabled.
+#
+# Arguments:
+#
+#   _logSvc                    - the Service identifier/name
+#   _logProp                   - the Service Property identifier/name
+#   _logPropServ               - the Service Property' service  identifier/name
+#   _logPropOpt                - the Service Property Option identifier/name
+#   _logVulnValue (integer)    - the vulnerability value
+#   _logRelatedInfo (optional) - a related information string
+#
+# Returns: nothing
+##############################################################################
+logServiceOptionDisabled() {
+
+   _logSvc="${1}"
+   _logProp="${2}"
+   _logPropSvc="${3}"
+   _logPropOpt="${4}"
+   _logVulnValue="${5}"
+   _logRelatedInfo="${6}"
+
+   if [ "${_logVulnValue}" = "0" ]; then
+      logSuccess 'Service ${_logPropSvc} of ${_logSvc} property ${_logProp} has option ${_logPropOpt}.'
+   else
+      logFailure 'Service ${_logPropSvc} of ${_logSvc} property ${_logProp} does not have option ${_logPropOpt}.'
+   fi
+   logMessage "${_logRelatedInfo}"
+}

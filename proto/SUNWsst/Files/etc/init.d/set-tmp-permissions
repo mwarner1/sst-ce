@@ -1,0 +1,107 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved
+# All rights reserved.
+#
+#ident  "@(#)set-tmp-permissions 1.4     02/06/05     SMI"
+#
+# INTRODUCTION
+#
+# The purpose of this script is to set the correct
+# permissions on the /tmp and /var/tmp directories
+# when the system is rebooted.  If an inconsistency
+# is found, it will be displayed to standard output
+# and logged via SYSLOG.
+#
+# INSTALLATION
+#
+# To install this script, the following commands should
+# be performed as 'root'.
+#
+#    # cp <script> /etc/init.d/set-tmp-permissions
+#    # chmod 744 /etc/init.d/set-tmp-permissions
+#    # chown root:sys /etc/init.d/set-tmp-permissions
+#    # ln /etc/init.d/set-tmp-permissions /etc/rc2.d/S00set-tmp-permissions
+#    # ln /etc/init.d/set-tmp-permissions /etc/rc2.d/S07set-tmp-permissions
+#
+# The reason that this script is installed into /etc/rc2.d
+# twice is to permit this check to be performed both before
+# and after the "mountall" command is run (from S01MOUNTFSYS).
+# That way, both the mount point and the mounted filesystem
+# will be sure to have the correct permissions and ownership.
+#
+# Glenn M. Brunette <glenn.brunette@sun.com>
+#
+
+TMP_OWNER="root"
+TMP_GROUP="sys"
+
+# If you change TMP_PERMS for any reason, be sure to update
+# TMP_PERMS_SET accordingly.  These values are reasonable,
+# however, and should not need to be changed.
+
+TMP_PERMS="drwxrwxrwt"
+TMP_PERMS_SET="1777"
+
+# Verify both /tmp and /var/tmp.
+
+for tmppath in /tmp /var/tmp; do
+
+   if [ -d "${tmppath}" ]; then
+
+      oldVal="`ls -ld ${tmppath}`"
+
+      # Obtain and verify the permissions on ${tmppath}.
+
+      perms="`echo ${oldVal} | awk '{ print $1 }'`"
+
+      if [ "${TMP_PERMS}" != "${perms}" ]; then
+         echo "WARNING: ${tmppath} had incorrect permissions (${perms})."
+      fi
+
+      # Obtain and verify the ownership of ${tmppath}.
+
+      owner="`echo ${oldVal} | awk '{ print $3 }'`"
+   
+      if [ "${TMP_OWNER}" != "${owner}" ]; then
+         echo "WARNING: ${tmppath} had incorrect ownership (${owner})."
+      fi
+   
+      # Obtain and verify the group of ${tmppath}.
+
+      group="`echo ${oldVal} | awk '{ print $4 }'`"
+   
+      if [ "${TMP_GROUP}" != "${group}" ]; then
+         echo "WARNING: ${tmppath} had an incorrect group setting (${group})."
+      fi
+  
+      # Make all of the changes to ${tmppath} to bring it into
+      # compliance with the settings as defined above.
+ 
+      /bin/chown ${TMP_OWNER}     ${tmppath}
+      /bin/chgrp ${TMP_GROUP}     ${tmppath}
+      /bin/chmod ${TMP_PERMS_SET} ${tmppath}
+   fi
+
+done
+

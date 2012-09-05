@@ -1,0 +1,199 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<?Fm: Validation Off>
+
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY man1m CDATA "System Administration">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.2">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY opts-tt CDATA "OPTIONS">
+<!ENTITY exam-tt CDATA "EXAMPLES">
+<!ENTITY exit-tt CDATA "EXIT STATUS">
+<!ENTITY exitstatuslead CDATA "The following exit values are returned:">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry lang = "en" os = "solaris"><refmeta><refentrytitle lang = "en">make-jass-pkg</refentrytitle>
+<manvolnum>1m</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man1m;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>unalias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>pseudonym, create
+or remove</primary></indexterm></refmeta>
+<refnamediv>
+<refname>make-jass-pkg</refname><refpurpose>create Solaris Security
+Toolkit (JASS) package stream file</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<cmdsynopsis os = "solaris"><command>make-jass-pkg</command><arg
+    choice = "plain" rep = "norepeat"><arg choice = "opt"
+    rep = "norepeat"><option>b</option><replaceable> new-base-dir</replaceable></arg><arg
+    choice = "opt" rep = "norepeat"><option>e </option><replaceable>excl-list</replaceable></arg><arg
+    choice = "opt" rep = "norepeat"><option>m</option><replaceable> new-email-address</replaceable></arg><arg
+    choice = "opt" rep = "norepeat"><option>p </option><replaceable>package-name</replaceable></arg><arg
+    choice = "opt" rep = "norepeat"><option>q</option></arg><arg
+    choice = "opt" rep = "norepeat"><option>t </option><replaceable>new-title</replaceable></arg></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>make-jass-pkg</command><arg
+    choice = "plain" rep = "norepeat"> <option>v</option></arg></cmdsynopsis>
+<cmdsynopsis os = "solaris"><command>make-jass-pkg</command><arg
+    choice = "plain" rep = "norepeat"> <option>?</option>|<option>h</option></arg></cmdsynopsis></refsynopsisdiv>
+<refsect1 lang = "en"><title>&desc-tt;</title>
+<para><command>The make-jass-pkg</command> command creates a Solaris package stream file from the Solaris Security Toolkit distribution. The resulting file can be installed using the <command>pkgadd</command> command and removed using the <command>pkgrm</command> command. Information about the installed distribution can be obtained using the <command>pkginfo</command> command.</para></refsect1>
+<refsect1 lang = "en"><title>EXTENDED DESCRIPTION</title>
+<refsect2 lang = "en"><title>Group Privileges Required</title>
+<para>You must have superuser privileges to run this command. </para></refsect2></refsect1>
+<refsect1 lang = "en"><title>&opts-tt;</title>
+<para>The following options are supported:</para><variablelist
+    termlength = "narrow" os = "solaris">
+<varlistentry>
+<term os = "solaris"><option>b </option><replaceable>new-base-dir</replaceable></term>
+<listitem os = "solaris"><para>Specifies an alternate installation base directory.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>e</option> <replaceable>excl-list</replaceable></term>
+<listitem os = "solaris"><para>Excludes top level files or directories from the package. This is done by specifying a pipe (|) separated list; for example, a|b|c|d.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>h</option> |<option>?</option></term>
+<listitem os = "solaris"><para>Displays usage descriptions.</para>
+<note role = "note" os = "solaris"><para>Use alone. Any option specified in addition to <option>h</option> or <option>?</option> is ignored. </para></note></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>m</option><replaceable> new-email-address</replaceable></term>
+<listitem os = "solaris"><para>Specifies an email address to use for in-house support.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>p</option><replaceable> package-name</replaceable></term>
+<listitem os = "solaris"><para>Specifies a custom package name. The default is <filename>JASScustm</filename>. </para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>q</option></term>
+<listitem os = "solaris"><para>Specifies quiet mode. No messages are displayed when this command is run.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>t </option><replaceable>new-title</replaceable></term>
+<listitem os = "solaris"><para>Specifies an alternative package title. The default title is &ldquo;Solaris Security Toolkit&rdquo;.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><option>v</option></term>
+<listitem os = "solaris"><para>Displays the version information for this program. </para></listitem>
+</varlistentry>
+</variablelist></refsect1>
+<refsect1 lang = "en"><title>&exam-tt;</title>
+<example width = "100" os = "solaris"><title>Creating a Package Stream File Using Defaults</title><screen width = "100" format = "linespecific">
+sc0: #:> /opt/SUNWsst/bin/<userinput>make-jass-pkg</userinput>
+
+&lsqb;NOTE] Creating the package's prototype file.  This may take a few minutes.
+
+&lsqb;NOTE] Excluded file: ./jass-include-list.tmp
+&lsqb;NOTE] Creating the package's info file.
+&lsqb;NOTE] Creating the package in a scratch directory.
+## Building pkgmap from package prototype file.
+## Processing pkginfo file.
+WARNING: parameter &lt;PSTAMP> set to "eng120040623143146"
+WARNING: parameter &lt;CLASSES> set to "none"
+## Attempting to volumize 360 entries in pkgmap.
+part  1 -- 2934 blocks, 357 entries
+## Packaging one part.
+/opt/SUNWsst/SUNWsst/pkgmap
+/opt/SUNWsst/SUNWsst/pkginfo
+.
+.&lsqb;list of files...]
+.
+/opt/SUNWsst/SUNWsst/reloc/rules.SAMPLE
+/opt/SUNWsst/SUNWsst/install/tsolinfo
+## Validating control scripts.
+## Packaging complete.
+&lsqb;NOTE] Creating the package's stream format (package file).
+The following packages are available:
+  1 JASScustm Solaris Security Toolkit 4.1.0
+                  (Solaris) 4.1.0
+Select package(s) you wish to process (or 'all' to process
+all packages). (default: all) &lsqb;?,??,q]: Transferring &lt;JASScustm> package instance
+&lsqb;NOTE] The package has been created as JASScustm.pkg.
+sc0: #:>
+</screen></example>
+<example width = "70" arch = "sparc" os = "solaris"><title>Creating a Package Stream File and Specifying Options</title><screen width = "70" format = "linespecific">
+sc0: #:> <userinput>/opt/SUNWsst/bin/make-jass-pkg -b /opt/SUNWsst/otherdir -e /opt/SUNWsst/test -m eng_support@mycompany.com -p MYJASS -t MyToolkit </userinput>
+
+&lsqb;NOTE] Creating the package's prototype file.  This may take a few minutes.
+&lsqb;NOTE] Creating the package's info file.
+&lsqb;NOTE] Creating the package in a scratch directory.
+## Building pkgmap from package prototype file.
+## Processing pkginfo file.
+WARNING: parameter &lt;PSTAMP> set to "eng120040623150621"
+WARNING: parameter &lt;CLASSES> set to "none"
+## Attempting to volumize 363 entries in pkgmap.
+part  1 -- 5612 blocks, 359 entries
+## Packaging one part.
+/opt/SUNWsst/SUNWsst/pkgmap
+/opt/SUNWsst/SUNWsst/pkginfo
+.
+.
+.&lsqb;list of files]
+/opt/SUNWsst/SUNWsst/reloc/rules.SAMPLE
+/opt/SUNWsst/SUNWsst/install/tsolinfo
+## Validating control scripts.
+## Packaging complete.
+&lsqb;NOTE] Creating the package's stream format (package file).
+The following packages are available:
+  1 MYJASS Solaris Security Toolkit 4.1.0 / MyToolkit
+                  (Solaris) 4.1.0
+Select package(s) you wish to process (or 'all' to process
+all packages). (default: all) &lsqb;?,??,q]: Transferring &lt;MYJASS> package instance
+&lsqb;NOTE] The package has been created as MYJASS.pkg.
+sc0: #:>
+</screen></example></refsect1>
+<refsect1 lang = "en"><title>&exit-tt;</title>
+<para>&exitstatuslead;</para><variablelist termlength = "narrow"
+    os = "solaris">
+<varlistentry>
+<term os = "solaris"><returnvalue>0</returnvalue></term>
+<listitem os = "solaris"><para>Successful completion.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><returnvalue>1</returnvalue></term>
+<listitem os = "solaris"><para>Error occurred.</para></listitem>
+</varlistentry>
+</variablelist></refsect1>
+<refsect1 lang = "en"><title>&attr-tt;</title>
+<para>See <citerefentry><refentrytitle lang = "en">attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" os = "solaris">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" valign = "top" os = "solaris"><para>Attribute Types</para></entry>
+<entry colname = "2" align = "center" valign = "top" os = "solaris"><para>Attribute Values</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Availability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>SUNWsst</para></entry>
+</row>
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Interface Stability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>Evolving</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 lang = "en"><title>&also-tt;</title>
+<para><citerefentry><refentrytitle lang = "en">add-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-check-sum</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-execute</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">rm-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para></refsect1></refentry>

@@ -1,0 +1,86 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-newaliases.aud 1.9     05/04/01     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="newaliases symbolic link"
+servfil="install-newaliases.aud"
+
+NEWALIASES="${JASS_ROOT_DIR}usr/bin/newaliases"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The newaliases(1M) program is typically a symbolic link to the sendmail
+   application.  This program rebuilds the random access data base for the
+   mail aliases file /etc/mail/aliases.
+
+Rationale for Verification Check:
+
+   This script is necessary since in some minimized environments, this
+   program may not be installed by default.  Failing to install this 
+   program may create problems with mail delivery.  This is most often
+   found in the Solaris OE version 8 and earlier where the newaliases
+   program was bundled as part of the SUNWnisu package.
+
+Determination of Compliance:
+
+   This script checks for the existence of the ${NEWALIASES} program.
+   If this file does not exist or is not a symbolic link, this
+   program will indicate a failure.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if [ "${JASS_CHECK_MINIMIZED}" = "1" ]; then
+   if check_os_revision 5.5.1 5.8 ; then
+      if check_fileExists ${NEWALIASES} 1 ; then
+         if check_fileTypeMatch ${NEWALIASES} "l" 1 ; then
+            logSuccess 'File ${NEWALIASES} is a symbolic link.'
+         else
+            logFailure 'File ${NEWALIASES} is not a symbolic link.'
+         fi
+      else
+         logFileNotFound "${NEWALIASES}" 1
+      fi
+   else
+      logInvalidOSRevision "5.5.1-5.8"
+   fi
+else
+   logNotice "This check is only applicable to minimized builds."
+fi
+
+finish_audit

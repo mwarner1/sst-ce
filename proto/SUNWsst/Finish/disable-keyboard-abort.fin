@@ -1,0 +1,70 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-keyboard-abort.fin 1.5     05/04/01     SMI"
+#
+# This script changes the KEYBOARD_ABORT variable in the 
+# /etc/default/kbd file, to prevent system suspending via STOP-A.
+#
+
+KBD=${JASS_ROOT_DIR}etc/default/kbd
+
+logMessage "Disabling the function: Keyboard abort (L1-A, Stop-A)"
+echo ""
+ 
+if check_os_min_revision 5.11; then
+ logMessage "Disabling keyboard abort"
+ svccfg -s keymap:default setprop keymap/keyboard_abort=disable
+ svcadm refresh keymap
+elif check_os_min_revision 5.6 ; then
+
+   if [ ! -f ${KBD} ]; then
+      create_a_file -m 444 -o root:sys ${KBD}
+      echo ""
+   fi
+
+   if [ `grep -c "^[^#]*KEYBOARD_ABORT=disable$" ${KBD}` = 0 ]; then
+
+      backup_file ${KBD}
+      echo ""
+
+      logMessage 'Setting the \\\"KEYBOARD_ABORT\\\" parameter to \\\"disable\\\" in ${KBD}.'
+
+      # First comment out all KEYBOARD_ABORT (as there are many in that file 
+      # then uncomment the "KEYBOARD_ABORT=disable" parameter if it already
+      # exists.  Otherwise, check for its existence and add it
+      # to the file at the end if necessary.
+
+      cat ${KBD}.${JASS_SUFFIX} |\
+         sed 's/^KEYBOARD_ABORT=/#KEYBOARD_ABORT=/g' |
+         sed 's/#.*KEYBOARD_ABORT=disable/KEYBOARD_ABORT=disable/g' > ${KBD}
+
+      if [ `grep "^[^#]*KEYBOARD_ABORT=disable$" ${KBD} | wc -l` = 0 ]; then
+         echo "KEYBOARD_ABORT=disable" >> ${KBD}
+      fi
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

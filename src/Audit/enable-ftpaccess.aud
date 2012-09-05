@@ -1,0 +1,110 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)enable-ftpaccess.aud 1.12     05/03/31 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="FTP Server Configuration File"
+servfil="enable-ftpaccess.aud"
+
+INETD=${JASS_ROOT_DIR}etc/inet/inetd.conf
+FTPACCESS="${JASS_ROOT_DIR}etc/ftpd/ftpaccess"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The File Transfer Protocol (FTP) service provides the ability for users 
+   to transfer files between systems.  This service is typically started by
+   inetd(1M) each time a connection is initiated.  This service provides 
+   various levels of access control based on the installed version of the 
+   Solaris OE.
+
+Rationale for Verification Check:
+
+   By default, in the Solaris OE version 9 and later, the FTP service is
+   configured to ignore the contents of the ${FTPACCESS} file.  This file is
+   used to store FTP service configuration information.  If this file is not
+   used, then alternate banners, file create mask settings and other 
+   parameters will not be enabled by default.  To instruct the FTP service to
+   use the ftpaccess file, the '-a' parameter should be added to the FTP 
+   service line in the ${INETD} file.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the FTP service is not configured
+   to use the ftpaccess file.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+ftpInstalled=1
+
+if check_os_min_revision 5.10 ; then
+   if  check_serviceInstalled svc:/network/ftp 1 LOG ; then 
+      check_serviceOptionEnabled "svc:/network/ftp" "inetd_start/exec" "in.ftpd" "-a"  1 LOG 
+   fi
+elif check_os_min_revision 5.9 ; then
+   if check_fileExists ${INETD} 0 ; then
+      if check_fileContentsExist ${INETD} "/usr/sbin/in\.ftpd" 0 ; then
+         if check_fileContentsExist ${INETD} \
+            "in\.ftpd[ 	]*.*[ 	]*-a" 1 ; then
+            logSuccess 'Service FTP is configured to use the \\\"ftpaccess\\\" file.'
+         else
+            logFailure 'Service FTP is not configured to use \\\"ftpaccess\\\" file.'
+         fi
+      else
+         logNotice 'Service FTP is not configured in ${INETD}.'
+         ftpInstalled=0
+      fi
+   else
+      logFileNotFound "${INETD}"
+   fi
+
+   if check_fileExists ${FTPACCESS} 0 ; then
+      logFileExists ${FTPACCESS} 0
+   else
+      if [ $ftpInstalled -eq 1 ]; then
+         logFileNotFound ${FTPACCESS} 1
+         adjustScore 1
+      else
+         logFileNotFound ${FTPACCESS} 
+      fi
+   fi
+
+else
+   logInvalidOSRevision "5.9+"
+fi
+
+finish_audit

@@ -1,0 +1,136 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-nfs-client.aud 1.13     05/03/31 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Networked File System (NFS) Client Service"
+servfil="disable-nfs-client.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Networked File System (NFS) client service provides the capability for
+   a system to access file systems shared by other servers.  This capability
+   is used in conjunction with the lockd(1M) and statd(1M) services that 
+   provide NFS locking and status monitoring services respectively.
+
+Rationale for Verification Check:
+
+   While the NFS client service can be a useful function, it may not be
+   critical for system operation.  If this service is not needed, then it 
+   should be disabled.
+
+Determination of Compliance:
+
+   This script determines if the NFS client service is configured or running 
+   on the system.  This script will indicate a failure if the software is 
+   configured to run (via a run-control script or smf) or actually running on the
+   system.  This script will also verify that the /etc/rc2.d/S73swapadd
+   run control script is successfully installed on the system when necessary.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWnfscr
+   SUNWnfscu
+   SUNWnfscx
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S73nfs.client
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rc0.d/K41nfs.client
+   ${JASS_ROOT_DIR}etc/rc0.d/K75nfs.client
+   ${JASS_ROOT_DIR}etc/rc1.d/K80nfs.client
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/lib/nfs/statd
+   /usr/lib/nfs/lockd
+"
+
+#-----------------------------------------------------------------------------
+
+addSwapScripts="
+   ${JASS_ROOT_DIR}etc/init.d/swapadd
+   ${JASS_ROOT_DIR}etc/rc2.d/S73swapadd
+"
+
+svc="
+   svc:/network/nfs/client:default
+   svc:/network/nfs/status:default
+   svc:/network/nfs/nlockmgr:default
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+
+if check_os_min_revision 5.10 ; then
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized_service "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceDisabled "${svc}" 1 LOG  
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceNotRunning "${svc}"  1 LOG
+else
+   if check_os_min_revision 5.9 ; then 
+      logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+      check_minimized             "$servpkg" 1 LOG
+   fi
+
+   logMessage "${JASS_MSG_SOFTWARE_CONFIGURED}"
+   check_startScriptNotExists "$servsrc"  1 LOG
+   check_stopScriptNotExists  "$servkrc"  1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists     "$servcmd"  1 LOG
+
+   logMessage "\n# Checking for the 'swapadd' run-control script.\n "
+   check_fileTemplate "${JASS_ROOT_DIR}etc/init.d/swapadd" 1 LOG
+   check_startScriptExists "${JASS_ROOT_DIR}etc/rc2.d/S73swapadd" 1 LOG
+fi
+finish_audit

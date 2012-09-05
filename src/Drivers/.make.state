@@ -1,0 +1,154 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers:
+	[ -d ../../proto/SUNWsst/Drivers ] || /bin/mkdir -p ../../proto/SUNWsst/Drivers
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/audit_private.funcs:
+	/usr/bin/cp -f audit_private.funcs ../../proto/SUNWsst/Drivers/audit_private.funcs
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/audit_private.funcs
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/audit_public.funcs:
+	/usr/bin/cp -f audit_public.funcs ../../proto/SUNWsst/Drivers/audit_public.funcs
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/audit_public.funcs
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/cis-config.driver:
+	/usr/bin/cp -f cis-config.driver ../../proto/SUNWsst/Drivers/cis-config.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/cis-config.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/cis-hardening.driver:
+	/usr/bin/cp -f cis-hardening.driver ../../proto/SUNWsst/Drivers/cis-hardening.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/cis-hardening.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/cis-secure.driver:
+	/usr/bin/cp -f cis-secure.driver ../../proto/SUNWsst/Drivers/cis-secure.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/cis-secure.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/clean.driver:
+	/usr/bin/cp -f clean.driver ../../proto/SUNWsst/Drivers/clean.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/clean.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/clean.run:
+	/usr/bin/cp -f clean.run ../../proto/SUNWsst/Drivers/clean.run
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/clean.run
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/clean_private.funcs:
+	/usr/bin/cp -f clean_private.funcs ../../proto/SUNWsst/Drivers/clean_private.funcs
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/clean_private.funcs
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/common_log.funcs:
+	/usr/bin/cp -f common_log.funcs ../../proto/SUNWsst/Drivers/common_log.funcs
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/common_log.funcs
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/common_misc.funcs:
+	/usr/bin/cp -f common_misc.funcs ../../proto/SUNWsst/Drivers/common_misc.funcs
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/common_misc.funcs
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/config.driver:
+	/usr/bin/cp -f config.driver ../../proto/SUNWsst/Drivers/config.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/config.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/driver.init:
+	/usr/bin/cp -f driver.init ../../proto/SUNWsst/Drivers/driver.init
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/driver.init
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/driver.run:
+	/usr/bin/cp -f driver.run ../../proto/SUNWsst/Drivers/driver.run
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/driver.run
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/driver_private.funcs:
+	/usr/bin/cp -f driver_private.funcs ../../proto/SUNWsst/Drivers/driver_private.funcs
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/driver_private.funcs
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/driver_public.funcs:
+	/usr/bin/cp -f driver_public.funcs ../../proto/SUNWsst/Drivers/driver_public.funcs
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/driver_public.funcs
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/finish.init:
+	/usr/bin/cp -f finish.init ../../proto/SUNWsst/Drivers/finish.init
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/finish.init
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/hardening.driver:
+	/usr/bin/cp -f hardening.driver ../../proto/SUNWsst/Drivers/hardening.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/hardening.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/install-Sun_ONE-WS.driver:
+	/usr/bin/cp -f install-Sun_ONE-WS.driver ../../proto/SUNWsst/Drivers/install-Sun_ONE-WS.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/install-Sun_ONE-WS.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/ldm_control-config.driver:
+	/usr/bin/cp -f ldm_control-config.driver ../../proto/SUNWsst/Drivers/ldm_control-config.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/ldm_control-config.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/ldm_control-hardening.driver:
+	/usr/bin/cp -f ldm_control-hardening.driver ../../proto/SUNWsst/Drivers/ldm_control-hardening.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/ldm_control-hardening.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/ldm_control-secure.driver:
+	/usr/bin/cp -f ldm_control-secure.driver ../../proto/SUNWsst/Drivers/ldm_control-secure.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/ldm_control-secure.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/secure.driver:
+	/usr/bin/cp -f secure.driver ../../proto/SUNWsst/Drivers/secure.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/secure.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/server-config.driver:
+	/usr/bin/cp -f server-config.driver ../../proto/SUNWsst/Drivers/server-config.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/server-config.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/server-hardening.driver:
+	/usr/bin/cp -f server-hardening.driver ../../proto/SUNWsst/Drivers/server-hardening.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/server-hardening.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/server-secure.driver:
+	/usr/bin/cp -f server-secure.driver ../../proto/SUNWsst/Drivers/server-secure.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/server-secure.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/suncluster3x-config.driver:
+	/usr/bin/cp -f suncluster3x-config.driver ../../proto/SUNWsst/Drivers/suncluster3x-config.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/suncluster3x-config.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/suncluster3x-hardening.driver:
+	/usr/bin/cp -f suncluster3x-hardening.driver ../../proto/SUNWsst/Drivers/suncluster3x-hardening.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/suncluster3x-hardening.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/suncluster3x-secure.driver:
+	/usr/bin/cp -f suncluster3x-secure.driver ../../proto/SUNWsst/Drivers/suncluster3x-secure.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/suncluster3x-secure.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/sunfire_15k_sc-config.driver:
+	/usr/bin/cp -f sunfire_15k_sc-config.driver ../../proto/SUNWsst/Drivers/sunfire_15k_sc-config.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/sunfire_15k_sc-config.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/sunfire_15k_sc-hardening.driver:
+	/usr/bin/cp -f sunfire_15k_sc-hardening.driver ../../proto/SUNWsst/Drivers/sunfire_15k_sc-hardening.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/sunfire_15k_sc-hardening.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/sunfire_15k_sc-secure.driver:
+	/usr/bin/cp -f sunfire_15k_sc-secure.driver ../../proto/SUNWsst/Drivers/sunfire_15k_sc-secure.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/sunfire_15k_sc-secure.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/undo.driver:
+	/usr/bin/cp -f undo.driver ../../proto/SUNWsst/Drivers/undo.driver
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/undo.driver
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/undo.funcs:
+	/usr/bin/cp -f undo.funcs ../../proto/SUNWsst/Drivers/undo.funcs
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/undo.funcs
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/undo.run:
+	/usr/bin/cp -f undo.run ../../proto/SUNWsst/Drivers/undo.run
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/undo.run
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/user.init.SAMPLE:
+	/usr/bin/cp -f user.init.SAMPLE ../../proto/SUNWsst/Drivers/user.init.SAMPLE
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/user.init.SAMPLE
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Drivers/user.run.SAMPLE:
+	/usr/bin/cp -f user.run.SAMPLE ../../proto/SUNWsst/Drivers/user.run.SAMPLE
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Drivers/user.run.SAMPLE
+.BUILT_LAST_MAKE_RUN:
+driver.init:
+	/usr/bin/rm -f driver.init; \
+		/usr/bin/sed -e "s/__VERSION__/5.0.0/g" \
+		driver.init.tmpl | \
+		/usr/bin/sed -e "s/__FULLNAME__/SUNWsst-5_0/g" > driver.init

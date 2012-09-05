@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)update-cron-allow.fin	3.7	05/04/12 SMI"
+#
+# This script creates the "/etc/cron.d/cron.allow" file that is used to
+# restrict access to the cron facility.  This file is populated with
+# those users defined in JASS_CRON_ALLOW (assuming the user does not
+# already exist in the "/etc/cron.d/cron.deny" file.
+#
+
+CRONALLOW=${JASS_ROOT_DIR}etc/cron.d/cron.allow
+CRONDENY=${JASS_ROOT_DIR}etc/cron.d/cron.deny
+
+logMessage "Updating cron facility access controls (cron.allow)."
+echo ""
+
+if [ ! -f ${CRONALLOW} ]; then
+   create_a_file -m 644 -o root:sys ${CRONALLOW}
+   echo ""
+fi
+
+backupPerformed="0"
+
+for ACCT in `echo ${JASS_CRON_ALLOW} | xargs -n 1 echo | sort -u`; do
+
+   # First check to see if the account is in /etc/passwd
+
+   if [ `nawk -F: '$1==user { print $1; }' user="${ACCT}" ${JASS_PASSWD} |\
+      wc -l` = 0 ]; then
+      logNotice 'Account, ${ACCT}, does not exist in ${JASS_PASSWD}.'
+      continue
+   fi
+
+   # Then check to see if the account is in cron.deny
+
+   if [ -f ${CRONDENY} ]; then
+      if [ `grep -c "^${ACCT}$" ${CRONDENY}` != 0 ]; then
+         logNotice 'Account, ${ACCT}, exists in ${CRONDENY}.'
+         continue
+      fi
+   fi
+
+   # All checks passed, add to cron.allow if not already there
+
+   if [ `grep -c "^${ACCT}$" ${CRONALLOW}` = 0 ]; then
+      if [ "${backupPerformed}" = "0" ]; then
+         backup_file ${CRONALLOW}
+         backupPerformed="1"
+         echo ""
+      fi
+      logMessage 'Adding ${ACCT} to ${CRONALLOW}.'
+      echo "${ACCT}" >> ${CRONALLOW}
+   fi
+
+done
+
+if [ "${backupPerformed}" = "1" ]; then
+   chown root:sys ${CRONALLOW}
+   chmod 644      ${CRONALLOW}
+fi

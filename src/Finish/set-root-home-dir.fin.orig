@@ -1,0 +1,161 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+#!/bin/sh
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-root-home-dir.fin	1.11	05/06/07 SMI"
+#
+# This script sets the HISTORY variable in /etc/default/passwd to
+# ${JASS_PASS_HISTORY}.
+#
+ROOT_HOME_DIR="${JASS_ROOT_DIR}root"
+PASSWD="${JASS_ROOT_DIR}etc/passwd"
+CONFIG_FILES_TO_MOVE=".cshrc .login .logout .profile .rhosts .shosts"
+CONFIG_DIRS_TO_MOVE=".ssh"
+slash_root_home_dir_exists=0
+
+
+#
+# JASS_ROOT_HOME_DIR is "/root" by default for Solaris 10+
+# For Solaris 9 and earlier JASS_ROOT_HOME_DIR is always "/"
+#
+check_os_min_revision 5.10
+if [ $? -eq 0 -a "${JASS_ROOT_HOME_DIR}" = "/root" ] ; then
+
+   logMessage "Creating /root home directory for the root account."
+   echo ""
+
+   # Get and check current root home directory
+   root_passwd=`grep '^root:' "${PASSWD}" | tail -1 `
+   if [ ! -z "$root_passwd" ]; then
+      passwd_root_home_dir=`echo $root_passwd | nawk -F: '{print $6}' `
+
+      # Make changes only if the root home directory is "/" or "/root"
+      if [ "$passwd_root_home_dir" = "/" ] ; then
+
+         #
+         # Make /root home directory if not there
+         #
+         if [ -f "${ROOT_HOME_DIR}" ]; then # first remove /root file, if any
+            backup_file "${ROOT_HOME_DIR}"
+            rm -f "${ROOT_HOME_DIR}"
+         fi
+
+         if [ ! -d "${ROOT_HOME_DIR}" ]; then
+            # Don't use mkdir_dashp as it will add rmdir to manifest:
+            mkdir -m 0700 -p "${ROOT_HOME_DIR}"
+            # Remove .* files that are automatically created so rmdir works
+            # during an undo:
+            add_to_manifest X "rmdir /root || \
+echo '[WARN] Directory /root not removed.  Check for configuration files and remove /root manually.'"
+         fi
+         slash_root_home_dir_exists=1
+
+         # Set /root home directory permissions and ownership,
+         # whether or not the directory was just created.
+         chown root:root "${ROOT_HOME_DIR}"
+         chmod 0700 "${ROOT_HOME_DIR}"
+
+         #
+         # Update passwd file with new root home directory
+         #
+         # Note: "usermod -d /root root" can't be used as it gets this error:
+         #    "UX: usermod: ERROR: root is in use.  Cannot change it"
+         #
+         logMessage 'Setting the home directory for the root account to \\\"/root\\\".'
+         backup_file "${PASSWD}"
+
+         /usr/sbin/chroot ${JASS_ROOT_DIR} \
+            /usr/sbin/passmgmt -m -h "${JASS_ROOT_HOME_DIR}" root
+
+         #
+         # Move selected /.* files and directories to /root and
+         # set file ownership and permission.
+         #
+         for i in $CONFIG_FILES_TO_MOVE ; do
+            if [ -f "${JASS_ROOT_DIR}${i}" ] ; then
+               move_a_file "${JASS_ROOT_DIR}${i}" "${ROOT_HOME_DIR}/${i}"
+            fi
+
+            if [ -f "${ROOT_HOME_DIR}/${i}" ] ; then
+               chown root:root "${ROOT_HOME_DIR}/${i}"
+               chmod 0700      "${ROOT_HOME_DIR}/${i}"
+            fi
+         done
+
+         for i in $CONFIG_DIRS_TO_MOVE ; do
+            if [ -d "${JASS_ROOT_DIR}${i}" ] ; then
+               move_a_file "${JASS_ROOT_DIR}${i}" "${ROOT_HOME_DIR}/${i}"
+            fi
+
+            if [ -d "${ROOT_HOME_DIR}/${i}" ] ; then
+               chown root:root "${ROOT_HOME_DIR}/${i}"
+               chmod 0700      "${ROOT_HOME_DIR}/${i}"
+            fi
+         done
+
+
+      elif [ "$passwd_root_home_dir" = "/root" ] ; then
+         slash_root_home_dir_exists=1
+
+      else
+         logWarning 'Home directory for the root account is ${passwd_root_home_dir}; \\\"/\\\" or \\\"/root\\\" expected.'
+      fi
+
+      #
+      # Copy .cshrc and .profile, if not there
+      #
+      if [ "$slash_root_home_dir_exists" = "1" ] ; then
+         logMessage "Copying .cshrc and .profile files for the root account."
+         echo ""
+
+         for i in "/root/.cshrc" "/root/.profile" ; do
+            if [ ! -f "${JASS_ROOT_DIR}${i}" ] ; then
+               copy_files "${i}"
+               chown root:root "${JASS_ROOT_DIR}${i}"
+               chmod 0700      "${JASS_ROOT_DIR}${i}"
+            fi
+         done
+      fi
+
+   else
+      logError 'Account root does not exist in ${PASSWD}.'
+   fi
+
+
+elif [ "${JASS_ROOT_HOME_DIR}" = "/" ] ; then
+     logMessage "Copying .cshrc and .profile files for the root account."
+     echo ""
+
+     for i in "/.cshrc" "/.profile" ; do
+        if [ ! -f "${JASS_ROOT_DIR}${i}" ] ; then
+           copy_files "${i}"
+           chown root:root "${JASS_ROOT_DIR}${i}"
+           chmod 0700      "${JASS_ROOT_DIR}${i}"
+        fi
+     done
+
+else
+   logFailure 'JASS_ROOT_HOME_DIR must be \\\"/root\\\" (Solaris 10 or above) or \\\"/\\\".'
+fi

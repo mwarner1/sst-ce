@@ -1,0 +1,216 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)rm-client	3.16	05/06/13 SMI"
+#
+# This script is an attempt to simplify the process of removing existing
+# clients from the JumpStart environment.  This script takes one argument:
+# a host name.
+#
+# Calling this script with those arguments will make the necessary calls to
+# the correct "rm_install_client".
+#
+
+jass_usage_msg="
+Usage: rm-client [-c] client-host-name
+   or: rm-client -v
+   or: rm-client -? | -h
+
+Where the options are as follows:
+
+   [[-c] client-host-name]   The name of the JumpStart client to be removed.
+
+   [-h | -?]                 This help message.
+
+   [-v]                      The version information for this program.
+
+"
+
+# ****************************************************************************
+# Explicitly define a path.
+# ****************************************************************************
+
+PATH=/usr/bin:/usr/sbin
+export PATH
+
+# ****************************************************************************
+# Obtain a fully qualified path to this script.
+# ****************************************************************************
+
+oldDirectory="`pwd`"
+newDirectory="`dirname $0`"
+cd ${newDirectory}
+jass_base_dir="`pwd`"
+
+if [ "`basename ${jass_base_dir}`" = "bin" ]; then
+   cd ..
+   jass_base_dir="`pwd`"
+fi
+
+cd ${oldDirectory}
+
+# ****************************************************************************
+# Define localization settings.
+# ****************************************************************************
+
+TEXTDOMAIN="rm-client"
+TEXTDOMAINDIR="${jass_base_dir}/lib/locale"
+export TEXTDOMAIN TEXTDOMAINDIR
+
+# ****************************************************************************
+# Function: printUsage
+#
+# The purpose of this function is to display the usage information for this
+# program.  No other processing is done.
+# ****************************************************************************
+
+printUsage()
+{
+   gettext "${jass_usage_msg}"
+}
+
+# ****************************************************************************
+# Function: printVersion
+#
+# The purpose of this function is to display any version information about
+# this program.  No other processing is done.
+# ****************************************************************************
+
+printVersion()
+{
+   toolkitVersion="`grep JASS_VERSION= ${jass_base_dir}/Drivers/driver.init |\
+   nawk -F= '{ print $2 }' | sed 's/\"//g'`"
+   echo `gettext 'Version: '`"${toolkitVersion}"
+}
+
+# ****************************************************************************
+# Parse the command line arguments that were passed to this script.
+# ****************************************************************************
+
+while getopts c:h\?v v; do
+   case ${v} in
+
+      c)
+         RM_HOSTNAME="${OPTARG}"
+         ;;
+
+      \?|h)
+         printUsage
+         exit 0
+         ;;
+
+      v)
+         printVersion
+         exit 0
+         ;;
+   esac
+done
+
+shift `expr $OPTIND - 1`
+
+# ****************************************************************************
+
+jass_hostname="${RM_HOSTNAME}"
+
+if [ -z "${jass_hostname}" ]; then
+   if [ $# -eq 1 -a ! -z "${1}" ] ; then
+      jass_hostname="${1}"
+   else
+      printUsage
+      exit 1
+   fi
+fi
+
+# Verify that the host exists in /etc/bootparams.  This is an indication that
+# it was configured for JumpStart.
+
+jass_host_entry=""
+if [ -f /etc/bootparams ]; then
+   jass_host_entry=`grep "${jass_hostname}" /etc/bootparams | grep "install="`
+else
+   gettext "Error: The /etc/bootparams file does not exist.\n"
+   exit 1
+fi
+
+if [ "${jass_host_entry}" = "" ]; then
+   gettext "Error: The specified system does not exist in /etc/bootparams.\n"
+   exit 1
+fi
+
+# Now that all of the user supplied information has been determined,
+# construct the name of the Operating System directory.  For example,
+# if the bootparams' line for the target system contains an entry like
+# install=server:/jumpstart/OS/s8_300_server, then the ${jass_host_os_dir}
+# as determined should be "Solaris_8".
+
+jass_os_path=`echo ${jass_host_entry} | nawk '{ print $3 }' |\
+   nawk -F: '{ print $2 }'`
+export jass_os_path
+
+jass_host_os=`basename ${jass_os_path}`
+export jass_host_os
+
+# Now that all of the user supplied information has been determined,
+# construct the name of the Operating System directory.  For example,
+# if the directory under /jumpstart/OS is "Solaris_8.0_06-00", indicating
+# a Solaris 8 06/00 Server Edition of the media, then the ${jass_host_os_dir}
+# as determined should be "8".  Note that each OS is a little different
+# with its naming convention hence the sed scripts below.
+
+usingTrusted=`echo ${jass_host_os} | sed -e 's/Solaris_[0-9].*//'`
+
+# The full explanation of this pattern is lost in history
+# However there is no need to watch out for Solaris_1.x
+# so we should be safe marking those as Solaris 10 versions
+jass_host_os_dir=`echo ${jass_host_os} | \
+    nawk -F_ '
+          $1 ~ /Trusted/ { print $3; }
+          $1 ~ /Solaris/ { print $2; }
+          ' |\
+   sed 's/\([2-9]\)\([0-9]\)/\1\.\2/g' |\
+   sed 's/\.0$//g' | sed 's/^7$/2\.7/g'`
+
+# From the jass_host_os_dir, construct the location to the actual
+# "Tools" directory where the "rm_install_client" script is located.
+
+if [ "${jass_host_os_dir}" = "2.5.1" ]; then
+   TOOLS_DIR=${jass_os_path}
+else
+   TOOLS_DIR=${jass_os_path}/${usingTrusted}Solaris_${jass_host_os_dir}/Tools
+fi
+
+export TOOLS_DIR
+
+if [ ! -d ${TOOLS_DIR} ]; then
+   eval echo `gettext 'Error: The Tools directory was not found: \"${TOOLS_DIR}\"\n'`
+   exit 1
+fi
+
+cd ${TOOLS_DIR}
+
+# Execute the actual "rm_install_client" with the appropriate arguments.
+
+./rm_install_client ${jass_hostname}
+

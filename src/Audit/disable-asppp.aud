@@ -1,0 +1,125 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved
+# All rights reserved.
+#
+#ident	"@(#)disable-asppp.aud	1.8	04/06/02	SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Asynchronous PPP Service"
+servfil="disable-asppp.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   aspppd(1M) is the link manager for the asynchronous data link protocol 
+   specified in RFC1331, The Point-to-Point Protocol (PPP) for the 
+   Transmission of Multi-protocol Datagrams over Point-to-Point Links.  It is
+   a user level daemon that works in concert with the IP-Dialup driver (ipdcm)
+   and PPP streams module (ppp(7M)) to provide IP network services over an 
+   analog modem using dialed voice grade telephone lines. The link manager 
+   automates the process of connecting to a peer (remote) host when PPP 
+   service with that host is required.  The connection process can be initiated
+   either by sending an IP datagram to a (disconnected) peer host or by 
+   receiving a notification that a peer host desires to establish a connection.
+
+Rationale for Verification Check:
+
+   While the ASPPP service can be a useful function, it may not be critical 
+   for system operation.  If this service is not needed, then it should be 
+   disabled.
+
+Determination of Compliance:
+
+   This script determines if the ASPPP service is installed, configured or 
+   running on the system.  This script will indicate a failure if the 
+   software is installed, configured to run (via a run-control script) or 
+   actually running on the system.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWapppr
+   SUNWapppu
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S47asppp
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rcS.d/K50asppp
+   ${JASS_ROOT_DIR}etc/rc0.d/K47asppp
+   ${JASS_ROOT_DIR}etc/rc0.d/K50asppp
+   ${JASS_ROOT_DIR}etc/rc1.d/K47asppp
+   ${JASS_ROOT_DIR}etc/rc1.d/K50asppp
+"
+#-----------------------------------------------------------------------------
+
+servcfg="
+   ${JASS_ROOT_DIR}etc/asppp.cf
+"
+#-----------------------------------------------------------------------------
+
+servcmd=" 
+   /usr/sbin/aspppd
+"
+
+# **************************************************************************** 
+# Check processing section.
+# **************************************************************************** 
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_revision 5.5.1 5.8 ; then
+
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized                 "$servpkg"    1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   if [ "${JASS_DISABLE_MODE}" = "conf" ]; then
+      check_serviceConfigNotExists "$servcfg"    1 LOG
+   elif [ "${JASS_DISABLE_MODE}" = "script" ]; then
+      check_startScriptNotExists   "$servsrc"    1 LOG
+      check_stopScriptNotExists    "$servkrc"    1 LOG
+   fi
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists          "$servcmd"    1 LOG
+
+else
+   logInvalidOSRevision "5.5.1-5.8"
+fi
+
+finish_audit

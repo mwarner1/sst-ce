@@ -1,0 +1,327 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)update-inetd-conf.fin	3.28	05/07/15 SMI"
+#
+# This script disables a those services (started from the Internet Services
+# Daemon [INETD]) that are defined by the JASS_SVCS_DISABLE variable.  This
+# script also enables those services listed by the JASS_SVCS_ENABLE
+# variable.  Note that if both variables contain the same service, the
+# service will be enabled as JASS_SVCS_ENABLE maintains precedence.
+#
+# With the arrival of smf(5), entries in the list may or may not be
+# FMRI's.  use is_bad_fmri to decide whether or not it is.
+
+INETD=${JASS_ROOT_DIR}etc/inet/inetd.conf
+NETCONFIG=${JASS_ROOT_DIR}etc/netconfig
+
+backupPerformed="0"
+inetdConfModified="0"
+
+# The new plan is to loop through, getting the non-duplicated DISABLE list.
+# We will then loop through the two new lists, dealing with each FMRI,
+# (checked by is_bad_fmri_nolog) and adding it to a delayed list if it isn't
+# an FMRI. Then we can use the older code with the delayed lists.
+
+# Filter out conflicts between entries in both the enable and
+# disable lists.  Since "enables" always win, filter conflicts
+# out of the disable list.
+
+disableList="`get_lists_disjunction \"${JASS_SVCS_DISABLE}\" \"${JASS_SVCS_ENABLE}\"`"
+disableDelayList=""
+enableDelayList=""
+
+# This could be a bit more intelligent, to only log these messages
+# when an SMF service is being disabled.  The extra code is rather a
+# lot for such a minimal benefit it seems.
+
+if check_os_min_revision 5.10 ; then
+   logMessage "Disabling smf(5) services listed in JASS_SVCS_DISABLE."
+   echo ""
+fi
+
+if [ "${disableList}" != "" ]; then
+   for svc in ${disableList}; do
+      if _is_bad_fmri_nolog "$svc" ; then
+	 # This is a pre-smf service.  Add it to the delayed disable list
+	 disableDelayList="${disableDelayList} ${svc}"
+      else
+	 # It is an SMF service.  Is this system SMF aware?
+	 if check_os_min_revision 5.10 ; then
+	    logMessage 'Disabling service, ${svc}.'
+	    disable_service_immediate "${svc}"
+	 fi
+      fi
+   done
+fi
+
+if check_os_min_revision 5.10 ; then
+   logMessage "Enabling smf(5) services listed in JASS_SVCS_ENABLE."
+   echo ""
+fi
+
+if [ "${JASS_SVCS_ENABLE}" != "" ]; then
+   for svc in ${JASS_SVCS_ENABLE}; do
+      if _is_bad_fmri_nolog "$svc" ; then
+	 # This is a pre-smf service.  Add it to the delayed enable list
+	 enableDelayList="${enableDelayList} ${svc}"
+      else
+	 # It is an SMF service.  Is this system SMF aware?
+	 if check_os_min_revision 5.10 ; then
+	    logMessage 'Enabling service, ${svc}.'
+	    enable_service "${svc}"
+	 fi
+      fi
+   done
+fi
+
+logMessage 'Updating status of network services in ${INETD}.'
+echo ""
+
+if [ ! -f ${NETCONFIG} ]; then
+   logWarning 'Required file ${NETCONFIG} was not found.'
+elif [ -f ${INETD} -a -s ${INETD} ]; then
+
+   # Create a list of valid network transports.
+
+   netConfig="`grep -v '^#' ${NETCONFIG} | nawk '{ print $1 }' |\
+      xargs echo | sed 's/ /|/g'`"
+
+   netConfig="${netConfig}|tli"
+
+   # Create the Enable/Disable Lists for the Services.
+
+   enableList="`echo ${enableDelayList} | xargs -n 1 echo | sort -u`"
+   disableList=""
+   tmpDisableList=""
+   if [ "${disableDelayList}" = "" ]; then
+      if [ ! -z "${enableList}" ]; then
+         tmpDisableList="`nawk '{ print $1 }' ${INETD} |\
+            nawk -F/ '{ print $1 }' | grep -v '#' | sort -u`"
+      fi
+   else
+      tmpDisableList="`echo ${disableDelayList} | xargs -n 1 echo | sort -u`"
+   fi
+
+   # Filter out conflicts between entries in both the enable and
+   # disable lists.  Since "enables" always win, filter conflicts
+   # out of the disable list.
+
+   disableList="`get_lists_disjunction \"${tmpDisableList}\" \"${enableList}\"`"
+
+   # Disable those services in the disableList variable.
+
+   if [ "${disableList}" != "" ]; then
+      logMessage "Disabling services listed in JASS_SVCS_DISABLE in ${INETD}."
+      echo ""
+
+      for svc in ${disableList}; do
+
+         svc_entry=""
+
+         # Check for RPC syntax that includes "/" followed by a number or
+         # a range of numbers.
+
+         svc_entry=`egrep "^${svc}/[0-9\-]*[ 	]*.*[ 	]*(${netConfig})[ 	]*" ${INETD} 2>/dev/null`
+         checkResult=$?
+
+         # If RPC syntax does not provide a result, try just the string
+         # followed by whitespace.  This should cover non-RPC services.
+
+         if [ "${svc_entry}" = "" ]; then
+            svc_entry=`egrep "^${svc}[ 	]*.*[ 	]*(${netConfig})[ 	]*" ${INETD} 2>/dev/null`
+            checkResult=$?
+         fi
+
+         if [ ${checkResult} = 0 ]; then
+
+	    if check_os_min_revision 5.10; then
+	       # A very messy case.  We need to first check and see if its FMRI
+	       # analogue is in the enable list.  Of course, what to do here is
+	       # a bit strange.  The legacy entry is disabled, but the FMRI is 
+	       # enabled.  Just error and continue.
+	       _fmri=`convert_inetd_service_to_fmri ${svc}`
+	       if [ $? -eq 0 ]; then
+		  # Check for a variant of this being enabled
+		  _test="`get_lists_disjunction \"${_fmri}\" \"${enableList}\"`"
+		  # _test is empty if it is enabled under another name
+		  if [ -z "${_test}" ]; then
+		     logError  \
+'${svc} is also enabled as an SMF service, ${_fmri}, in JASS_SVCS_ENABLE.'
+		     logNotice 'Please correct this inconsistency.'
+		     continue
+		  fi
+	       else
+		  logError 'Failed to identify service ${svc} as an FMRI, check ${INETD}.'
+	       fi
+	    fi
+
+            if [ "${backupPerformed}" = "0" ]; then
+	       if check_os_min_revision 5.10; then
+		  add_to_manifest X "update_inetconv_in_upgrade"
+		  if [ "${JASS_STANDALONE}" = "1" ] ; then
+		     # Inetconv must be run before any relevant commands
+		     # in the upgrade file
+		     update_inetconv_in_upgrade
+		  fi
+	       fi
+               backup_file ${INETD}
+               backupPerformed="1"
+	       echo ""
+
+            fi
+
+            svc_name="`echo ${svc_entry}   | nawk '{ print $1 }'`"
+            svc_binary="`echo ${svc_entry} | nawk '{ print $6 }'`"
+
+            logMessage 'Disabling service, ${svc_name} (${svc_binary}).'
+            ed -s ${INETD} << EOEF > /dev/null 2>&1
+g|^${svc_name}[ 	]*|s|^${svc_name}|\# ${svc_name}|g
+.
+w
+q
+EOEF
+         fi
+
+	 # We should also disable the fmri entries via the upgrade file
+	 if check_os_min_revision 5.10; then
+	    _fmri=`convert_inetd_service_to_fmri ${svc}`
+	    if [ $? -eq 0 ]; then
+	       _test="`get_lists_disjunction \"${_fmri}\" \"${JASS_SVCS_DISABLE}\"`"
+	       # _test is empty if it is disabled under another name
+	       if [ -n "${_test}" -a "${JASS_STANDALONE}" = "1" ]; then
+		  # In Jumpstart, update-inetd will handle this
+		  logMessage 'Disabling the FMRI analogue (${_fmri}) of service ${svc}.'
+		  disable_service_immediate ${_fmri}
+	       fi
+	    fi
+	 fi
+
+
+      done
+   fi
+
+
+   # Enable those services in the enableList variable.
+
+   if [ "${enableList}" != "" ]; then
+      echo ""
+      logMessage "Enabling those services listed in JASS_SVCS_ENABLE in ${INETD}."
+      echo ""
+
+      for svc in ${enableList}; do
+         svc_entry=""
+
+         # Check for RPC syntax that includes "/" followed by a number or
+         # a range of numbers.
+
+         svc_entry=`egrep "^( 	]*#[ 	]*${svc}/[0-9\-]*[ 	]*).*[ 	]*(${netConfig})[ 	]*" ${INETD} 2>/dev/null`
+         checkResult=$?
+
+         # If RPC syntax does not provide a result, try just the string
+         # followed by whitespace.  This should cover non-RPC services.
+
+         if [ "${svc_entry}" = "" ]; then
+            svc_entry=`egrep "^([ 	]*#[ 	]*${svc}[ 	]*).*[ 	]*(${netConfig})[ 	]*" ${INETD} 2>/dev/null`
+            checkResult=$?
+         fi
+
+         if [ ${checkResult} -eq 0 ]; then
+
+            if [ "${backupPerformed}" = "0" ]; then
+	       if check_os_min_revision 5.10; then
+		  add_to_manifest X "update_inetconv_in_upgrade"
+		  if [ "${JASS_STANDALONE}" = "1" ] ; then
+		     # Inetconv must be run before any relevant commands
+		     # in the upgrade file
+		     update_inetconv_in_upgrade
+		  fi
+	       fi
+               backup_file ${INETD}
+               backupPerformed="1"
+	       echo ""
+
+            fi
+
+            svc_name="`echo ${svc_entry}   | sed 's/#//g' | nawk '{ print $1 }'`"
+            svc_binary="`echo ${svc_entry} | sed 's/#//g' | nawk '{ print $6 }'`"
+
+            logMessage 'Enabling service, ${svc_name} (${svc_binary}).'
+            ed -s ${INETD} << EOEF > /dev/null 2>&1
+g|^[ 	]*#[ 	]*${svc_name}[ 	]*.*wait|s|^[ 	]*#[ 	]*${svc_name}|${svc_name}|g
+g|^[ 	]*#[ 	]*${svc_name}[ 	]*.*poly|s|^[ 	]*#[ 	]*${svc_name}|${svc_name}|g
+.
+w
+q
+EOEF
+
+            # We should also enable the fmri entries in the upgrade file
+            if check_os_min_revision 5.10; then
+	       _fmri=`convert_inetd_service_to_fmri ${svc}`
+	       if [ $? -eq 0 ]; then
+		  # We also need to remove the svccfg entries here, along with
+		  # the imported manifests, but only if we are going to be the
+		  # ones adding it.
+		  if is_service_installed ${_fmri}; then
+		     : # If it is already here, we won't delete it during undo.
+		  else
+		     add_to_manifest X "_delete_converted_inetd_entry ${_fmri}"
+		     add_to_manifest X "_enable_or_disable_service ${_fmri} /var/svc/profile/upgrade 0"
+		  fi
+
+		  _test="`get_lists_disjunction \"${_fmri}\" \"${JASS_SVCS_ENABLE}\"`"
+		  # _test is empty if it is enabled under another name
+		  if [ -n "${_test}" -a "${JASS_STANDALONE}" = "1" ]; then
+		     # In Jumpstart, update-inetd will handle this
+		     logMessage 'Enabling the FMRI analogue (${_fmri}) of service ${svc}.'
+		     enable_service ${_fmri}
+		  fi
+
+
+		  # We should also warn if this FMRI is explicitly disabled.  That
+		  # Is probably a scary sign.
+		  _test="`get_lists_disjunction \"${_fmri}\" \"${JASS_SVCS_DISABLE}\"`"
+		  # _test is empty if it is disabled under another name
+		  if [ -z "${_test}" ]; then
+		     logMessage \
+'${svc} is also enabled as an SMF service, ${_fmri}, in JASS_SVCS_DISABLE.'
+		     logNotice 'Please correct this inconsistency.'
+		  fi
+
+	       else
+		  logError 'Failed to identify service ${svc} as an FMRI, check ${INETD}.'
+	       fi
+	    fi
+	 fi
+      done
+   fi
+
+   if [ "${backupPerformed}" = "1" ]; then
+      chown root:sys ${INETD}
+      chmod 444      ${INETD}
+   fi
+else
+   logFileNotFound "${INETD}"
+fi

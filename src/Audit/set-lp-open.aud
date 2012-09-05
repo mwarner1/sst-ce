@@ -1,0 +1,106 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-lp-open.aud		1.2	06/10/23 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Line Printer (LP) Service"
+servfil="set-lp-open.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Line Printer (lp) service is used to process print jobs on the system.
+
+Rationale for Verification Check:
+
+   Sometimes it may be necessary to allow non-local users 
+   access to the local print service.
+
+
+Determination of Compliance:
+
+   When Secure by Default is available, the lp service will
+   checked for whether or not it is listening to external connections.  If
+   it is not, a failure will be indicated.
+
+   If SBD is not available, this script does nothing.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWpsr SUNWpsu SUNWpsf
+"
+
+#-----------------------------------------------------------------------------
+
+# LP, LPD, and IPP remote printing protocols, respectively:
+svc="
+   svc:/application/print/server:default
+   svc:/application/print/ipp-listener:default
+   svc:/application/print/rfc1179:default
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+if check_sbd_available; then
+   check_minimized_service "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   if check_serviceInstalled "svc:application/print/rfc1179:default" 0; then
+      check_servicePropEnabled "svc:application/print/rfc1179:default" \
+       "inetd/bind_addr" "" 1 LOG
+   fi
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceDisabled "svc:/application/print/ipp-listener:default" \
+    1 LOG
+   check_serviceEnabled "svc:/application/print/rfc1179:default" \
+    1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceNotRunning "svc:/application/print/ipp-listener:default" \
+    1 LOG
+   check_serviceRunning "svc:/application/print/rfc1179:default" \
+    1 LOG
+
+else
+   logNoSBD
+fi
+
+finish_audit

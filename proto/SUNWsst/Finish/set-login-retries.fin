@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-login-retries.fin	3.6	05/04/12 SMI"
+#
+# This script sets the RETRIES variable in /etc/default/login to
+# ${JASS_LOGIN_RETRIES}.
+#
+
+logMessage "Limiting the number of failed login attempts allowed before the
+'login' program exits."
+echo ""
+
+LOGIN=${JASS_ROOT_DIR}etc/default/login
+
+if [ ! -f ${LOGIN} ]; then
+   create_a_file -m 644 -o root:sys ${LOGIN}
+   echo ""
+fi
+
+currentValue=`grep "RETRIES=" ${LOGIN} | grep -v "^#" | nawk -F\= '{ print $2 }'`
+
+if [ "${currentValue}" != "${JASS_LOGIN_RETRIES}" ]; then
+
+   backup_file ${LOGIN}
+   echo ""
+
+   logMessage 'Setting \\\"RETRIES\\\" to \\\"${JASS_LOGIN_RETRIES}\\\" in ${LOGIN}.'
+
+   if [ `grep -c "RETRIES=" ${LOGIN}` = 0 ]; then
+
+      echo "" >> ${LOGIN}
+      echo "# RETRIES determines the number of failed logins that " >> ${LOGIN}
+      echo "# will be allowed before login exits." >> ${LOGIN}
+      echo "RETRIES=${JASS_LOGIN_RETRIES}" >> ${LOGIN}
+else
+      nawk '$1 ~ /^#.*RETRIES=/ { printf("RETRIES=%s\n", maxRetries); }
+         $1 ~ /^" "*RETRIES=/ { printf("RETRIES=%s\n", maxRetries); }
+         $1 ~ /^RETRIES=/ { printf("RETRIES=%s\n", maxRetries);  }
+         $1 !~ /RETRIES=/ { print $0 }' maxRetries="${JASS_LOGIN_RETRIES}" \
+         ${LOGIN}.${JASS_SUFFIX} > ${LOGIN}
+   fi
+fi

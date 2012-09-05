@@ -1,0 +1,114 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)update-cron-allow.aud 1.12     05/06/08     SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="CRON Facility Access Control (cron.allow)"
+servfil="update-cron-allow.aud"
+
+CRON_DENY="${JASS_ROOT_DIR}etc/cron.d/cron.deny"
+CRON_ALLOW="${JASS_ROOT_DIR}etc/cron.d/cron.allow"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The cron(1M) facility provides scheduled command execution.  Regularly
+   scheduled commands can be specified according to instructions found in
+   crontab(1) files in the directory /var/spool/cron/crontabs.
+
+Rationale for Verification Check:
+
+   Only authorized users should be able to submit jobs that will be run
+   regularly using the cron facility.  Therefore, users who are permitted to
+   use this service should be listed in the ${CRON_ALLOW} file.  This script
+   will check to see if any of the users defined by the JASS_CRON_ALLOW
+   parameter are listed in the ${CRON_ALLOW} file.
+
+Determination of Compliance:
+
+   This script will indicate a failure if a user is listed in the
+   JASS_CRON_ALLOW parameter but does not exist in the ${CRON_ALLOW} file.
+   The list of users defined by the JASS_CRON_ALLOW parameter is:
+
+`printPretty \"${JASS_CRON_ALLOW}\"`
+
+   Note that to pass this check, each user must exist in both the
+   ${JASS_PASSWD} file as well as the ${CRON_ALLOW} file.  Furthermore, the
+   user should not already exist in the ${CRON_DENY} file as it could create
+   confusion.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "# Checking users permitted access to the cron facility.\n "
+
+# Determine if the ${CRON_DENY} file should be checked as well.
+
+checkDeny=0
+if check_fileExists "${CRON_DENY}" 0 ; then
+   checkDeny=1
+fi
+
+for acct in `echo ${JASS_CRON_ALLOW} | xargs -n 1 echo | sort -u`; do
+
+   if check_fileContentsExist "${JASS_PASSWD}" "^${acct}:" 0 ; then
+      if check_fileContentsExist "${CRON_ALLOW}" "^${acct}$" 1 ; then
+
+         logSuccess 'User ${acct} is listed in ${CRON_ALLOW}.'
+
+         # Collect response from ${CRON_DENY} file if it exists.
+
+         if [ ${checkDeny} -eq 1 ]; then
+            if check_fileContentsExist "${CRON_DENY}" "^${acct}$" 0 ; then
+               logNotice 'User ${acct} also listed in ${CRON_DENY}.'
+            fi
+         fi
+
+      else
+         if [ -f "${CRON_ALLOW}" ] ; then
+            logFailure 'User ${acct} is not listed in ${CRON_ALLOW}.'
+         else
+            adjustScore 1
+            logFailure 'CRON ALLOW file ${CRON_ALLOW} does not exist'
+         fi
+      fi
+   else
+      logWarning 'User ${acct} is not listed in ${JASS_PASSWD}.'
+   fi
+
+done
+
+finish_audit

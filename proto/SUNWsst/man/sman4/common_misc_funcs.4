@@ -1,0 +1,106 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<!ENTITY file-name CDATA "common_misc_funcs">
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY man4 CDATA "File Formats">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.2">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY SST-REFMAN CDATA "Solaris Security Toolkit 4.2 Reference Manual">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry lang = "en" os = "solaris"><refmeta><refentrytitle lang = "en">&file-name;</refentrytitle>
+<manvolnum>4</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man4;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>alias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>unalias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>pseudonym, create
+or remove</primary></indexterm></refmeta>
+<refnamediv>
+<refname>&file-name;</refname><refpurpose>list miscellaneous framework
+functions in the common_misc.funcs file</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<synopsis os = "solaris"><filename>common_misc_funcs</filename></synopsis></refsynopsisdiv>
+<refsect1 lang = "en"><title>&desc-tt;</title><indexterm CLASS
+= "singular" SIGNIFICANCE = "Normal"><primary sortas = "alias">alias
+ shell built-in functions to create your own pseudonym or shorthand
+for a command or series of commands</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary sortas = "unalias">unalias
+ shell built-in functions to create your own pseudonym or shorthand
+for a command or series of commands</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>shell command
+interpreter builtin-functions</primary>
+<secondary sortas = "alias"> alias</secondary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>shell command
+interpreter builtin-functions</primary>
+<secondary sortas = "unalias"> unalias</secondary></indexterm>
+<para>Miscellaneous functions are used within several areas of the Solaris Security Toolkit software and are not specific to functionality provided by other framework functions. The miscellaneous functions are in the Drivers directory in a file called <filename>common_misc.funcs</filename>. Common utility functions such as <filename>isNumeric</filename> and <filename>printPretty</filename> are in this file.</para>
+<para>Framework functions provide flexibility for you to change the behavior of the Solaris Security Toolkit software without modifying source code. </para></refsect1>
+<refsect1 lang = "en"><title>EXTENDED DESCRIPTION</title>
+<para>The following is a list of common miscellaneous functions:<itemizedlist
+    mark = "bullet" spacing = "normal"><listitem><para>adjustScore</para></listitem>
+<listitem><para>checkLogStatus</para></listitem>
+<listitem><para>clean_path</para></listitem>
+<listitem><para>extractComments</para></listitem>
+<listitem><para>get_driver_report</para></listitem>
+<listitem><para>get_lists_conjunction</para></listitem>
+<listitem><para>get_lists_disjunction</para></listitem>
+<listitem><para>invalidVulnVal</para></listitem>
+<listitem><para>isNumeric</para></listitem>
+<listitem><para>printPretty</para></listitem>
+<listitem><para>printPrettyPath</para></listitem>
+<listitem><para>strip_path</para></listitem></itemizedlist></para>
+<para>For detailed information and instructions on the use of each of these functions please refer to the &ldquo;Framework Functions&rdquo; chapter of the <citetitle pubwork = "book">&SST-REFMAN;</citetitle>.</para></refsect1>
+<refsect1 lang = "en"><title>&attr-tt;</title>
+<para>See <citerefentry><refentrytitle lang = "en">attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" os = "solaris">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" valign = "top" os = "solaris"><para>ATTRIBUTE TYPE</para></entry>
+<entry colname = "2" align = "center" valign = "top" os = "solaris"><para>ATTRIBUTE VALUES</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Availability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>SUNWsst</para></entry>
+</row>
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Stability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>Unstable</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 lang = "en"><title>&also-tt;</title>
+<para><citerefentry><refentrytitle lang = "en">add-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">audit_public_funcs</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">common_log_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">driver_public_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-check-sum</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-execute</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">make-jass-pkg</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">rm-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">security_drivers</refentrytitle>
+<manvolnum>7</manvolnum></citerefentry></para></refsect1></refentry>

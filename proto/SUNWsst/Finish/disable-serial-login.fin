@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-serial-login.fin	1.1	06/12/21 SMI"
+#
+# Disable logins from serial ports ttya and ttyb with pmadm(1M).
+#
+PMADM=/usr/sbin/pmadm
+
+logMessage 'Disabling serial port login.'
+echo ""
+
+# Disable logins if enabled
+for i in ttya ttyb ; do
+   chroot ${JASS_ROOT_DIR} ${PMADM} -L -p zsmon -s $i | cut -f4 -d: \
+      | grep 'x' >/dev/null
+   if [ $? -ne 0 ] ; then # enabled--disable it
+      logMessage 'Disabling serial port ${i}.'
+      chroot ${JASS_ROOT_DIR} ${PMADM} -d -p zsmon -s $i 
+      add_to_manifest X "${PMADM} -e -p zsmon -s $i"
+   fi
+done
+

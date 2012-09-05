@@ -1,0 +1,156 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-flexible-crypt.aud	1.4	05/07/12 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Stronger Password Algorithms"
+servfil="set-flexible-crypt.aud"
+
+#-----------------------------------------------------------------------------
+POLICY=${JASS_ROOT_DIR}etc/security/policy.conf
+PERL=/usr/perl5/bin/perl
+SHADOW_FILE=${JASS_ROOT_DIR}/etc/shadow
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   Solaris 10 allows for a more flexible method of choosing password
+   encryption algorithms.  The Toolkit sets these parameters to ensure
+   that the set of algorithms and the default algorithm is set to a
+   more secure choice.
+
+   This script will check to determine if these values are set correctly,
+   and to see that passwords not changed since the last run of the
+   toolkit are still expired, if JASS_CRYPT_FORCE_EXPIRED is set. This
+   could trigger a false failure if the last run was made without
+   this variable set.
+
+Determination of Compliance:
+
+   This script will return a failure if any of the parameters in ${POLICY} are
+   not set to the values defined by the JASS_CRYPT_* variable.
+   The following variables are checked for these values
+
+   CRYPT_DEFAULT               ${JASS_CRYPT_DEFAULT}
+
+   CRYPT_ALGORITHMS_ALLOW      ${JASS_CRYPT_ALGORITHMS_ALLOW}
+
+   It will also indicate a failure if JASS_CRYPT_FORCE_EXPIRE is set to 1
+   but there is a local user account on the system with a non-expired
+   password that has not been changed since the first non-undone run
+   of the toolkit.
+
+   Note: If multiple drivers have been run, it is possible this last
+   check may produce some spurious failures.
+
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10; then
+   if check_fileExists ${POLICY} 1 ; then
+      check_keyword_value_pair "${POLICY}" "CRYPT_DEFAULT" \
+         "${JASS_CRYPT_DEFAULT}"
+
+      check_keyword_value_pair "${POLICY}" "CRYPT_ALGORITHMS_ALLOW" \
+         "${JASS_CRYPT_ALGORITHMS_ALLOW}"
+
+      if [ "${JASS_CRYPT_FORCE_EXPIRE}" = "1" ]; then
+
+	 # The date we need to compare password changes to is the
+	 # most recent time a JASS run was done that set
+	 # JASS_CRYPT_FORCE_EXPIRE.  This value will only get set
+	 # when the passwords are expired.
+
+	 last_expired_date=`find_sst_run_with "JASS_CRYPT_FORCE_EXPIRE" "1"`
+
+	 # Even though perl is a core package, someone might have removed it.
+	 # That's a _really_ bad idea, but we try and accommodate.
+
+	 if [ -x $PERL ]; then
+	    current=`$PERL -e 'print int(time()/(60*60*24))'`
+	    # last_date is now the days of epoch since the toolkit was run
+	    # the first time.
+
+	    if [ -z "${last_expired_date}" ] ; then
+	       last_date=0
+	    else
+	       last_date=${last_expired_date}
+	       yr=`echo ${last_date} | cut -c1-4`
+	       mo=`echo ${last_date} | cut -c5-6`
+	       dy=`echo ${last_date} | cut -c7-8`
+	       hr=`echo ${last_date} | cut -c9-10`
+	       mn=`echo ${last_date} | cut -c11-12`
+	       sc=`echo ${last_date} | cut -c13-14`
+	       last_date=`$PERL -MTime::Local -e \
+	          "print int(timelocal('$sc','$mn','$hr','$dy', \
+	          '$mo'-1,'$yr'-1900)/(60*60*24))"`
+	    fi
+
+	    for USER in `egrep -v '^#|^$' ${SHADOW_FILE} | awk -F: '{print $1}'`; do
+
+	       if is_user_account_passworded "${USER}"; then
+		  line=`egrep "^${USER}:" ${SHADOW_FILE}`
+		  lastchg=`echo ${line} | awk -F: '{print $3}'`
+
+		  # Solaris marks a password as expired by setting lastchg
+		  # to 0.
+
+		  # Passwords that have not been changed since the run of
+		  # JASS that forced all passwords to expire, but are
+		  # not expired now are an Audit failure.
+
+		  # last_date is when the passwords were expired, lastchg is
+		  # when tha password was last changed.
+
+		  if [ $lastchg -lt $last_date -a $lastchg -gt 0 ]; then
+		     logFailure 'The password of user ${USER} is not expired and has not been changed.'
+		     adjustScore 1
+		  fi
+	       fi
+	    done
+	 else
+	    # There isn't much we can do here without
+	    # writing a calendar routine
+	    logFailure 'Password Expiration Check not performed because perl was missing'
+	    adjustScore 1
+	 fi
+      fi
+   else
+      logFileNotFound ${POLICY} 1
+   fi
+else
+   logInvalidOSRevision "5.10+"
+fi
+finish_audit

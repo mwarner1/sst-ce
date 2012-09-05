@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-tcpwrappers.fin	1.11	05/04/12 SMI"
+#
+# This script will enable TCP Wrappers on Solaris 9 or later.  This
+# script will enable TCP Wrappers in /etc/default/inetd and will also
+# copy the file templates (hosts.allow, hosts.deny) to the target
+# system.
+
+accessFiles="
+   /etc/hosts.allow
+   /etc/hosts.deny
+"
+
+logMessage "Enabling the function: TCP Wrappers"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+
+   # We should warn the user about installing an unmodified hosts.* file,
+   # This could be not what is expected.
+   warn_on_default_files "${accessFiles}"
+
+   # Copy the access control files to the system.
+   copy_files "${accessFiles}"
+
+   # For Solaris 10, use smf to enable TCP wrappers
+   set_service_property_value "svc:/network/inetd" "defaults/tcp_wrappers" "true"
+
+   # TCP wrappers also need to be explicitly enabled on bind
+   set_service_property_value "svc:/network/rpc/bind" "config/enable_tcpwrappers" "true"
+
+elif check_os_min_revision 5.9 ; then
+
+   # Copy the access control files to the system.
+   copy_files "${accessFiles}"
+
+   # Enable TCP Wrappers in /etc/default/inetd.
+   INETD="${JASS_ROOT_DIR}etc/default/inetd"
+   if [ ! -f ${INETD} ]; then
+      create_a_file -m 644 -o root:sys ${INETD}
+      echo ""
+   fi
+
+   oldValue=`grep '^ENABLE_TCPWRAPPERS=' ${INETD} | nawk -F= '{ print $2 }' 2>/dev/null`
+
+   if [ "${oldValue}" != "YES" ]; then
+      backup_file ${INETD}
+      echo ""
+
+      logMessage 'Setting the \\\"ENABLE_TCPWRAPPERS\\\" parameter to \\\"YES\\\" in ${INETD}.'
+
+      cat ${INETD}.${JASS_SUFFIX} |\
+         sed 's/#.*ENABLE_TCPWRAPPERS=/ENABLE_TCPWRAPPERS=/g' |\
+         sed "s/^ENABLE_TCPWRAPPERS=.*$/ENABLE_TCPWRAPPERS=YES/g" > ${INETD}
+
+      # The following case is needed if the ENABLE_CONNECTION_LOGGING line was not
+      # found in the file.
+
+      if [ `grep -c '^ENABLE_TCPWRAPPERS=' ${INETD}` = 0 ]; then
+         echo "ENABLE_TCPWRAPPERS=YES" >> ${INETD}
+      fi
+   fi
+else
+   logInvalidOSRevision "5.9+"
+fi
+

@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)print-suid-files.aud 1.6     04/01/07     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Set-UID Files"
+servfil="print-suid-files.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script searches local filesystems in order to find files that have 
+   the set-uid bit set.  This script is used to provide a catalogue of 
+   set-uid objects for further review.
+
+Determination of Compliance:
+
+   This script will return any matching files (those having the set-uid bit 
+   set) along with a full (long) listing for further review.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+FIND_COMMAND="
+find ${JASS_ROOT_DIR} ! -local -prune -o ( ! -type l -perm -4000 ) -print
+"
+
+logMessage "# Searching for all filesystem objects that are set-uid.\n "
+
+for filename in `${FIND_COMMAND}`; do
+   related="\n`gettext 'Object Listing for ${filename}:'`\n------------------------------\n"
+   related="${related}`ls -ld ${filename}`\n"
+   logFileExists ${filename} "" "${related}"
+done
+
+finish_audit

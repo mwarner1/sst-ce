@@ -1,0 +1,120 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)update-cron-log-size.aud	1.8	05/07/06 SMI"
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="CRON Facility Log File Size Limit"
+servfil="update-cron-log-size.aud"
+
+LOGCHECKER="${JASS_ROOT_DIR}etc/cron.d/logchecker"
+LOGADM="${JASS_ROOT_DIR}etc/logadm.conf"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The cron(1M) facility provides scheduled command execution.  Regularly
+   scheduled commands can be specified according to instructions found in
+   crontab(1) files in the directory /var/spool/cron/crontabs.
+
+Rationale for Verification Check:
+
+   By default, the cron facility generates a log entry for each command that
+   it executes.  These log entries are stored in the /var/cron/log file.  In
+   the default configuration, when the cron log file reaches or exceeds a
+   size of 0.5-Mbytes, it is moved to the /var/cron/olog file. In environments
+   with high cron facility usage, log entries could be easily lost when cron
+   overwrites an existing /var/cron/olog file with a newer /var/cron/log file.
+
+   This script will attempt to verify that the default size limit applied to
+   cron log files has been increased from 0.5-Mbytes to the value defined by
+   the JASS_CRON_LOG_SIZE parameter.  This script will check the 'LIMIT'
+   parameter in the ${LOGCHECKER} file for the Solaris OE version 8 and
+   earlier.  For the Solaris OE version 9 and later, this script will check
+   the cron entry in the ${LOGADM} file.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the CRON facility has not been
+   configured to increase it default size limit for its log files.  The
+   check method is based on the version of the Solaris OE as discussed
+   above as well as the value of the JASS_CRON_LOG_SIZE.  The size limit
+   defined by the JASS_CRON_LOG_SIZE parameter is ${JASS_CRON_LOG_SIZE}k.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+   if check_os_min_revision 5.9 ; then
+      if check_fileExists ${LOGADM} 0; then
+         newSize="`expr ${JASS_CRON_LOG_SIZE} / 2`"
+         if check_fileContentsExist ${LOGADM} \
+            "^/var/cron/log.*-s ${newSize}k" 1 ; then
+            logSuccess 'log size (\\\"-s\\\") is set to ${newSize}k in ${LOGADM}.'
+         else
+            if check_fileContentsExist ${LOGADM} "^/var/cron/log.*-s" 0 ; then
+               logFailure 'log size (\\\"-s\\\") is not set to ${newSize}k in ${LOGADM}.'
+            else
+               logNotice 'log size (\\\"-s\\\") is not defined in ${LOGADM}.'
+            fi
+         fi
+      else
+         logFileNotFound "${LOGADM}"
+      fi
+
+   else
+      if check_fileExists ${LOGCHECKER} 0; then
+         if check_fileContentsExist ${LOGCHECKER} \
+            "LIMIT=${JASS_CRON_LOG_SIZE}" 1; then
+            logSuccess 'log size (\\\"LIMIT\\\") is set to ${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}.'
+         else
+            if check_fileContentsExist ${LOGCHECKER} \
+               "LIMIT=" 0 ; then
+               logFailure 'log size (\\\"LIMIT\\\") is not set to ${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}.'
+            else
+               logNotice 'log size (\\\"LIMIT\\\") is not defined in ${LOGCHECKER}.'
+            fi
+         fi
+      else
+         logFileNotFound "${LOGCHECKER}"
+      fi
+   fi
+
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

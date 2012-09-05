@@ -1,0 +1,117 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-system-accounts.fin	3.16	05/03/31 SMI"
+#
+# This script is used to disable those accounts on the system defined
+# by the JASS_ACCT_DISABLE variable.  This is accomplished by calling
+# passwd -l for the account name.
+#
+# Note that this script does not impact the 'root' account.
+#
+
+logMessage "Configuring the system to disable system accounts."
+echo ""
+
+JASS_SHADOW=${JASS_ROOT_DIR}etc/shadow
+
+backupPerformed=0
+
+echo ""
+logMessage 'Locking accounts.'
+echo ""
+
+for ACCT in `echo ${JASS_ACCT_DISABLE} | xargs -n 1 echo | sort -u`; do
+   dolock=0
+   
+   if check_os_min_revision 5.10 ; then
+      if [ "${ACCT}" != "root" ]; then
+         if is_user_account_extant "${ACCT}" ; then
+            if is_user_account_locked "${ACCT}" ; then
+               logMessage '${ACCT} is already locked.'
+            elif is_user_account_login_not_set "${ACCT}" ; then
+               logMessage '${ACCT} has no login set.'
+               dolock=1
+            else 
+               logMessage '${ACCT} is not locked.'
+               dolock=1
+            fi
+
+            if [ $dolock -eq 1 ] ; then
+               logMessage 'Locking the account, ${ACCT}.'
+               lock_user_account "${ACCT}"
+            fi 
+                 
+         else
+            logNotice 'User ${ACCT} does not exist.'
+         fi
+      else
+         logNotice 'This function will not be performed for the user, ${ACCT}.'
+      fi
+      continue
+   fi
+   if [ "${ACCT}" != "root" ]; then
+      acctline=`egrep "^${ACCT}:" ${JASS_SHADOW} 2>/dev/null`
+      if [ -z "${acctline}" ]; then
+        logNotice 'User ${ACCT} does not exist in ${JASS_SHADOW}.'
+        continue
+      fi
+      
+      locked=`echo ${acctline} | egrep "^${ACCT}:\*LK\*:" 2>/dev/null`
+      nologin=`echo ${acctline} | egrep "^${ACCT}:NP:" 2>/dev/null`
+      passlen=`echo ${acctline} | egrep "^${ACCT}:" 2>/dev/null | cut -f 2 -d: | cut -b13-`
+
+
+      if [ ! -z "${locked}" ]; then
+        logMessage '${ACCT} is already locked.'
+      elif [ ! -z "$nologin" ]; then
+        logMessage '${ACCT} has no login set.'
+        dolock=1
+      elif [ -z "$passlen" ]; then
+        logMessage '${ACCT} has an illegal password length.'
+        dolock=1
+      fi
+      
+      if [ $dolock = 1 ]; then
+
+        if [ "${backupPerformed}" = "0" ]; then
+           backup_file ${JASS_PASSWD}
+           backup_file ${JASS_SHADOW}
+           backupPerformed="1"
+           echo ""
+        fi
+
+        logMessage 'Locking the account, ${ACCT}.'
+        chroot ${JASS_ROOT_DIR} /usr/bin/passwd -l ${ACCT}
+      fi
+   else
+      logNotice 'This function will not be performed for the user, ${ACCT}.'
+   fi
+done
+
+if [ "${backupPerformed}" ]; then
+   chmod 444       ${JASS_PASSWD}
+   chown root:sys  ${JASS_PASSWD}
+fi

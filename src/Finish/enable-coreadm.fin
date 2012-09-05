@@ -1,0 +1,132 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-coreadm.fin	1.17	05/07/06 SMI"
+#
+# The purpose of this script is to enable coreadm to store global and
+# init core files by pattern JASS_CORE_PATTERN.
+#
+
+logMessage "Configuring coreadm to use pattern matching and logging."
+echo ""
+
+checks="
+   COREADM_GLOB_PATTERN=${JASS_CORE_PATTERN}
+   COREADM_INIT_PATTERN=${JASS_CORE_PATTERN}
+   COREADM_GLOB_ENABLED=yes
+   COREADM_PROC_ENABLED=no
+   COREADM_GLOB_SETID_ENABLED=yes
+   COREADM_PROC_SETID_ENABLED=no
+   COREADM_GLOB_LOG_ENABLED=yes
+"
+
+COREADM="/usr/bin/coreadm"
+CONF="${JASS_ROOT_DIR}etc/coreadm.conf"
+
+tmpCoreDir="`dirname ${JASS_ROOT_DIR}${JASS_CORE_PATTERN}`"
+COREDIR="`clean_path ${tmpCoreDir}`"
+
+if check_os_min_revision 5.11 ; then
+ # Solaris 11 moves coreadm into SMF instead of using /etc/coreadm.conf
+ coreadm -g /var/core/core_%n_%f_%u_%g_%t_%p
+ coreadm -i /var/core/core_%n_%f_%u_%g_%t_%p
+ coreadm -e global -e global-setid -e log
+ coreadm -d process -d proc-setid
+
+elif check_os_min_revision 5.7 ; then
+
+   if [ ! -d "${COREDIR}" ] ; then
+      mkdir_dashp ${COREDIR}
+      # These do NOT have to be undone, as the directory was just created:
+      chown root:root ${COREDIR}
+      chmod 0700 ${COREDIR}
+
+   else # /var/core already exists--correct permissions if needed
+      if check_fileOwnerNoMatch ${COREDIR} root 0 ; then
+         logWarning 'Directory ${COREDIR} was not owned by \\\"root\\\".'
+         change_owner root ${COREDIR}
+      fi
+
+      if check_fileGroupNoMatch ${COREDIR} root 0 ; then
+         logWarning 'Directory ${COREDIR} did not have group \\\"root\\\".'
+         change_group root ${COREDIR}
+      fi
+
+      if check_fileModeNoMatch ${COREDIR} 0700 0; then
+         logWarning 'Directory ${COREDIR} did not have mode 700.'
+         change_mode 0700 ${COREDIR}
+      fi
+   fi
+
+   if [ -f ${CONF} ]; then
+      checkPassed=1
+      for check in ${checks}; do
+         if [ `grep -c "^${check}" ${CONF}` = 0 ]; then # missing
+            checkPassed=0 # failed
+            break
+         fi
+      done
+   else
+      checkPassed=0
+      create_a_file -m 644 -o root:sys ${CONF}
+   fi
+
+   if [ $checkPassed -eq 0 ]; then # fix coreadm.conf
+
+      backup_file ${CONF}
+
+      /usr/sbin/chroot ${JASS_ROOT_DIR} ${COREADM} \
+         -g ${JASS_CORE_PATTERN} -i ${JASS_CORE_PATTERN} \
+         -e global -d process -e global-setid -d proc-setid -e log
+      rc=$?
+
+      echo ""
+      case $rc in
+         0) logMessage "coreadm change was successful."        ;;
+         1) logWarning "coreadm configuration update failure." ;;
+         2) logNotice  "Invalid coreadm configuration."        ;;
+         *) logNotice  "Unknown coreadm return code."          ;;
+      esac
+   else
+      logMessage "coreadm has already been successfully configured."
+   fi
+
+   if check_os_revision 5.7 5.8 ; then
+      # Workaround for bug 4417742 coreadm -u clobbers COREADM_PROC_ENABLED.
+      # Was fixed in Solaris 9, but not earlier.
+      COREADM_FIX="/usr/bin/coreadm -d process"
+      RC_COREADM="${JASS_ROOT_DIR}etc/rcS.d/S42coreadm"
+
+      if check_fileContentsNotExist ${RC_COREADM} "${COREADM_FIX}" 0
+      then
+         logNotice "Adding ${COREADM_FIX} line to ${RC_COREADM}."
+         backup_file_in_safe_directory ${RC_COREADM}
+         echo "${COREADM_FIX}" >> "${RC_COREADM}"
+      fi
+   fi
+
+else
+   logInvalidOSRevision "5.7+"
+fi

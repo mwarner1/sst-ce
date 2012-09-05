@@ -1,0 +1,8 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/Files/etc/dt/config:
+	[ -d ../../../../../proto/SUNWsst/Files/etc/dt/config ] || /bin/mkdir -p ../../../../../proto/SUNWsst/Files/etc/dt/config
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/Files/etc/dt/config/Xaccess:
+	/usr/bin/cp -f Xaccess ../../../../../proto/SUNWsst/Files/etc/dt/config/Xaccess
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/Files/etc/dt/config/Xaccess

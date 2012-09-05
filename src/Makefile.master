@@ -1,0 +1,153 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)Makefile.master	1.9	07/02/15 SMI"
+#
+# Makefile.master, global definitions for system source
+#
+TOP_ROOT=	..
+PROTO_ROOT=	$(TOP_ROOT)/proto
+ROOT=		$(PROTO_ROOT)/SUNWsst
+RELEASESDIR=	$(TOP_ROOT)/Releases
+VERSION=	5.0.0
+# Change "." to "_" and NO third-level version if 0 (e.g., 4.3.0 becomes 4_3)
+# See http://javaweb.sfbay/release/naming_conv.html
+VERSION_IN_FILENAME=  5_0
+
+PACKAGENAME=	SUNWsst
+
+FULLNAME=	$(PACKAGENAME)-$(VERSION_IN_FILENAME)
+
+#
+# The declaration POUND_SIGN is always '#'. This is needed to get around the
+# make feature that '#' is always a comment delimiter, even when escaped or
+# quoted.  The only way of generating this is the :sh macro mechanism.  Note
+# however that in general :sh macros should be avoided in makefiles that are
+# widely included into other makefiles, as the resulting shell executions can
+# cause a noticeable slowdown in build times.
+#
+POUND_SIGN:sh=				echo \\043
+CH=					$(POUND_SIGN)
+
+BUILD_TOOLS=	/ws/on81-tools
+
+JAVA_ROOT=	/usr/java
+
+MD5_TOOLS=	/opt/SUNBEmd5
+OLDMD5=		$(MD5_TOOLS)/md5-sparc
+NEWMD5=		/usr/bin/digest -v -a md5
+
+ECHO=		echo
+INS=		install
+TRUE=		true
+SYMLINK=	/usr/bin/ln -s
+LN=		/usr/bin/ln
+CHMOD=		/usr/bin/chmod
+CHOWN=		$(TRUE)
+CHGRP=		$(TRUE)
+COMPRESS=	/bin/compress
+CP=		/usr/bin/cp -f
+M4=		/usr/ccs/bin/m4
+MV=		/usr/bin/mv -f
+MKDIR=		/bin/mkdir -p
+MSGFMT=		/bin/msgfmt
+RM=		/usr/bin/rm -f
+GREP=		/usr/bin/grep
+SED=		/usr/bin/sed
+NAWK=		/usr/bin/nawk
+MCS=		/usr/ccs/bin/mcs
+CAT=            /usr/bin/cat
+STRIP=		/usr/ccs/bin/strip
+TAR=		/bin/tar
+CPP=		/usr/lib/cpp
+JAVAC=		$(JAVA_ROOT)/bin/javac
+JAVAH=		$(JAVA_ROOT)/bin/javah
+JAVADOC=	$(JAVA_ROOT)/bin/javadoc
+RMIC=		$(JAVA_ROOT)/bin/rmic
+JAR=		$(JAVA_ROOT)/bin/jar
+CTFCONVERT=	$(BUILD_TOOLS)/onbld/bin/$(MACH)/ctfconvert
+CTFMERGE=	$(BUILD_TOOLS)/onbld/bin/$(MACH)/ctfmerge
+CTFSTABS=	$(BUILD_TOOLS)/onbld/bin/$(MACH)/ctfstabs
+CTFCVTPTBL=	$(BUILD_TOOLS)/onbld/bin/ctfcvtptbl
+CTFFINDMOD=	$(BUILD_TOOLS)/onbld/bin/ctffindmod
+XREF=		$(BUILD_TOOLS)/onbld/bin/xref
+FIND=		/usr/bin/find
+PERL=		/usr/bin/perl
+SORT=		/usr/bin/sort
+TOUCH=		/usr/bin/touch
+WC=		/usr/bin/wc
+XARGS=		/usr/bin/xargs
+ELFSIGN=	/usr/bin/elfsign
+PKGMK=		/bin/pkgmk
+PKGTRANS=	/bin/pkgtrans
+USEMD5=		$(PERL) -e 'print ((-x "/usr/bin/digest") ? "NEWMD5" : "OLDMD5")'
+MD5=		$($(USEMD5:sh))
+
+FILEMODE=	644
+DIRMODE=	755
+READMODE=	444
+EXEMODE=	555
+
+# Note: owner and group for proto area objects is no longer set by
+# Makefiles at all.  These have no real effect and are kept here for
+# transition purposes.  They (along with CH, CHOWN, and CHGRP) should be
+# removed early in the s11 development cycle.
+OWNER=		root
+GROUP=		root
+
+.NO_PARALLEL:
+
+# Note that the X and C checks are not used at this time and may need
+# modification when they are actually used.
+#
+CSTYLE=		cstyle
+CSTYLE_TAIL=
+HDRCHK=		hdrchk
+HDRCHK_TAIL=
+JSTYLE=		jstyle
+
+# For patch building
+BUILDPATCH=	/opt/SUNWpatch/buildpatch
+
+#
+# This is overwritten by local Makefile when PROG is a list.
+#
+POFILE= $(PROG).po
+
+CLASSPATH=	.
+COMPILE.java=	$(JAVAC) $(JAVAFLAGS) -classpath $(CLASSPATH)
+
+SPRO_ROOT=		$(BUILD_TOOLS)/SUNWspro
+SPRO_VROOT=		$(SPRO_ROOT)/SOS8
+INTC_ROOT=		$(BUILD_TOOLS)/INTCia64
+
+#
+# Pass on targets
+#
+TARGET=		all
+all :=		TARGET= all
+top :=		TARGET= top
+install :=	TARGET= install
+clean :=	TARGET= clean
+clobber :=	TARGET= clobber

@@ -1,0 +1,109 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-ftpd-umask.fin	3.10	05/04/12 SMI"
+#
+# This programs sets the default file creation mask for the File
+# Transfer Protocol (FTP) service.  Prior to Solaris 9, this was
+# done by setting the 'UMASK' variable in /etc/default/ftpd to
+# ${JASS_FTPD_UMASK}.  For Solaris 9 and above, this is done using
+# the 'defumask' parameter in the /etc/ftpd/ftpaccess file.  For
+# more information on this functionality, see in.ftpd(1M) and
+# ftpaccess(4) [Solaris 9+].
+#
+
+logMessage "Setting the default file creation mask for the FTP service."
+echo ""
+
+if check_os_min_revision 5.11; then
+ if ! is_service_installed svc:/network/ftp:default ; then
+  logMessage "FTP server not installed. Skipping."
+ fi
+
+elif check_os_min_revision 5.6 ; then
+   if check_os_min_revision 5.9 ; then
+      if pkginfo -q -R ${JASS_ROOT_DIR} SUNWftpr ; then
+         FTPACCESS="${JASS_ROOT_DIR}etc/ftpd/ftpaccess"
+         if [ ! -f ${FTPACCESS} ]; then
+            create_a_file -m 640 -o root:sys ${FTPACCESS}
+            echo ""
+         fi
+
+         if egrep -s "^defumask ${JASS_FTPD_UMASK}$" \
+            ${FTPACCESS} 2>/dev/null ; then
+            : # The change has already been applied.
+         else
+            backup_file ${FTPACCESS}
+            echo ""
+
+            logMessage 'Setting \\\"defumask\\\" to \\\"${JASS_FTPD_UMASK}\\\" in ${FTPACCESS}.'
+
+            cat ${FTPACCESS}.${JASS_SUFFIX} |\
+               sed "s/^defumask [0-9]*$/defumask ${JASS_FTPD_UMASK}/g" > ${FTPACCESS}
+
+            # The following case is needed if the 'defumask' line was not
+            # found in the file.
+
+            if [ `grep -c "^defumask ${JASS_FTPD_UMASK}$" ${FTPACCESS}` = 0 ]; then
+               echo "defumask ${JASS_FTPD_UMASK}" >> ${FTPACCESS}
+            fi
+         fi
+      else
+         logNotice "FTP (package SUNWftpr) does not appear to be installed."
+         logNotice "Skipping setting default file creation mask for FTP."
+      fi
+   else
+      FTPD="${JASS_ROOT_DIR}etc/default/ftpd"
+
+      # If the file was not found, then create it.
+
+      if [ ! -f ${FTPD} ]; then
+         create_a_file -m 640 -o root:sys ${FTPD}
+         echo ""
+      fi
+
+      oldValue=`grep '^UMASK=' ${FTPD} | nawk -F= '{ print $2 }' 2>/dev/null`
+
+      if [ "${oldValue}" != "${JASS_FTPD_UMASK}" ]; then
+         backup_file ${FTPD}
+         echo ""
+
+         logMessage 'Setting \\\"UMASK\\\" to \\\"${JASS_FTPD_UMASK}\\\" in ${FTPD}.'
+
+         cat ${FTPD}.${JASS_SUFFIX} |\
+            sed 's/#.*UMASK=/UMASK=/g' |\
+            sed "s/^UMASK=.*$/UMASK=${JASS_FTPD_UMASK}/g" > ${FTPD}
+
+         # The following case is needed if the UMASK line was not
+         # found in the file.
+
+         if [ `grep -c '^UMASK=' ${FTPD}` = 0 ]; then
+            echo "UMASK=${JASS_FTPD_UMASK}" >> ${FTPD}
+         fi
+      fi
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

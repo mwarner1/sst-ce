@@ -1,0 +1,89 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)server-secure.driver	3.16	05/07/18 SMI"
+#
+# The purpose of this driver is to act as a wrapper calling the
+# appropriate configuration and hardening drivers for securing a
+# Sun system being used as a server.
+#
+
+DIR="`/bin/dirname $0`"
+export DIR
+
+# These values can be overridden through user.init
+if [ -z "${JASS_FILE_COPY_KEYWORD}" \
+   -o "${_JASS_FILE_COPY_KEYWORD_DEF}" = "1" ]; then
+   JASS_FILE_COPY_KEYWORD="server"
+fi
+
+# set-password-history uses this
+if [ -z "${JASS_PASS_HISTORY}" -o "${_JASS_PASS_HISTORY_DEF}" = "1" ]; then
+   JASS_PASS_HISTORY="4"
+fi
+
+
+# set-strict-password-checks.fin uses these variables
+if [ -z "${JASS_PASS_MAXREPEATS}" \
+   -o "${_JASS_PASS_MAXREPEATS_DEF}" = "1" ]; then
+   JASS_PASS_MAXREPEATS="2"
+fi
+
+if [ -z "${JASS_PASS_MINDIFF}" -o "${_JASS_PASS_MINDIFF_DEF}" = "1" ]; then
+   JASS_PASS_MINDIFF="5"
+fi
+
+if [ -z "${JASS_PASS_MINALPHA}" -o "${_JASS_PASS_MINALPHA_DEF}" = "1" ]; then
+   JASS_PASS_MINALPHA="3"
+fi
+
+if [ -z "${JASS_PASS_MINNONALPHA}" \
+   -o "${_JASS_PASS_MINNONALPHA_DEF}" = "1" ]; then
+   JASS_PASS_MINNONALPHA="1"
+fi
+
+# set-flexible-crypt uses
+if [ -z "${JASS_CRYPT_FORCE_EXPIRE}" \
+   -o "${_JASS_CRYPT_FORCE_EXPIRE_DEF}" = "1" ]; then
+   JASS_CRYPT_FORCE_EXPIRE="0"
+fi
+
+. ${DIR}/driver.init
+
+# The following services will remain enabled in this configuration
+# so that machine can still function as server:
+#
+# telnet, ftp, dtspc, rstatd, 100155
+
+JASS_SVCS_ENABLE="${JASS_SVCS_ENABLE} telnet ftp dtspc rstatd 100155
+svc:/network/telnet:default 
+svc:/network/ftp:default 
+svc:/network/rpc/rstat:default 
+svc:/network/rpc/smserver:default "
+
+. ${DIR}/server-config.driver
+
+. ${DIR}/server-hardening.driver
+

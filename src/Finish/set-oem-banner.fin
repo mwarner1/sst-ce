@@ -1,0 +1,70 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-oem-banner.fin	1.6	07/01/08 SMI"
+#
+# This script sets the OEM power-on warning banner in EEPROM.
+#
+# This script can only be used on SPARC-based systems.  It cannot be used
+# from within a non-global Solaris zone.
+#
+
+OEM_BANNER_MESSAGE='Authorized uses only.  All activity may be monitored and reported.'
+
+logMessage "Setting the Power-on warning banner message."
+echo ""
+
+if [ "${JASS_ZONE_NAME}" = "global" ] ; then
+   UNAME_P="`uname -p`"
+
+   if [ "${UNAME_P}" = "sparc" ] ; then
+      oem_banner_q="`eeprom | grep '^oem-banner?=' | nawk -F= '{ print $2 }'`"
+      if [ "${oem_banner_q}" = "false" ] ; then
+         logMessage 'Setting EEPROM oem-banner? variable to true.'
+         eeprom 'oem-banner?=true'
+         add_to_manifest X "eeprom \"oem-banner?=false\""
+      else
+         logNotice 'The EEPROM oem-banner? variable is set to true.'
+      fi
+
+      # If "oem-banner: data not available", this sets oem_banner to empty:
+      oem_banner="`eeprom | grep '^oem-banner=' | nawk -F= '{ print $2 }'`"
+
+      if [ "${oem_banner}" != "${OEM_BANNER_MESSAGE}" ] ; then
+         logMessage \
+            'Setting EEPROM oem-banner variable to: ${OEM_BANNER_MESSAGE}'
+         eeprom "oem-banner=${OEM_BANNER_MESSAGE}"
+         add_to_manifest X "eeprom \"oem-banner=${oem_banner}\""
+      else
+         logNotice 'The EEPROM oem-banner variable is correctly set.'
+      fi
+
+   else
+      logNotice \
+         'This script is not supported on this architecture, ${UNAME_P}.'
+   fi
+else
+   logNotGlobalZone
+fi

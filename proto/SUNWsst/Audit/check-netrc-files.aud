@@ -1,0 +1,116 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)check-netrc-files.aud 1.2     07/08/08 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="User .netrc Check"
+servfil="check-netrc-files.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The purpose of this check is to determine if any user has defined a
+   .netrc file containing a clear-text password.
+
+Rationale for Verification Check:
+
+   This check is necessary to identify files in which reusable passwords
+   may be defined and available to principals other than the owner.  This
+   check will determine if a .netrc file exists, if it contains the
+   'password' token, and if it has poor file ownership or permissions.
+
+   Note that these files do not exist by default in Solaris.  If this check
+   fails, it will be a result of actions taken post-installation.
+
+Determination of Compliance:
+
+   This check reports a failure if the 'password' token is found in a
+   user's .netrc file as well as if the file has poor ownership or
+   permissions.  For this script, the .netrc must be assigned to its
+   owner and not permit any form of access to group or world.
+"
+
+#-----------------------------------------------------------------------------
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+infoList=`getent passwd | nawk -F: '{ print $1":"$6 }'`
+
+for info in ${infoList}; do
+   user=`echo ${info}    | nawk -F: '{ print $1 }'`
+   homeDir=`echo ${info} | nawk -F: '{ print $2 }'`
+
+   if [ "${user}" != "root" -a "${homeDir}" = "/" ] ; then
+      logNotice 'User ${user} has a root (/) home directory; skipping.'
+      continue
+   fi
+
+
+   if check_fileExists ${homeDir} 0 ; then
+      if check_fileTypeMatch ${homeDir} "d" 0 ; then
+         if check_fileExists ${homeDir}/.netrc 0 ; then
+
+            if check_fileContentsNotExist ${homeDir} "password" 1 ; then
+               logFailure \
+                  'User ${user} has a .netrc file and has passwords defined.'
+               adjustScore 1
+            else
+               logNotice \
+                  'User ${user} has a .netrc file but has no passwords defined.'
+            fi
+
+            check_fileOwnerMatch "${homeDir}/.netrc" "${user}" 1 LOG
+
+            if check_fileModeNoMatch ${homeDir}/.netrc "-40 -20 -10 -4 -2 -1" 1
+            then
+               logSuccess 'File ${homeDir}/.netrc has sufficient permissions.'
+            else
+               logFailure \
+                  'File ${homeDir}/.netrc does not have sufficient permissions.'
+               adjustScore 1
+	    fi
+         fi
+
+      else
+         logWarning \
+            'Home directory ${homeDir} for user ${user} is not a directory.'
+      fi
+   else
+      logWarning 'Home directory ${homeDir} for user ${user} does not exist.'
+   fi
+done
+
+finish_audit

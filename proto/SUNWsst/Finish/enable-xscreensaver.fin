@@ -1,0 +1,111 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)enable-xscreensaver.fin 1.3     07/02/01 SMI"
+#
+# This script makes sure the the screensaver is configured for
+# GUI logins.
+
+logMessage "Enabling the Screensaver for GUI logins"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+
+   # We need to configure all the local resource files in 
+   # /etc/dt.  These values will override any in /usr/dt,
+   # so we don't need to worry about those.
+   for file in ${JASS_ROOT_DIR}usr/dt/config/*/sys.resources; do
+      # if there were no such files, then file is now a literal
+      if [ "${file}" = "${JASS_ROOT_DIR}usr/dt/config/*/sys.resources" ]; then
+	 break
+      fi
+      dir=`dirname ${file} | sed -e 's/usr/etc/'`
+      mkdir_dashp ${dir}
+      myfile="${dir}/sys.resources"
+      if [ ! -f ${myfile} ]; then
+	 create_a_file -m 444 -o root:sys ${myfile}
+      fi
+      if [ `egrep -c '^dtsession\*saverTimeout: 10$' ${myfile}` = 0 -o \
+           `egrep -c '^dtsession\*lockTimeout: 10$' ${myfile}` = 0 ]; then
+	 logMessage "Adding dtsession Timeouts to ${dir}/sys.resources"
+	 backup_file ${myfile}
+	 nawk \
+	     '
+	    /dtsession\*saverTimeout:/ { if (prsave == 0) \
+	       { $0="dtsession*saverTimeout: 10"; prsave=1 } \
+	       else { $1="!dtsession*saverTimeout:"} }
+	    /dtsession\*lockTimeout:/ { if (prlock == 0) \
+	       { $0="dtsession*lockTimeout: 10"; prlock=1 } \
+	       else { $1="!dtsession*lockTimeout:"} }
+	    { print }
+	    END { if (prlock==0) print "dtsession*lockTimeout: 10"
+	          if (prsave==0) print "dtsession*saverTimeout: 10" }
+	    ' "${myfile}.${JASS_SUFFIX}" > ${myfile}
+      fi
+      change_mode 0444 ${myfile}
+      change_owner root:sys ${myfile}
+   done
+
+   # We also need to check the non-dtsession defaults.
+   # That's in /usr/openwin/lin/app-defaults/Xscreensaver
+   
+   myfile=${JASS_ROOT_DIR}usr/openwin/lib/app-defaults/XScreenSaver
+   dir=`dirname ${myfile}`
+   mkdir_dashp ${dir}
+
+   if [ ! -f ${myfile} ]; then
+      create_a_file -m 444 -o root:bin ${myfile}
+   fi
+   if [ `egrep -c '^\*timeout: 0:10:00$' ${myfile}` = 0 -o \
+        `egrep -c '^\*lock: True$' ${myfile}` = 0 -o \
+        `egrep -c '^\*lockTimeout: 0:00:00$' ${myfile}` = 0 ]; then
+      logMessage "Adding Xscreensaver timeouts to XScreenSaver defaults"
+      backup_file ${myfile}
+      nawk \
+	     '
+	    /\*timeout:/ { if (prtime == 0) \
+	       { $0="*timeout: 0:10:00"; prtime=1 } \
+	       else { $1="!timeout:"} }
+	    /\*lockTimeout:/ { if (prlockt == 0) \
+	       { $0="*lockTimeout: 0:00:00"; prlockt=1 } \
+	       else { $1="!*lockTimeout:"} }
+	    /\*lock:/ { if (prlock == 0) \
+	       { $0="*lock: True"; prlock=1 } \
+	       else { $1="!*lock:"} }
+	    { print }
+	    END { if (prlockt==0) print "*lockTimeout: 0:00:00"
+	          if (prlock==0) print "*lock: True"
+	          if (prtime==0) print "*timeout: 0:10:00" }
+	    ' "${myfile}.${JASS_SUFFIX}" > ${myfile}
+   fi
+   change_mode 0444 ${myfile}
+   change_owner root:bin ${myfile}
+
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+
+

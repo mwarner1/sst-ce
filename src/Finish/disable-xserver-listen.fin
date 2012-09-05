@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-xserver-listen.fin	3.8	05/04/12 SMI"
+#
+# The purpose of this script is to disable the X11 server's ability
+# to listen and accept requests over TCP.  This is accomplished by
+# adding the option "-nolisten tcp" to the X server configuration
+# line in the /etc/dt/config/Xservers file.
+#
+
+logMessage "Disabling the function: X11 Server (listen on TCP/6000)"
+echo ""
+
+if check_os_min_revision 5.9 ; then
+
+   U_XSERVERS="${JASS_ROOT_DIR}usr/dt/config/Xservers"
+   E_XSERVERS="${JASS_ROOT_DIR}etc/dt/config/Xservers"
+
+   if [ ! -f ${E_XSERVERS} ]; then
+      if [ -f ${U_XSERVERS} ]; then
+
+         logMessage 'Adding the \\\"-nolisten tcp\\\" option to ${E_XSERVERS}.'
+         echo ""
+         logNotice 'This file is being created from the master version of the file,
+${U_XSERVERS}.'
+
+         # The next 2 lines are necessary for undo functionality.
+         mkdir_dashp ${JASS_ROOT_DIR}etc/dt/config
+         create_a_file -m 644 -o root:sys ${E_XSERVERS}
+         backup_file ${E_XSERVERS}
+
+         cat ${U_XSERVERS} |\
+            nawk '/^[^#]*:0.*local_uid@console/ {
+               print $0" -nolisten tcp"; continue;
+            } { print ; }' > ${E_XSERVERS}
+      else
+         logNotice 'The file, ${E_XSERVERS}, could not be created as the
+master file, ${U_XSERVERS}, could not be found.'
+      fi
+   else
+      if egrep -s "^[^#]*:0.*local_uid@console.*-nolisten tcp" \
+         ${E_XSERVERS} 2>/dev/null; then
+         :  # The change is already present.
+      else
+
+         backup_file ${E_XSERVERS}
+         echo ""
+
+         logMessage 'Adding the \\\"-nolisten tcp\\\" option to ${E_XSERVERS}.'
+
+         cat ${E_XSERVERS}.${JASS_SUFFIX} |\
+            nawk '/^[^#]*:0.*local_uid@console/ {
+               print $0" -nolisten tcp"; continue;
+            } { print ; }' > ${E_XSERVERS}
+      fi
+   fi
+else
+   logInvalidOSRevision "5.9+"
+fi

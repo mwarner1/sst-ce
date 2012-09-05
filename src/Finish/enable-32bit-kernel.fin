@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)enable-32bit-kernel.fin 3.5     04/01/05     SMI"
+#
+# This script will set the "boot-file" variable in the EEPROM of Sun 
+# SPARC systems to the value of "kernel/unix" which has the effect of 
+# forcing the system to boot using a 32-bit kernel.  This is useful for 
+# products that can run on Solaris 7+ but must run in 32-bit only mode, 
+# such as Checkpoint Firewall-1 (4.0, 4.1).  
+#
+# Note that use of this script is intended for sun4u systems running
+# the Solaris OE version 7 through 9.
+#
+
+logMessage "Configuring the system to boot into 32-bit kernel mode."
+echo ""
+
+if check_os_revision 5.7 5.9 ; then
+   ARCH="`uname -m`"
+
+   case ${ARCH} in
+      sun4u)
+         capable=1
+         ;;
+   
+      *)
+         capable=0
+         ;;
+   esac
+
+   if [ ${capable} = 1 ]; then
+      logMessage 'Setting the EEPROM parameter \\\"boot-file\\\" to \\\"kernel/unix\\\".'
+      eeprom "boot-file=kernel/unix"
+   else
+      logNotice 'This function is not supported on the ${ARCH} architecture.'
+   fi
+else
+   logInvalidOSRevision "5.7-5.9"
+fi

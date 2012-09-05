@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)enable-32bit-kernel.aud 1.6     04/01/07     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="32-bit Kernel"
+servfil="enable-32bit-kernel.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script attempts to determine if the system is configured to boot
+   a 32-bit kernel.  Note that this script is typically used on the versions
+   of the Solaris OE that support both 32-bit and 64-bit operation.  Due
+   to software incompatibility, there is sometimes a need to operate in 
+   32-bit mode.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the system is either configured 
+   to run in 32-bit mode or is actually running in 32-bit mode.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_revision 5.7 5.9 ; then
+
+   ARCH="`uname -m`"
+   case ${ARCH} in
+
+      sun4u)
+         capable=1
+         ;;
+
+      *)
+         capable=0
+         ;;
+
+   esac
+
+   if [ ${capable} = 1 ]; then
+      result="`eeprom boot-file`"
+      if [ "${result}" = "kernel/unix" ]; then
+         logSuccess "32-bit system kernel is enabled."
+      else
+         adjustScore 1
+         logFailure "32-bit system kernel is not enabled."
+         logNotice 'EEPROM \\\"boot-file\\\" parameter is \\\"${result}\\\".'
+      fi
+   else
+      logNotice 'This script is not supported on the ${ARCH} architecture.'
+   fi
+
+   if [ "`isainfo`" = "sparcv9" ]; then
+      adjustScore 1
+      logFailure "System is running in 64-bit mode."
+   else
+      logSuccess "System is running in 32-bit mode."
+   fi
+
+else
+   logInvalidOSRevision "5.7-5.9"
+fi
+
+finish_audit

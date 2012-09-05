@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-sys-suspend-restrictions.aud 1.6     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Suspend / Resume Restrictions"
+servfil="set-sys-suspend-restrictions.aud"
+
+SYSSUSPEND="${JASS_ROOT_DIR}etc/default/sys-suspend"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The ability to suspend a system can be restricted using the PERMS parameter
+   in the ${SYSSUSPEND} file.  This parameter can take a varity of values 
+   based on the system requirements.  For more information on this capability,
+   see sys-suspend(1M).
+
+Rationale for Verification Check:
+
+   This script checks the ${SYSSUSPEND} file to determine if the PERMS 
+   parameter has been set appropriately.
+
+   Note that if the PERMS parameter is set to '-', then only the root account
+   can suspend the system.  Also, if the settings are not defined in the 
+   ${SYSSUSPEND} file, the default is to allow the owner of the console to 
+   suspend the system.
+
+Determination of Compliance:
+
+   This script will check the ${SYSSUSPEND} file and indicate a failure and 
+   if the PERMS parameter does not have the following value:
+
+   ${JASS_SUSPEND_PERMS}
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+   if check_fileExists ${SYSSUSPEND} 1 ; then
+      if check_fileContentsExist ${SYSSUSPEND} \
+         "^PERMS=${JASS_SUSPEND_PERMS}" 1 ; then
+         logSuccess 'PERMS is set to \\\"${JASS_SUSPEND_PERMS}\\\" in ${SYSSUSPEND}.'
+      else
+         if check_fileContentsExist ${SYSSUSPEND} "^PERMS=" 0 ; then
+            logFailure 'PERMS is not set to \\\"${JASS_SUSPEND_PERMS}\\\" in ${SYSSUSPEND}.'
+         else
+            logFailure 'PERMS is not defined in ${SYSSUSPEND}.'
+         fi
+      fi
+   else
+      logFileNotFound ${SYSSUSPEND} 1
+   fi   
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

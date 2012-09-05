@@ -1,0 +1,620 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish:
+	[ -d ../../proto/SUNWsst/Finish ] || /bin/mkdir -p ../../proto/SUNWsst/Finish
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-IIim.fin:
+	/usr/bin/cp -f disable-IIim.fin ../../proto/SUNWsst/Finish/disable-IIim.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-IIim.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-ab2.fin:
+	/usr/bin/cp -f disable-ab2.fin ../../proto/SUNWsst/Finish/disable-ab2.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-ab2.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-apache.fin:
+	/usr/bin/cp -f disable-apache.fin ../../proto/SUNWsst/Finish/disable-apache.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-apache.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-apache2.fin:
+	/usr/bin/cp -f disable-apache2.fin ../../proto/SUNWsst/Finish/disable-apache2.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-apache2.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-appserv.fin:
+	/usr/bin/cp -f disable-appserv.fin ../../proto/SUNWsst/Finish/disable-appserv.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-appserv.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-asppp.fin:
+	/usr/bin/cp -f disable-asppp.fin ../../proto/SUNWsst/Finish/disable-asppp.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-asppp.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-autoinst.fin:
+	/usr/bin/cp -f disable-autoinst.fin ../../proto/SUNWsst/Finish/disable-autoinst.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-autoinst.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-automount.fin:
+	/usr/bin/cp -f disable-automount.fin ../../proto/SUNWsst/Finish/disable-automount.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-automount.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-dhcpd.fin:
+	/usr/bin/cp -f disable-dhcpd.fin ../../proto/SUNWsst/Finish/disable-dhcpd.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-dhcpd.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-directory.fin:
+	/usr/bin/cp -f disable-directory.fin ../../proto/SUNWsst/Finish/disable-directory.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-directory.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-dmi.fin:
+	/usr/bin/cp -f disable-dmi.fin ../../proto/SUNWsst/Finish/disable-dmi.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-dmi.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-dtlogin.fin:
+	/usr/bin/cp -f disable-dtlogin.fin ../../proto/SUNWsst/Finish/disable-dtlogin.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-dtlogin.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-face-log.fin:
+	/usr/bin/cp -f disable-face-log.fin ../../proto/SUNWsst/Finish/disable-face-log.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-face-log.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-ipv6.fin:
+	/usr/bin/cp -f disable-ipv6.fin ../../proto/SUNWsst/Finish/disable-ipv6.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-ipv6.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-kdc.fin:
+	/usr/bin/cp -f disable-kdc.fin ../../proto/SUNWsst/Finish/disable-kdc.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-kdc.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-keyboard-abort.fin:
+	/usr/bin/cp -f disable-keyboard-abort.fin ../../proto/SUNWsst/Finish/disable-keyboard-abort.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-keyboard-abort.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-keyserv-uid-nobody.fin:
+	/usr/bin/cp -f disable-keyserv-uid-nobody.fin ../../proto/SUNWsst/Finish/disable-keyserv-uid-nobody.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-keyserv-uid-nobody.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-ldap-client.fin:
+	/usr/bin/cp -f disable-ldap-client.fin ../../proto/SUNWsst/Finish/disable-ldap-client.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-ldap-client.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-lp.fin:
+	/usr/bin/cp -f disable-lp.fin ../../proto/SUNWsst/Finish/disable-lp.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-lp.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-mesg.fin:
+	/usr/bin/cp -f disable-mesg.fin ../../proto/SUNWsst/Finish/disable-mesg.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-mesg.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-mipagent.fin:
+	/usr/bin/cp -f disable-mipagent.fin ../../proto/SUNWsst/Finish/disable-mipagent.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-mipagent.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-named.fin:
+	/usr/bin/cp -f disable-named.fin ../../proto/SUNWsst/Finish/disable-named.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-named.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-nfs-client.fin:
+	/usr/bin/cp -f disable-nfs-client.fin ../../proto/SUNWsst/Finish/disable-nfs-client.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-nfs-client.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-nfs-server.fin:
+	/usr/bin/cp -f disable-nfs-server.fin ../../proto/SUNWsst/Finish/disable-nfs-server.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-nfs-server.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-nis-client.fin:
+	/usr/bin/cp -f disable-nis-client.fin ../../proto/SUNWsst/Finish/disable-nis-client.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-nis-client.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-nscd-caching.fin:
+	/usr/bin/cp -f disable-nscd-caching.fin ../../proto/SUNWsst/Finish/disable-nscd-caching.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-nscd-caching.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-picld.fin:
+	/usr/bin/cp -f disable-picld.fin ../../proto/SUNWsst/Finish/disable-picld.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-picld.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-power-mgmt.fin:
+	/usr/bin/cp -f disable-power-mgmt.fin ../../proto/SUNWsst/Finish/disable-power-mgmt.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-power-mgmt.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-ppp.fin:
+	/usr/bin/cp -f disable-ppp.fin ../../proto/SUNWsst/Finish/disable-ppp.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-ppp.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-preserve.fin:
+	/usr/bin/cp -f disable-preserve.fin ../../proto/SUNWsst/Finish/disable-preserve.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-preserve.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-remote-root-login.fin:
+	/usr/bin/cp -f disable-remote-root-login.fin ../../proto/SUNWsst/Finish/disable-remote-root-login.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-remote-root-login.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-rhosts.fin:
+	/usr/bin/cp -f disable-rhosts.fin ../../proto/SUNWsst/Finish/disable-rhosts.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-rhosts.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-routing.fin:
+	/usr/bin/cp -f disable-routing.fin ../../proto/SUNWsst/Finish/disable-routing.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-routing.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-rpc.fin:
+	/usr/bin/cp -f disable-rpc.fin ../../proto/SUNWsst/Finish/disable-rpc.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-rpc.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-samba.fin:
+	/usr/bin/cp -f disable-samba.fin ../../proto/SUNWsst/Finish/disable-samba.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-samba.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-sendmail.fin:
+	/usr/bin/cp -f disable-sendmail.fin ../../proto/SUNWsst/Finish/disable-sendmail.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-sendmail.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-serial-login.fin:
+	/usr/bin/cp -f disable-serial-login.fin ../../proto/SUNWsst/Finish/disable-serial-login.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-serial-login.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-slp.fin:
+	/usr/bin/cp -f disable-slp.fin ../../proto/SUNWsst/Finish/disable-slp.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-slp.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-sma.fin:
+	/usr/bin/cp -f disable-sma.fin ../../proto/SUNWsst/Finish/disable-sma.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-sma.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-smcwebserver.fin:
+	/usr/bin/cp -f disable-smcwebserver.fin ../../proto/SUNWsst/Finish/disable-smcwebserver.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-smcwebserver.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-snmp.fin:
+	/usr/bin/cp -f disable-snmp.fin ../../proto/SUNWsst/Finish/disable-snmp.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-snmp.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-spc.fin:
+	/usr/bin/cp -f disable-spc.fin ../../proto/SUNWsst/Finish/disable-spc.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-spc.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-ssh-root-login.fin:
+	/usr/bin/cp -f disable-ssh-root-login.fin ../../proto/SUNWsst/Finish/disable-ssh-root-login.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-ssh-root-login.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-syslogd-listen.fin:
+	/usr/bin/cp -f disable-syslogd-listen.fin ../../proto/SUNWsst/Finish/disable-syslogd-listen.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-syslogd-listen.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-system-accounts.fin:
+	/usr/bin/cp -f disable-system-accounts.fin ../../proto/SUNWsst/Finish/disable-system-accounts.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-system-accounts.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-uucp.fin:
+	/usr/bin/cp -f disable-uucp.fin ../../proto/SUNWsst/Finish/disable-uucp.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-uucp.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-vold.fin:
+	/usr/bin/cp -f disable-vold.fin ../../proto/SUNWsst/Finish/disable-vold.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-vold.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-wbem.fin:
+	/usr/bin/cp -f disable-wbem.fin ../../proto/SUNWsst/Finish/disable-wbem.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-wbem.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-xdmcp.fin:
+	/usr/bin/cp -f disable-xdmcp.fin ../../proto/SUNWsst/Finish/disable-xdmcp.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-xdmcp.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-xfs.fin:
+	/usr/bin/cp -f disable-xfs.fin ../../proto/SUNWsst/Finish/disable-xfs.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-xfs.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/disable-xserver-listen.fin:
+	/usr/bin/cp -f disable-xserver-listen.fin ../../proto/SUNWsst/Finish/disable-xserver-listen.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/disable-xserver-listen.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-32bit-kernel.fin:
+	/usr/bin/cp -f enable-32bit-kernel.fin ../../proto/SUNWsst/Finish/enable-32bit-kernel.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-32bit-kernel.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-account-lockout.fin:
+	/usr/bin/cp -f enable-account-lockout.fin ../../proto/SUNWsst/Finish/enable-account-lockout.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-account-lockout.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-bart.fin:
+	/usr/bin/cp -f enable-bart.fin ../../proto/SUNWsst/Finish/enable-bart.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-bart.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-bsm.fin:
+	/usr/bin/cp -f enable-bsm.fin ../../proto/SUNWsst/Finish/enable-bsm.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-bsm.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-coreadm.fin:
+	/usr/bin/cp -f enable-coreadm.fin ../../proto/SUNWsst/Finish/enable-coreadm.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-coreadm.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-cronlog.fin:
+	/usr/bin/cp -f enable-cronlog.fin ../../proto/SUNWsst/Finish/enable-cronlog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-cronlog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-ftp-debuglog.fin:
+	/usr/bin/cp -f enable-ftp-debuglog.fin ../../proto/SUNWsst/Finish/enable-ftp-debuglog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-ftp-debuglog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-ftp-syslog.fin:
+	/usr/bin/cp -f enable-ftp-syslog.fin ../../proto/SUNWsst/Finish/enable-ftp-syslog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-ftp-syslog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-ftpaccess.fin:
+	/usr/bin/cp -f enable-ftpaccess.fin ../../proto/SUNWsst/Finish/enable-ftpaccess.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-ftpaccess.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-inetd-syslog.fin:
+	/usr/bin/cp -f enable-inetd-syslog.fin ../../proto/SUNWsst/Finish/enable-inetd-syslog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-inetd-syslog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-ipfilter.fin:
+	/usr/bin/cp -f enable-ipfilter.fin ../../proto/SUNWsst/Finish/enable-ipfilter.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-ipfilter.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-ldmd.fin:
+	/usr/bin/cp -f enable-ldmd.fin ../../proto/SUNWsst/Finish/enable-ldmd.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-ldmd.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-password-changes.fin:
+	/usr/bin/cp -f enable-password-changes.fin ../../proto/SUNWsst/Finish/enable-password-changes.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-password-changes.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-password-history.fin:
+	/usr/bin/cp -f enable-password-history.fin ../../proto/SUNWsst/Finish/enable-password-history.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-password-history.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-priv-nfs-ports.fin:
+	/usr/bin/cp -f enable-priv-nfs-ports.fin ../../proto/SUNWsst/Finish/enable-priv-nfs-ports.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-priv-nfs-ports.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-process-accounting.fin:
+	/usr/bin/cp -f enable-process-accounting.fin ../../proto/SUNWsst/Finish/enable-process-accounting.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-process-accounting.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-rfc1948.fin:
+	/usr/bin/cp -f enable-rfc1948.fin ../../proto/SUNWsst/Finish/enable-rfc1948.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-rfc1948.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-sar.fin:
+	/usr/bin/cp -f enable-sar.fin ../../proto/SUNWsst/Finish/enable-sar.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-sar.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-ssh-root-login.fin:
+	/usr/bin/cp -f enable-ssh-root-login.fin ../../proto/SUNWsst/Finish/enable-ssh-root-login.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-ssh-root-login.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-stack-protection.fin:
+	/usr/bin/cp -f enable-stack-protection.fin ../../proto/SUNWsst/Finish/enable-stack-protection.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-stack-protection.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-tcpwrappers.fin:
+	/usr/bin/cp -f enable-tcpwrappers.fin ../../proto/SUNWsst/Finish/enable-tcpwrappers.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-tcpwrappers.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/enable-xscreensaver.fin:
+	/usr/bin/cp -f enable-xscreensaver.fin ../../proto/SUNWsst/Finish/enable-xscreensaver.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/enable-xscreensaver.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-Sun_ONE-WS.fin:
+	/usr/bin/cp -f install-Sun_ONE-WS.fin ../../proto/SUNWsst/Finish/install-Sun_ONE-WS.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-Sun_ONE-WS.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-at-allow.fin:
+	/usr/bin/cp -f install-at-allow.fin ../../proto/SUNWsst/Finish/install-at-allow.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-at-allow.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-authlog.fin:
+	/usr/bin/cp -f install-authlog.fin ../../proto/SUNWsst/Finish/install-authlog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-authlog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-connlog.fin:
+	/usr/bin/cp -f install-connlog.fin ../../proto/SUNWsst/Finish/install-connlog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-connlog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-fix-modes.fin:
+	/usr/bin/cp -f install-fix-modes.fin ../../proto/SUNWsst/Finish/install-fix-modes.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-fix-modes.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-ftpusers.fin:
+	/usr/bin/cp -f install-ftpusers.fin ../../proto/SUNWsst/Finish/install-ftpusers.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-ftpusers.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-jass.fin:
+	/usr/bin/cp -f install-jass.fin ../../proto/SUNWsst/Finish/install-jass.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-jass.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-ldm.fin:
+	/usr/bin/cp -f install-ldm.fin ../../proto/SUNWsst/Finish/install-ldm.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-ldm.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-local-syslog.fin:
+	/usr/bin/cp -f install-local-syslog.fin ../../proto/SUNWsst/Finish/install-local-syslog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-local-syslog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-loginlog.fin:
+	/usr/bin/cp -f install-loginlog.fin ../../proto/SUNWsst/Finish/install-loginlog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-loginlog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-md5.fin:
+	/usr/bin/cp -f install-md5.fin ../../proto/SUNWsst/Finish/install-md5.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-md5.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-nddconfig.fin:
+	/usr/bin/cp -f install-nddconfig.fin ../../proto/SUNWsst/Finish/install-nddconfig.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-nddconfig.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-newaliases.fin:
+	/usr/bin/cp -f install-newaliases.fin ../../proto/SUNWsst/Finish/install-newaliases.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-newaliases.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-openssh.fin:
+	/usr/bin/cp -f install-openssh.fin ../../proto/SUNWsst/Finish/install-openssh.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-openssh.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-recommended-patches.fin:
+	/usr/bin/cp -f install-recommended-patches.fin ../../proto/SUNWsst/Finish/install-recommended-patches.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-recommended-patches.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-sadmind-options.fin:
+	/usr/bin/cp -f install-sadmind-options.fin ../../proto/SUNWsst/Finish/install-sadmind-options.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-sadmind-options.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-security-mode.fin:
+	/usr/bin/cp -f install-security-mode.fin ../../proto/SUNWsst/Finish/install-security-mode.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-security-mode.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-shells.fin:
+	/usr/bin/cp -f install-shells.fin ../../proto/SUNWsst/Finish/install-shells.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-shells.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-strong-permissions.fin:
+	/usr/bin/cp -f install-strong-permissions.fin ../../proto/SUNWsst/Finish/install-strong-permissions.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-strong-permissions.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-sulog.fin:
+	/usr/bin/cp -f install-sulog.fin ../../proto/SUNWsst/Finish/install-sulog.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-sulog.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/install-templates.fin:
+	/usr/bin/cp -f install-templates.fin ../../proto/SUNWsst/Finish/install-templates.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/install-templates.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/minimize-Sun_ONE-WS.fin:
+	/usr/bin/cp -f minimize-Sun_ONE-WS.fin ../../proto/SUNWsst/Finish/minimize-Sun_ONE-WS.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/minimize-Sun_ONE-WS.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/print-jass-environment.fin:
+	/usr/bin/cp -f print-jass-environment.fin ../../proto/SUNWsst/Finish/print-jass-environment.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/print-jass-environment.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/print-jumpstart-environment.fin:
+	/usr/bin/cp -f print-jumpstart-environment.fin ../../proto/SUNWsst/Finish/print-jumpstart-environment.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/print-jumpstart-environment.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/print-package-files.fin:
+	/usr/bin/cp -f print-package-files.fin ../../proto/SUNWsst/Finish/print-package-files.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/print-package-files.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/print-rhosts.fin:
+	/usr/bin/cp -f print-rhosts.fin ../../proto/SUNWsst/Finish/print-rhosts.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/print-rhosts.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/print-sgid-files.fin:
+	/usr/bin/cp -f print-sgid-files.fin ../../proto/SUNWsst/Finish/print-sgid-files.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/print-sgid-files.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/print-suid-files.fin:
+	/usr/bin/cp -f print-suid-files.fin ../../proto/SUNWsst/Finish/print-suid-files.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/print-suid-files.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/print-unowned-objects.fin:
+	/usr/bin/cp -f print-unowned-objects.fin ../../proto/SUNWsst/Finish/print-unowned-objects.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/print-unowned-objects.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/print-world-writable-objects.fin:
+	/usr/bin/cp -f print-world-writable-objects.fin ../../proto/SUNWsst/Finish/print-world-writable-objects.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/print-world-writable-objects.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/remove-unneeded-accounts.fin:
+	/usr/bin/cp -f remove-unneeded-accounts.fin ../../proto/SUNWsst/Finish/remove-unneeded-accounts.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/remove-unneeded-accounts.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/s15k-exclude-domains.fin:
+	/usr/bin/cp -f s15k-exclude-domains.fin ../../proto/SUNWsst/Finish/s15k-exclude-domains.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/s15k-exclude-domains.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/s15k-sms-override.fin:
+	/usr/bin/cp -f s15k-sms-override.fin ../../proto/SUNWsst/Finish/s15k-sms-override.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/s15k-sms-override.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/s15k-sms-secure-failover.fin:
+	/usr/bin/cp -f s15k-sms-secure-failover.fin ../../proto/SUNWsst/Finish/s15k-sms-secure-failover.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/s15k-sms-secure-failover.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/s15k-static-arp.fin:
+	/usr/bin/cp -f s15k-static-arp.fin ../../proto/SUNWsst/Finish/s15k-static-arp.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/s15k-static-arp.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-banner-dtlogin.fin:
+	/usr/bin/cp -f set-banner-dtlogin.fin ../../proto/SUNWsst/Finish/set-banner-dtlogin.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-banner-dtlogin.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-banner-ftpd.fin:
+	/usr/bin/cp -f set-banner-ftpd.fin ../../proto/SUNWsst/Finish/set-banner-ftpd.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-banner-ftpd.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-banner-sendmail.fin:
+	/usr/bin/cp -f set-banner-sendmail.fin ../../proto/SUNWsst/Finish/set-banner-sendmail.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-banner-sendmail.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-banner-sshd.fin:
+	/usr/bin/cp -f set-banner-sshd.fin ../../proto/SUNWsst/Finish/set-banner-sshd.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-banner-sshd.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-banner-telnetd.fin:
+	/usr/bin/cp -f set-banner-telnetd.fin ../../proto/SUNWsst/Finish/set-banner-telnetd.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-banner-telnetd.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-calendar-localonly.fin:
+	/usr/bin/cp -f set-calendar-localonly.fin ../../proto/SUNWsst/Finish/set-calendar-localonly.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-calendar-localonly.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-calendar-open.fin:
+	/usr/bin/cp -f set-calendar-open.fin ../../proto/SUNWsst/Finish/set-calendar-open.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-calendar-open.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-dtlogin-localonly.fin:
+	/usr/bin/cp -f set-dtlogin-localonly.fin ../../proto/SUNWsst/Finish/set-dtlogin-localonly.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-dtlogin-localonly.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-dtlogin-open.fin:
+	/usr/bin/cp -f set-dtlogin-open.fin ../../proto/SUNWsst/Finish/set-dtlogin-open.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-dtlogin-open.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-failed-logins.fin:
+	/usr/bin/cp -f set-failed-logins.fin ../../proto/SUNWsst/Finish/set-failed-logins.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-failed-logins.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-flexible-crypt.fin:
+	/usr/bin/cp -f set-flexible-crypt.fin ../../proto/SUNWsst/Finish/set-flexible-crypt.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-flexible-crypt.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-ftpd-umask.fin:
+	/usr/bin/cp -f set-ftpd-umask.fin ../../proto/SUNWsst/Finish/set-ftpd-umask.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-ftpd-umask.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-greeter-warning.fin:
+	/usr/bin/cp -f set-greeter-warning.fin ../../proto/SUNWsst/Finish/set-greeter-warning.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-greeter-warning.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-grub-password.fin:
+	/usr/bin/cp -f set-grub-password.fin ../../proto/SUNWsst/Finish/set-grub-password.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-grub-password.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-log-file-permissions.fin:
+	/usr/bin/cp -f set-log-file-permissions.fin ../../proto/SUNWsst/Finish/set-log-file-permissions.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-log-file-permissions.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-login-retries.fin:
+	/usr/bin/cp -f set-login-retries.fin ../../proto/SUNWsst/Finish/set-login-retries.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-login-retries.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-lp-localonly.fin:
+	/usr/bin/cp -f set-lp-localonly.fin ../../proto/SUNWsst/Finish/set-lp-localonly.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-lp-localonly.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-lp-open.fin:
+	/usr/bin/cp -f set-lp-open.fin ../../proto/SUNWsst/Finish/set-lp-open.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-lp-open.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-oem-banner.fin:
+	/usr/bin/cp -f set-oem-banner.fin ../../proto/SUNWsst/Finish/set-oem-banner.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-oem-banner.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-power-restrictions.fin:
+	/usr/bin/cp -f set-power-restrictions.fin ../../proto/SUNWsst/Finish/set-power-restrictions.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-power-restrictions.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-rmmount-nosuid.fin:
+	/usr/bin/cp -f set-rmmount-nosuid.fin ../../proto/SUNWsst/Finish/set-rmmount-nosuid.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-rmmount-nosuid.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-root-group.fin:
+	/usr/bin/cp -f set-root-group.fin ../../proto/SUNWsst/Finish/set-root-group.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-root-group.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-root-home-dir.fin:
+	/usr/bin/cp -f set-root-home-dir.fin ../../proto/SUNWsst/Finish/set-root-home-dir.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-root-home-dir.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-root-password.fin:
+	/usr/bin/cp -f set-root-password.fin ../../proto/SUNWsst/Finish/set-root-password.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-root-password.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-rpc-localonly.fin:
+	/usr/bin/cp -f set-rpc-localonly.fin ../../proto/SUNWsst/Finish/set-rpc-localonly.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-rpc-localonly.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-rpc-open.fin:
+	/usr/bin/cp -f set-rpc-open.fin ../../proto/SUNWsst/Finish/set-rpc-open.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-rpc-open.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-smcwebserver-localonly.fin:
+	/usr/bin/cp -f set-smcwebserver-localonly.fin ../../proto/SUNWsst/Finish/set-smcwebserver-localonly.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-smcwebserver-localonly.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-smcwebserver-open.fin:
+	/usr/bin/cp -f set-smcwebserver-open.fin ../../proto/SUNWsst/Finish/set-smcwebserver-open.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-smcwebserver-open.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-ssh-config.fin:
+	/usr/bin/cp -f set-ssh-config.fin ../../proto/SUNWsst/Finish/set-ssh-config.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-ssh-config.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-strict-password-checks.fin:
+	/usr/bin/cp -f set-strict-password-checks.fin ../../proto/SUNWsst/Finish/set-strict-password-checks.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-strict-password-checks.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-sys-suspend-restrictions.fin:
+	/usr/bin/cp -f set-sys-suspend-restrictions.fin ../../proto/SUNWsst/Finish/set-sys-suspend-restrictions.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-sys-suspend-restrictions.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-system-umask.fin:
+	/usr/bin/cp -f set-system-umask.fin ../../proto/SUNWsst/Finish/set-system-umask.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-system-umask.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-term-type.fin:
+	/usr/bin/cp -f set-term-type.fin ../../proto/SUNWsst/Finish/set-term-type.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-term-type.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-tmpfs-limit.fin:
+	/usr/bin/cp -f set-tmpfs-limit.fin ../../proto/SUNWsst/Finish/set-tmpfs-limit.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-tmpfs-limit.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-ttdb-localonly.fin:
+	/usr/bin/cp -f set-ttdb-localonly.fin ../../proto/SUNWsst/Finish/set-ttdb-localonly.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-ttdb-localonly.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-ttdb-open.fin:
+	/usr/bin/cp -f set-ttdb-open.fin ../../proto/SUNWsst/Finish/set-ttdb-open.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-ttdb-open.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-user-password-reqs.fin:
+	/usr/bin/cp -f set-user-password-reqs.fin ../../proto/SUNWsst/Finish/set-user-password-reqs.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-user-password-reqs.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-user-umask.fin:
+	/usr/bin/cp -f set-user-umask.fin ../../proto/SUNWsst/Finish/set-user-umask.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-user-umask.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-wbem-localonly.fin:
+	/usr/bin/cp -f set-wbem-localonly.fin ../../proto/SUNWsst/Finish/set-wbem-localonly.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-wbem-localonly.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/set-wbem-open.fin:
+	/usr/bin/cp -f set-wbem-open.fin ../../proto/SUNWsst/Finish/set-wbem-open.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/set-wbem-open.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/suncluster3x-set-nsswitch-conf.fin:
+	/usr/bin/cp -f suncluster3x-set-nsswitch-conf.fin ../../proto/SUNWsst/Finish/suncluster3x-set-nsswitch-conf.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/suncluster3x-set-nsswitch-conf.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/update-at-deny.fin:
+	/usr/bin/cp -f update-at-deny.fin ../../proto/SUNWsst/Finish/update-at-deny.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/update-at-deny.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/update-cron-allow.fin:
+	/usr/bin/cp -f update-cron-allow.fin ../../proto/SUNWsst/Finish/update-cron-allow.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/update-cron-allow.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/update-cron-deny.fin:
+	/usr/bin/cp -f update-cron-deny.fin ../../proto/SUNWsst/Finish/update-cron-deny.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/update-cron-deny.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/update-cron-log-size.fin:
+	/usr/bin/cp -f update-cron-log-size.fin ../../proto/SUNWsst/Finish/update-cron-log-size.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/update-cron-log-size.fin
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Finish/update-inetd-conf.fin:
+	/usr/bin/cp -f update-inetd-conf.fin ../../proto/SUNWsst/Finish/update-inetd-conf.fin
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Finish/update-inetd-conf.fin

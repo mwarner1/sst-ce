@@ -1,0 +1,208 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-bart.aud	1.19	05/06/16 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="BART"
+servfil="enable-bart.aud"
+
+BART="${JASS_ROOT_DIR}usr/bin/bart"
+BART_DIR="var/opt/SUNWsst/BART"
+RULES="var/opt/SUNWsst/BART/rules"
+MANIFESTS="${JASS_ROOT_DIR}${BART_DIR}/manifests"
+# E.g., /var/opt/SUNWsst/BART/rules/manifests/20050810150227.txt
+CONTROL_MANIFEST_REGEXP="${MANIFESTS}/[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9].txt"
+AUDIT_MANIFEST_FILE="${MANIFESTS}/${JASS_TIMESTAMP}.txt"
+FAILED_MANIFEST_FILE="${MANIFESTS}/${JASS_TIMESTAMP}.failed.txt"
+COMPARE_FILE="${MANIFESTS}/${JASS_TIMESTAMP}.compare.txt"
+
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Basic Auditing and Reporting Tool (BART) is a file tracking tool that
+   operates entirely at the file system level. Using BART gives you the
+   ability to quickly, easily, and reliably gather information about the
+   components of the software stack installed on deployed systems. Using
+   BART enables you to determine what file-level changes have occurred on
+   a system, relative to a known baseline.  This script creates a baseline
+   or control manifest for this system.  You can then compare this baseline
+   with a snapshot of the system at a later time, generating a report that
+   lists file-level changes that have occurred on the system since the
+   BART control manifest was created.  For details see bart(1M),
+   bart_manifest(4), and bart_rules(4).
+
+Rationale for Verification Check:
+
+   This script will create a snapshot of the system using \"bart create\".
+   It will then compare the snapshot with the BART control manifest
+   and report any differences.  This will ensure that any changes can
+   be investigated for potential problems.
+
+Determination of Compliance:
+
+   This script will indicate a failure if \"bart compare\" finds any
+   differences between the control manifest and the snapshot just taken
+   of the system.
+"
+
+#-----------------------------------------------------------------------------
+
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+if check_os_min_revision 5.10 ; then
+
+
+   if [ -x "${BART}" ] ; then
+
+      # Create bart and manifests directories, if missing
+      if [ ! -d "${MANIFESTS}" ] ; then
+         mkdir -p ${MANIFESTS}
+      fi
+
+      # Copy rules files if missing
+      if [ ! -f "${JASS_ROOT_DIR}${RULES}" ] ; then
+            logNotice 'BART rules file ${JASS_ROOT_DIR}${RULES} is not present'
+
+            # Copy correct rules file over
+            # Can't use copy_files as it creates a undo manifest:
+            # copy_files "/${RULES}"
+            expanded_rules_file=`get_expanded_file_name /${RULES}`
+            if [ ! -z "${expanded_rules_file}" ] ; then
+               cp ${expanded_rules_file} ${JASS_ROOT_DIR}${RULES}
+            fi
+      fi
+
+      # Verify rules files
+      check_fileTemplate "${JASS_ROOT_DIR}${RULES}" 1 LOG
+      if [ $? -eq 0 ] ; then # rules OK
+
+         # Get latest manifest file.
+         latest_manifest_file=`ls -1d ${CONTROL_MANIFEST_REGEXP} 2>/dev/null \
+            | tail -1`
+         if [ ! -z "${latest_manifest_file}" ] ; then
+
+            #
+            # Run BART to create a snapshot manifest to compare with control
+            # Note: egrep is workaround for BART bug 6276935.
+            # Note: S82mkdtab is filtered out to avoid false failures. This
+            # file is deleted after Solaris is first booted.
+            #
+            logMessage 'Running bart create -r ${JASS_ROOT_DIR}${RULES}.'
+            ${BART} create -R "${JASS_ROOT_DIR}" \
+               -r "${JASS_ROOT_DIR}${RULES}" \
+               | egrep -v '^/var/|^/etc/rc2.d/S82mkdtab' \
+               > "${AUDIT_MANIFEST_FILE}"
+            bart_status=$?
+
+            if [ "$bart_status" = "0" ] ; then
+               logMessage \
+                  'BART snapshot manifest ${AUDIT_MANIFEST_FILE}
+created.'
+
+               #
+               # Run BART compare to compare latest and snapshot manifests
+               #
+               logMessage 'Running bart compare with control manifest
+${latest_manifest_file}.'
+               ${BART} compare -r "${JASS_ROOT_DIR}${RULES}" \
+                  "${latest_manifest_file}" "${AUDIT_MANIFEST_FILE}" \
+                  >${COMPARE_FILE}
+               bart_status=$?
+
+               case "$bart_status" in
+               0)
+                  logSuccess 'BART compare with latest manifest successful.'
+                  rm -f "${COMPARE_FILE}"
+                  ;;
+
+               1)
+                  compare_file_lines=`wc -l $COMPARE_FILE | nawk '{print $1}'`
+                  logFailure \
+'BART found one or more files have changed.  For details see file
+${COMPARE_FILE} (${compare_file_lines} line(s)).
+Check earlier manifest files in ${MANIFESTS},
+and check with the Solaris Fingerprint Database for any issues found.'
+                  adjustScore 1
+                  ;;
+
+               *)
+                  logError 'BART compare failed (return code ${bart_status}).'
+                  ;;
+               esac
+
+
+            else
+               mv "${AUDIT_MANIFEST_FILE}" "${FAILED_MANIFEST_FILE}"
+               logError 'BART create failed; return code ${bart_status}.
+Manifest file ${FAILED_MANIFEST_FILE}.'
+            fi
+
+         else
+            logError 'No BART control manifest found.'
+
+            #
+            # Run BART to create a control manifest
+            #
+            logMessage 'Running bart create -r ${JASS_ROOT_DIR}${RULES}.'
+            ${BART} create -R "${JASS_ROOT_DIR}" \
+               -r "${JASS_ROOT_DIR}${RULES}" > "${AUDIT_MANIFEST_FILE}"
+            bart_status=$?
+
+            if [ "$bart_status" = "0" ] ; then
+               logMessage \
+                  'BART snapshot manifest ${AUDIT_MANIFEST_FILE} created.'
+            else
+               mv "${AUDIT_MANIFEST_FILE}" "${FAILED_MANIFEST_FILE}"
+               logError 'BART create failed; return code ${bart_status}.
+Manifest file ${FAILED_MANIFEST_FILE}.'
+            fi
+         fi
+
+      else
+         logError 'BART rules file ${JASS_ROOT_DIR}${RULES} is incorrect for this driver.
+To fix, run \\\"jass-execute -d driver\\\".'
+      fi
+
+   else
+      logError '${JASS_ROOT_DIR}usr/bin/bart is not installed.'
+   fi
+
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+finish_audit

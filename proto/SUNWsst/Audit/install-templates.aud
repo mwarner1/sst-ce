@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved
+# All rights reserved.
+#
+#ident	"@(#)install-templates.aud	1.5	04/01/07	SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="File Templates"
+servfil="install-templates.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   The purpose of this script is to determine if the files defined by the 
+   JASS_FILES parameter have been successfully copied to the target system.  
+   Note that this is typically done as part of the copy_files() function in 
+   the driver.run script.  
+ 
+   This script will perform two checks per object: (1) a test to ensure that
+   the source and target file types match (regular file, symbolic link, or 
+   directory) and (2) a test to ensure that their contents are the same.
+
+Determination of Compliance:
+
+   This script will indicate a failure for each of the above checks that are
+   found to be false.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+   check_fileTemplate "${JASS_FILE_LIST}" 1 LOG
+
+finish_audit

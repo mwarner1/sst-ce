@@ -1,0 +1,169 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)clean_private.funcs	1.3	05/07/07 SMI"
+#
+
+
+
+# ============================================================================
+# Function: cleanup_ops
+#
+# Perform the cleanup of undo files.
+# ============================================================================
+cleanup_ops()
+{
+   # Parameters to this function are:
+   # $1	= fully qualified name of the MANIFEST file to be processed
+
+   if [ -z "$1" ] ; then
+      logError 'No JASS_RUN_MANIFEST file specified.'
+      return
+   fi
+
+   reverse_manifest=`dirname $1`/reverse-`basename $1`
+
+   cat /dev/null > ${reverse_manifest} || {
+      logError 'Unable to create temp reversed JASS_RUN_MANIFEST file.'
+      return
+   }
+
+   # Create the reversed manifest file
+   n=`wc -l ${1} | nawk '{print $1}'`
+   while [ ${n} != 0 ]
+   do
+      # this picks off nth line from file, counting down from n to 1
+      sed -e ${n}' q
+		   d' ${1} >> ${reverse_manifest}
+      n=`expr ${n} - 1`
+   done
+
+   # Now step through the reversed manifest file, undoing each operation
+   # Don't redirect stdin to the manifest file since the undo operations
+   # may need to read interactive user input from stdin
+
+   currentScript=""
+   _error=0
+   _warn=0
+   _notice=0
+   _failure=0
+
+   exec 7<${reverse_manifest}
+
+   while true; do
+
+      read operation module src dest args <&7
+
+      if [ $? != 0 ]; then
+	 exec 7<&-
+	 break
+      fi
+
+      if [ "${currentScript}" != "${module}" ]; then
+	 JASS_SCRIPT="${currentScript}"
+	 logScriptFailure "error"   ${_error}
+	 logScriptFailure "warning"    ${_warn}
+	 logScriptFailure "note"    ${_notice}
+	 logScriptFailure "failure" ${_failure}
+
+         currentScript="${module}"
+         logBanner '${DRV_NAME}: Undoing Finish Script: ${currentScript}'
+
+	 _error=0
+	 _warn=0
+	 _notice=0
+	 _failure=0
+
+      fi
+
+      case ${operation} in
+
+      # We wish to remove the saved files that would have been
+      # removed by JASS_SAVE_BACKUP being set to 1 during
+      # the driver.run, see cleanup_files()
+
+      # This corresponds to the J, C, M, N options
+
+      [Jj])
+	 logNotice 'Removing a Sun Security Toolkit: Community Edition-created file.'
+	 logNotice 'File: ${dest}'
+	 rm -f $dest
+	 echo ""
+	 ;;
+
+      [Mm])
+	 logNotice 'Cleaning operation MOVE.'
+	 logNotice 'File: ${dest}'
+	 rm -f $dest
+	 echo ""
+	 ;;
+
+      [Cc])
+	 logNotice 'Cleaning operation COPY.'
+	 logNotice 'File: ${dest}'
+	 rm -f $dest
+	 echo ""
+	 ;;
+
+      [Nn])
+
+	 logNotice 'Undoing operation MAKE DIRECTORY.'
+	 logMessage 'rmdir $src'
+	 rmdir $src
+	 echo ""
+
+	 ;;
+
+      [Ss])
+	 ;;
+
+      [Xx])
+	 ;;
+
+      [Rr])
+	 ;;
+
+      [Dd])
+	 ;;
+
+      *)
+	 logError 'Unknown operation ${operation}, skipping.'
+	 echo ""
+	 ;;
+      esac
+
+   done
+
+   JASS_SCRIPT="${currentScript}"
+   logScriptFailure "error"   ${_error}
+   logScriptFailure "warning"    ${_warn}
+   logScriptFailure "note"    ${_notice}
+   logScriptFailure "failure" ${_failure}
+
+   CURRENT_SCRIPT=""
+
+   # Clear away reverse manifest file
+   #/bin/rm -f ${reverse_manifest}
+}

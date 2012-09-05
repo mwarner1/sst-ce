@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-rmmount-nosuid.fin 3.7     04/06/02     SMI"
+#
+# This script adds two entries into /etc/rmmount.conf in order
+# to disable the mounting of Set-UID files.  This is important
+# because someone with physical access to a system (to insert
+# a floppy or CD-ROM) could load Set-UID binaries thereby
+# compromising the system.
+#
+
+RMMOUNT=${JASS_ROOT_DIR}etc/rmmount.conf
+
+# Solaris 2.5.1 doesn't support these options and also mounts them nosuid by 
+# default so this isn't needed as well
+
+logMessage "Preventing remove media types from being mounted set-uid."
+echo ""
+
+if check_os_min_revision 5.6 ; then
+
+   if [ -f ${RMMOUNT} ]; then
+
+      needHsfs=0
+      needUfs=0
+
+      # Note: Solaris 8+ has these options enabled by default.  The following
+      # checks were adjusted to support Solaris 8+ so that duplicate 
+      # entries were not installed.
+
+      if [ `grep -c "mount.*hsfs.*-o.*nosuid" ${RMMOUNT}` = 0 ]; then
+         needHsfs=1
+      fi
+
+      if [ `grep -c -w "mount.*ufs.*-o.*nosuid" ${RMMOUNT}` = 0 ]; then
+         needUfs=1
+      fi
+  
+      if [ ${needHsfs} = 1 -o ${needUfs} = 1 ]; then
+         echo ""                                                     >> ${RMMOUNT}
+         echo "# Disable mounting removable filesystems with set-uid">> ${RMMOUNT}
+         echo ""                                                     >> ${RMMOUNT}
+
+         backup_file ${RMMOUNT}
+         echo ""
+
+         logMessage "Disabling removable media from being mounted set-uid."
+  
+         if [ ${needHsfs} = 1 ]; then
+            logMessage "Disabling HSFS removable media from being mounted set-uid."
+            echo "mount hsfs -o nosuid"                              >> ${RMMOUNT}
+         fi
+     
+         if [ ${needUfs} = 1 ]; then
+            logMessage "Disabling UFS removable media from being mounted set-uid."
+            echo "mount ufs -o nosuid"                               >> ${RMMOUNT}
+         fi
+  
+         echo ""                                                     >> ${RMMOUNT}
+  
+         chmod 444       ${RMMOUNT}
+         chown root:bin  ${RMMOUNT}
+      fi
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

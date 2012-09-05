@@ -1,0 +1,177 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-root-home-dir.aud	1.7	05/05/04 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Root Home Directory"
+servfil="set-root-home-dir.aud"
+
+ROOT_HOME_DIR="${JASS_ROOT_DIR}root"
+PASSWD="${JASS_ROOT_DIR}etc/passwd"
+CONFIG_FILES_TO_COPY="${JASS_ROOT_DIR}root/.cshrc ${JASS_ROOT_DIR}root/.profile"
+OLD_CONFIG_FILES_TO_COPY="${JASS_ROOT_DIR}.cshrc ${JASS_ROOT_DIR}.profile"
+CONFIG_FILES_TO_MOVE=".cshrc .login .logout .profile .rhosts .shosts"
+CONFIG_DIRS_TO_MOVE=".ssh"
+
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   A separate \"${JASS_ROOT_DIR}root\" directory from the file root
+   \"${JASS_ROOT_DIR}\" avoids a number of problems. Several \".*\" files
+   and directories are created over time, cluttering up the filesystem's root
+   directory.  The existence and sometimes contents of root account files are
+   viewable by non-privileged users.  Also, non-privileged users without a
+   home directories use \"${JASS_ROOT_DIR}\" as home.  This is supported
+   for Solaris 10.
+
+   The .profile and .cshrc files are copied to the root account home
+   directory if not present.
+
+Rationale for Verification Check:
+
+   This script will check to ensure a separate \"${JASS_ROOT_DIR}root\" home
+   directory for the root account exists separately from the filesystem root
+   directory \"${JASS_ROOT_DIR}\".  This check is made for Solaris 10 and
+   later.
+
+   Additionally, this script verifies file existence, ownership, permission,
+   and contents for the .profile and .cshrc files.
+
+Determination of Compliance:
+
+   For Solaris 10 and above, if JASS_ROOT_HOME_DIR is set to \"/root\",
+   this script returns a failure if \"${JASS_ROOT_DIR}root\" directory
+   does not exist or has incorrect ownership or permissions.
+
+   Additionally, this script returns a failure if the .profile or .cshrc
+   files are not present, have been modified, or have incorrect ownership
+   or permissions.
+"
+
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+#
+# JASS_ROOT_HOME_DIR is "/root" by default for Solaris 10+
+# For Solaris 9 and earlier JASS_ROOT_HOME_DIR is "/"
+#
+check_os_min_revision 5.10
+if [ $? -eq 0 -a "${JASS_ROOT_HOME_DIR}" = "/root" ] ; then
+
+   # Get and check current root home directory
+   root_passwd=`grep '^root:' "${PASSWD}" | tail -1 `
+   if [ ! -z "$root_passwd" ]; then
+      passwd_root_home_dir=`echo $root_passwd | nawk -F: '{print $6}' `
+
+      # Check only if the root directory is "/root" or "/"
+      if [ "$passwd_root_home_dir" = "/root" ] ; then
+
+         # Verify /root home directory is there
+         if [ ! -d "${ROOT_HOME_DIR}" ]; then
+           logFailure 'Home directory for the root account, ${ROOT_HOME_DIR}, does not exist.'
+           adjustScore 1
+         fi
+
+         # Verify contents
+         check_fileTemplate \
+            "${JASS_ROOT_DIR}root/.cshrc ${JASS_ROOT_DIR}root/.profile" 1 LOG
+
+         # Verify /root home directory permission and ownership
+         check_fileModeMatch  "${ROOT_HOME_DIR}" "0700" 1 LOG
+         check_fileOwnerMatch "${ROOT_HOME_DIR}" "root" 1 LOG
+         check_fileGroupMatch "${ROOT_HOME_DIR}" "root" 1 LOG
+
+         #
+         # Verify permission & ownership of selected /.* files & directories
+         #
+         for i in $CONFIG_FILES_TO_MOVE ; do
+            if [ -f "${ROOT_HOME_DIR}/${i}" ] ; then
+               check_fileModeMatch  "${ROOT_HOME_DIR}/${i}" "0700" 1 LOG
+               check_fileOwnerMatch "${ROOT_HOME_DIR}/${i}" "root" 1 LOG
+               check_fileGroupMatch "${ROOT_HOME_DIR}/${i}" "root" 1 LOG
+
+            elif [ -f "${JASS_ROOT_DIR}${i}" ] ; then
+               logFailure 'File ${i} not moved from \\\"$JASS_ROOT_DIR\\\" to \\\"$ROOT_HOME_DIR\\\".'
+               adjustScore 1
+            fi
+         done
+
+         for i in $CONFIG_DIRS_TO_MOVE ; do
+            if [ -d "${ROOT_HOME_DIR}/${i}" ] ; then
+               check_fileModeMatch  "${ROOT_HOME_DIR}/${i}" "0700" 1 LOG
+               check_fileOwnerMatch "${ROOT_HOME_DIR}/${i}" "root" 1 LOG
+               check_fileGroupMatch "${ROOT_HOME_DIR}/${i}" "root" 1 LOG
+
+            elif [ -d "${JASS_ROOT_DIR}${i}" ] ; then
+               logFailure 'Directory ${i} not moved from \\\"$JASS_ROOT_DIR\\\" to \\\"$ROOT_HOME_DIR\\\".'
+               adjustScore 1
+            fi
+         done
+
+
+      elif [ "$passwd_root_home_dir" = "/" ] ; then
+         logFailure 'Home directory for the root account is \\\"/\\\"; \\\"/root\\\" expected.'
+         adjustScore 1
+
+      else # root directory not "/" or "/home", log warning, not audit error
+         logWarning 'Home directory for the root account is ${passwd_root_home_dir}; \\\"/\\\" or \\\"/root\\\" expected.'
+      fi
+   else
+      logError 'Account root does not exist in ${PASSWD}.'
+   fi
+
+
+elif [ "${JASS_ROOT_HOME_DIR}" = "/" ] ; then
+
+   check_fileExists "${JASS_ROOT_DIR}.cshrc ${JASS_ROOT_DIR}.profile" 1 LOG
+
+   #
+   # Verify contents, permission, and ownership
+   #
+   check_fileTemplate  "${JASS_ROOT_DIR}.cshrc ${JASS_ROOT_DIR}.profile" 1 LOG
+   check_fileModeMatch  "${JASS_ROOT_DIR}.cshrc ${JASS_ROOT_DIR}.profile" \
+      "0700" 1 LOG
+   check_fileOwnerMatch "${JASS_ROOT_DIR}.cshrc ${JASS_ROOT_DIR}.profile" \
+      "root" 1 LOG
+   check_fileGroupMatch "${JASS_ROOT_DIR}.cshrc ${JASS_ROOT_DIR}.profile" \
+      "root" 1 LOG
+
+else
+   logFailure 'JASS_ROOT_HOME_DIR must be \\\"/root\\\" (Solaris 10 or above) or \\\"/\\\".'
+fi
+
+finish_audit

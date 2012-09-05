@@ -1,0 +1,1027 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)finish.init	3.39	05/07/18 SMI"
+#
+# This file contains all of the variable definitions used by any of the
+# default JASS Finish scripts.  These variables serve as the default values
+# that are used by the JASS Toolkit.  All of these values can be modified
+# using the "user.init" file.  Any variables that are defined in the
+# "user.init" file will not be replaced by this script.
+#
+# To augment these values (rather than replace them), this file can be
+# sourced by the "user.init" file and then the variables can be extended
+# in the normal shell fashion (i.e., VAR="${VAR} new_value").  Furthermore,
+# more complex functions can be included into "user.init" to provide
+# advanced filtering and assignment capabilities.
+
+# ============================================================================
+# Define the JASS Finish script specific variables.
+# ============================================================================
+
+# ============================================================================
+# JASS_KILL_SCRIPT_DISABLE
+#
+# This variable contains a boolean value that determines whether the "kill"
+# run control scripts (in a given Finish script) will be disabled.  Note
+# that the "start" run control scripts are always disabled.  Some
+# administrators prefer to have the "kill" scripts left in place so that
+# any services that may be started will be properly terminated during a
+# system shutdown/reboot.
+# ============================================================================
+
+if [ -z "${JASS_KILL_SCRIPT_DISABLE}" ]; then
+   JASS_KILL_SCRIPT_DISABLE="1"
+fi
+export JASS_KILL_SCRIPT_DISABLE
+
+# ============================================================================
+# JASS_PASSWD
+#
+# This variable contains a filename value that specifies the location of
+# the JumpStart client's password file.  This variable is used by many of
+# the variables below.
+# ============================================================================
+
+if [ -z "${JASS_PASSWD}" ]; then
+   JASS_PASSWD="${JASS_ROOT_DIR}etc/passwd"
+fi
+export JASS_PASSWD
+
+# ============================================================================
+# JASS_ACCT_DISABLE
+#
+# This variable contains a (possibly empty) list of users to be disabled
+# as part of the disable-system-accounts.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_ACCT_DISABLE}" ]; then
+   JASS_ACCT_DISABLE="
+      daemon bin adm lp uucp nuucp nobody smtp listen noaccess nobody4 smmsp"
+
+   # In addition, several new default accounts were created after Solaris 9.
+
+   case ${JASS_OS_REVISION} in
+      5.10)
+         JASS_ACCT_DISABLE="${JASS_ACCT_DISABLE} gdm webservd"
+         ;;
+   esac
+fi
+export JASS_ACCT_DISABLE
+
+# ============================================================================
+# JASS_ACCT_REMOVE
+#
+# This variable contains a (possibly empty) list of users to be removed
+# from the system as part of the remove-unneeded-accounts.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_ACCT_REMOVE}" ]; then
+   JASS_ACCT_REMOVE="smtp listen nobody4"
+fi
+export JASS_ACCT_REMOVE
+
+# ============================================================================
+# JASS_AGING_MINWEEKS
+#
+# This variable contains a numeric value specifying the minimum number
+# of weeks that must pass before a user can change their password.  This
+# variable is used in the set-user-password-reqs.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_AGING_MINWEEKS}" ]; then
+   JASS_AGING_MINWEEKS="1"
+fi
+export JASS_AGING_MINWEEKS
+
+# ============================================================================
+# JASS_AGING_MAXWEEKS
+#
+# This variable contains a numeric value specifying the maximum number
+# of weeks a password remains valid before it must be changed by the user.
+# This variable is used in the set-user-password-reqs.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_AGING_MAXWEEKS}" ]; then
+   JASS_AGING_MAXWEEKS="8"
+fi
+export JASS_AGING_MAXWEEKS
+
+# ============================================================================
+# JASS_AGING_WARNWEEKS
+#
+# This variable contains a numeric value specifying the number of weeks
+# before a password expiration that the user is warned.  This variable is
+# used in the set-user-password-reqs.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_AGING_WARNWEEKS}" ]; then
+   JASS_AGING_WARNWEEKS="1"
+fi
+export JASS_AGING_WARNWEEKS
+
+# ============================================================================
+# JASS_AT_ALLOW
+#
+# This variable contains a (possibly empty) list of users to be added to the
+# /etc/cron.d/at.allow file.  Note that a user will not be added to this file
+# if it already exists in /etc/cron.d/at.deny or if it does not exist in
+# ${JASS_PASSWD}.  This variable is used by the install-at-allow.fin
+# Finish script.
+# ============================================================================
+
+if [ -z "${JASS_AT_ALLOW}" ]; then
+   JASS_AT_ALLOW=""
+fi
+export JASS_AT_ALLOW
+
+# ============================================================================
+# JASS_AT_DENY
+#
+# This variable contains a (possibly empty) list of users to be added to
+# the /etc/cron.d/at.deny file.  Note that a user will not be added to this
+# file if it already exists in /etc/cron.d/at.allow or if it does not exist
+# in ${JASS_PASSWD}.  This variable is used by the update-at-deny.fin
+# Finish script.
+#
+# NOTE: If this variable definition is copied to the user.init the reference
+# to JASS_PASSWD must be removed as that will not yet be defined. If not
+# removed any use of this variable in finish or audit scripts will cause the
+# Toolkit to appear to hang as it will be waiting for input"
+# ============================================================================
+
+if [ -z "${JASS_AT_DENY}" ]; then
+   if [ ! -z "${JASS_PASSWD}" ]; then
+      JASS_AT_DENY="`nawk -F: '{ print $1 }' ${JASS_PASSWD}`"
+   else
+      echo "[ERR ] "`gettext "JASS_PASSWD must be defined before use."`
+      exit 1
+   fi
+fi
+export JASS_AT_DENY
+
+
+# ============================================================================
+# JASS_BANNER_DTLOGIN
+#
+# This variable contains a string value that is the file which contains
+# the dtlogin banner for CDE connections.
+# For more information, refer section discussing the BANNER variable in the
+# dtlogin(1M) manual page.  This variable is used by the
+# set-banner-dtlogin.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_BANNER_DTLOGIN}" ]; then
+   JASS_BANNER_DTLOGIN="/etc/motd"
+fi
+export JASS_BANNER_DTLOGIN
+
+# ============================================================================
+# JASS_BANNER_FTPD
+#
+# This variable contains a string value that will be used as a banner
+# displayed to a user prior to authenticating to this service.  For more
+# information, refer section discussing the BANNER variable in the
+# in.ftpd(1M) manual page.  This variable is used by the set-banner-ftpd.fin
+# Finish script.
+# ============================================================================
+
+if [ -z "${JASS_BANNER_FTPD}" ]; then
+   JASS_BANNER_FTPD="\"Authorized Use Only\""
+fi
+export JASS_BANNER_FTPD
+
+# ============================================================================
+# JASS_BANNER_TELNETD
+#
+# This variable contains a string value that will be used as a banner
+# displayed to a user prior to authenticating to this service.  For more
+# information, refer section discussing the BANNER variable in the
+# in.telnetd(1M) manual page.  This variable is used by the
+# set-banner-telnetd.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_BANNER_TELNETD}" ]; then
+   JASS_BANNER_TELNETD="\"Authorized Use Only\""
+fi
+export JASS_BANNER_TELNETD
+
+# ============================================================================
+# JASS_BANNER_SENDMAIL
+#
+# This variable contains a string value that will be used as a banner that
+# is displayed when a remote host connects to port 25.
+# For more information, refer to the sendmail(1M) manual page.
+# This variable is used by the set-banner-sendmail.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_BANNER_SENDMAIL}" ]; then
+   JASS_BANNER_SENDMAIL="Mail Server Ready"
+fi
+export JASS_BANNER_SENDMAIL
+
+# ============================================================================
+# JASS_BANNER_SSHD
+#
+# This variable contains a string for the banner file that ssh will
+# display on a successful login.
+# For more information, refer to the sshd(1M) manual page.
+# This variable is used by the set-banner-sshd.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_BANNER_SSHD}" ]; then
+   JASS_BANNER_SSHD="/etc/issue"
+fi
+export JASS_BANNER_SSHD
+
+# ============================================================================
+# JASS_CORE_PATTERN
+#
+# This variable contains the path and core dump file pattern for
+# coreadm.  This variable is used by the enable-coreadm.fin Finish
+# script.
+# ============================================================================
+
+if [ -z "${JASS_CORE_PATTERN}" ]; then
+   JASS_CORE_PATTERN="/var/core/core_%n_%f_%u_%g_%t_%p"
+fi
+export JASS_CORE_PATTERN
+
+# ============================================================================
+# JASS_CPR_MGT_USER
+#
+# This variable contains a string value that will be used to define
+# what user(s) will be permitted to perform checkpoint resume functions.
+# This default value for this variable is "-" which indicates that only
+# the 'root' account will be able to perform these management functions.
+# For more information, refer to the /etc/default/power file.  This
+# variable is used in the set-power-restrictions.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_CPR_MGT_USER}" ]; then
+   JASS_CPR_MGT_USER="-"
+fi
+export JASS_CPR_MGT_USER
+
+# ============================================================================
+# JASS_CRON_ALLOW
+#
+# This variable contains a (possibly empty) list of users to be added to the
+# /etc/cron.d/cron.allow file.  Note that a user will not be added to this
+# file if it already exists in /etc/cron.d/cron.deny or if it does not exist
+# in ${JASS_PASSWD}.  This variable is used by the update-cron-allow.fin
+# Finish script.
+# ============================================================================
+
+if [ -z "${JASS_CRON_ALLOW}" ]; then
+   JASS_CRON_ALLOW="root"
+fi
+export JASS_CRON_ALLOW
+
+# ============================================================================
+# JASS_CRON_DENY
+#
+# This variable contains a (possibly empty) list of users to be added to the
+# /etc/cron.d/cron.deny file.  Note that a user will not be added to this
+# file if it already exists in /etc/cron.d/cron.allow or if it does not exist
+# in ${JASS_PASSWD}.  This variable is used by the update-cron-allow.fin
+# Finish script.
+#
+# NOTE: If this variable definition is copied to the user.init the reference
+# to JASS_PASSWD must be removed as that will not yet be defined. If not
+# removed any use of this variable in finish or audit scripts will cause the
+# Toolkit to appear to hang as it will be waiting for input"
+# ============================================================================
+
+if [ -z "${JASS_CRON_DENY}" ]; then
+   if [ ! -z "${JASS_PASSWD}" ]; then
+      JASS_CRON_DENY="
+         `nawk -F: '($3 < 100) { print $1 }' ${JASS_PASSWD} | grep -vw root`
+         nobody noaccess nobody4"
+   else
+      echo "[ERR ] "`gettext "JASS_PASSWD must be defined before use."`
+      exit 1
+   fi
+fi
+export JASS_CRON_DENY
+
+# ============================================================================
+# JASS_CRON_LOG_SIZE
+#
+# This variable contains a numeric value representing the maximum size (in
+# blocks) of /var/cron/log file.  If the file exceeds this maximum limit,
+# it will be moved to /var/cron/olog as part of the /etc/cron.d/logchecker
+# script.  The default value for this script was 1024 (0.5MB).  This value
+# is changed to be 20480 (10.0MB).  This variable is used by the
+# update-cron-log-size.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_CRON_LOG_SIZE}" ]; then
+   JASS_CRON_LOG_SIZE="20480"
+fi
+export JASS_CRON_LOG_SIZE
+
+# ============================================================================
+# JASS_FILE_COPY_KEYWORD
+#
+# This variable contains the default keyword specific suffix for file copies.
+# This is used by copy_files() to pick up different files for different
+# drivers.
+# ============================================================================
+
+if [ -z "${JASS_FILE_COPY_KEYWORD}" ]; then
+   JASS_FILE_COPY_KEYWORD=""
+   _JASS_FILE_COPY_KEYWORD_DEF="1"
+   export _JASS_FILE_COPY_KEYWORD_DEF
+fi
+export JASS_FILE_COPY_KEYWORD
+
+# ============================================================================
+# JASS_CRYPT_ALGORITHMS_ALLOW
+#
+# This variable contains a list of ',' separated valid algorithms to be set
+# for CRYPT_ALGORITHMS_ALLOW in /etc/security/policy.conf.  Setting invalid
+# values will likely lead to a disabled system.
+# ============================================================================
+
+if [ -z "${JASS_CRYPT_ALGORITHMS_ALLOW}" ]; then
+ if [ -z ${JASS_OS_ORDINAL} ]; then
+  echo "ERROR: JASS_OS_ORDINAL not set!"
+ fi
+# 16 December 2011 Matt Warner
+# Solaris 11 has more and stronger algorithms allowed
+ if [ ${JASS_OS_ORDINAL} -gt "051000" ]; then
+   JASS_CRYPT_ALGORITHMS_ALLOW="1,2a,md5,5,6"
+ else
+   JASS_CRYPT_ALGORITHMS_ALLOW="1,2a,md5"
+ fi
+fi
+export JASS_CRYPT_ALGORITHMS_ALLOW
+
+# ============================================================================
+# JASS_CRYPT_DEFAULT
+#
+# This variable contains the default choice of encryption algorithm for local
+# user passwords, set via CRYPT_DEFAULT in
+# /etc/security/policy.conf.
+# ============================================================================
+
+if [ -z "${JASS_CRYPT_DEFAULT}" ]; then
+ # Solaris 11 allows up to SHA512. Use that as the default
+ if [ ${JASS_OS_ORDINAL} -gt "051000" ]; then
+   JASS_CRYPT_DEFAULT="6"
+ else
+   JASS_CRYPT_DEFAULT="1"
+ fi
+fi
+export JASS_CRYPT_DEFAULT
+
+# ============================================================================
+# JASS_CRYPT_ALGORITHMS_FORCE_EXPIRE
+#
+# If this variable is set to "1", all local users will have their passwords
+# expired upon running the set-flex-crypt.fin finish script. This will force
+# them to use the new encryption algorithm. It should be set to a non-1
+# value to not expire passwords.
+# ============================================================================
+
+if [ -z "${JASS_CRYPT_FORCE_EXPIRE}" ]; then
+   JASS_CRYPT_FORCE_EXPIRE="1"
+   _JASS_CRYPT_FORCE_EXPIRE_DEF="1"
+   export _JASS_CRYPT_FORCE_EXPIRE_DEF
+fi
+export JASS_CRYPT_FORCE_EXPIRE
+
+# ============================================================================
+# JASS_FIXMODES_DIR
+#
+# This variable contains the path name where the Fix Modes program, if
+# found will be installed by the install-fix-modes.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_FIXMODES_DIR}" ]; then
+   JASS_FIXMODES_DIR="/opt"
+fi
+export JASS_FIXMODES_DIR
+
+# ============================================================================
+# JASS_FIXMODES_OPTIONS
+#
+# This variable contains a (possibly empty) list of options to be passed to
+# the Fix Modes program upon execution by the install-fix-modes.fin Finish
+# script.
+# ============================================================================
+
+if [ -z "${JASS_FIXMODES_OPTIONS}" ]; then
+   JASS_FIXMODES_OPTIONS=""
+fi
+export JASS_FIXMODES_OPTIONS
+
+# ============================================================================
+# JASS_MD5_DIR
+#
+# This variable contains the path name where the MD5 executables, if
+# found will be installed by the install-md5.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_MD5_DIR}" ]; then
+   JASS_MD5_DIR="/opt"
+fi
+export JASS_MD5_DIR
+
+# ============================================================================
+# JASS_FTPUSERS
+#
+# This variable contains a (possibly empty) list of users to be added to the
+# /etc/ftpusers file.  This variable is used by the install-ftpusers.fin
+# Finish script.
+#
+# NOTE: If this variable definition is copied to the user.init the reference
+# to JASS_PASSWD must be removed as that will not yet be defined. If not
+# removed any use of this variable in finish or audit scripts will cause the
+# Toolkit to appear to hang as it will be waiting for input"
+# ============================================================================
+
+if [ -z "${JASS_FTPUSERS}" ]; then
+   if [ ! -z "${JASS_PASSWD}" ]; then
+      JASS_FTPUSERS="
+         `nawk -F: '($3 < 100) { print $1 }' ${JASS_PASSWD}`
+         nobody noaccess nobody4"
+   else
+      echo "[ERR ] "`gettext "JASS_PASSWD must be defined before use."`
+      exit 1
+   fi
+fi
+export JASS_FTPUSERS
+
+# ============================================================================
+# JASS_FTPD_UMASK
+#
+# This variable contains a numeric (octal) value to be used for the
+# default file creation mask used by the in.ftpd(1M) daemon.  This
+# variable is used in the set-ftpd-umask.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_FTPD_UMASK}" ]; then
+   JASS_FTPD_UMASK="022"
+fi
+export JASS_FTPD_UMASK
+
+# ============================================================================
+# JASS_LOGIN_RETRIES
+#
+# This variable contains a numeric value specifying the number of
+# consecutive failed logins that can occur for a user before the
+# login process logs the failure and terminates the connection.
+# This variable is used in the set-login-retries.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_LOGIN_RETRIES}" ]; then
+   JASS_LOGIN_RETRIES="3"
+fi
+export JASS_LOGIN_RETRIES
+
+# ============================================================================
+# JASS_PASS_HISTORY
+#
+# This variable contains a numeric value specifying the number of
+# previous passwords kept by the system and checked against when a local user
+# changes their password.  If a match is found, passwd will exit and not
+# change the password.
+# This variable is used in the enable-password-history.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_HISTORY}" ]; then
+   JASS_PASS_HISTORY="10"
+   _JASS_PASS_HISTORY_DEF="1"
+   export _JASS_PASS_HISTORY_DEF
+fi
+export JASS_PASS_HISTORY
+
+# ============================================================================
+# JASS_PASS_DICTIONLIST
+#
+# This variable contains a string comma separated value specifying the
+# location of dictionaries used to check user passwords.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_DICTIONLIST}" ]; then
+   JASS_PASS_DICTIONLIST="/usr/share/lib/dict/words"
+fi
+export JASS_PASS_DICTIONLIST
+
+# ============================================================================
+# JASS_PASS_DICTIONDBDIR
+#
+# This variable contains a string value specifying the
+# location of a directory where the generated dictionaries used to check
+# user passwords reside.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_DICTIONDBDIR}" ]; then
+   JASS_PASS_DICTIONDBDIR="/var/passwd"
+fi
+export JASS_PASS_DICTIONDBDIR
+
+
+# ============================================================================
+# JASS_PASS_LENGTH
+#
+# This variable contains a numeric value specifying the minimum length
+# of a user's password.  The current range is between 1 and 8.  This
+# variable is used in the set-user-password-reqs.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_LENGTH}" ]; then
+   JASS_PASS_LENGTH="8"
+fi
+export JASS_PASS_LENGTH
+
+# ============================================================================
+# JASS_PASS_MAXREPEATS
+#
+# This variable contains a numeric value specifying the maximum number
+# of consecutive repeating characters in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_MAXREPEATS}" ]; then
+   JASS_PASS_MAXREPEATS="1"
+   _JASS_PASS_MAXREPEATS_DEF="1"
+   export _JASS_PASS_MAXREPEATS_DEF
+fi
+export JASS_PASS_MAXREPEATS
+
+
+# ============================================================================
+# JASS_PASS_MINALPHA
+#
+# This variable contains a numeric value specifying the minimum number
+# of a alphabetic characters in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_MINALPHA}" ]; then
+   JASS_PASS_MINALPHA="4"
+   _JASS_PASS_MINALPHA_DEF="1"
+   export _JASS_PASS_MINALPHA_DEF
+fi
+export JASS_PASS_MINALPHA
+
+# ============================================================================
+# JASS_PASS_MINDIFF
+#
+# This variable contains a numeric value specifying the minimum number
+# of a different characters in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_MINDIFF}" ]; then
+   JASS_PASS_MINDIFF="7"
+   _JASS_PASS_MINDIFF_DEF="1"
+   export _JASS_PASS_MINDIFF_DEF
+fi
+export JASS_PASS_MINDIFF
+
+
+# ============================================================================
+# JASS_PASS_MINDIGIT
+#
+# This variable contains a numeric value specifying the minimum number
+# of a digits in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_MINDIGIT}" ]; then
+   JASS_PASS_MINDIGIT="1"
+fi
+export JASS_PASS_MINDIGIT
+
+# ============================================================================
+# JASS_PASS_MINLOWER
+#
+# This variable contains a numeric value specifying the minimum number
+# of a lowercase characters in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_MINLOWER}" ]; then
+   JASS_PASS_MINLOWER="2"
+fi
+export JASS_PASS_MINLOWER
+
+# ============================================================================
+# JASS_PASS_MINNONALPHA
+#
+# This variable contains a numeric value specifying the minimum number
+# of a lowercase characters in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+# MINNONALPHA is not set by default, SPECIAL and DIGIT are used instead
+
+# ============================================================================
+# JASS_PASS_MINSPECIAL
+#
+# This variable contains a numeric value specifying the minimum number
+# of a special (non-alpha, non-digit) characters in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_MINSPECIAL}" ]; then
+   JASS_PASS_MINSPECIAL="1"
+fi
+export JASS_PASS_MINSPECIAL
+
+# ============================================================================
+# JASS_PASS_MINUPPER
+#
+# This variable contains a numeric value specifying the minimum number
+# of a uppercase characters in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_MINUPPER}" ]; then
+   JASS_PASS_MINUPPER="2"
+fi
+export JASS_PASS_MINUPPER
+
+# ============================================================================
+# JASS_PASS_NAMECHECK
+#
+# This variable contains a YES/NO value for whether or not a user's password
+# is checked against their login name. This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_NAMECHECK}" ]; then
+   JASS_PASS_NAMECHECK="YES"
+fi
+export JASS_PASS_NAMECHECK
+
+
+# ============================================================================
+# JASS_PASS_WHITESPACE
+#
+# This variable contains a YES/NO value for whether or not whitespace
+# characters are allowed in a user's password.  This
+# variable is used in the set-strict-password-checks.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_PASS_WHITESPACE}" ]; then
+   JASS_PASS_WHITESPACE="YES"
+fi
+export JASS_PASS_WHITESPACE
+
+
+# ============================================================================
+# JASS_POWER_MGT_USER
+#
+# This variable contains a string value that will be used to define
+# what user(s) will be permitted to perform power management functions.
+# This default value for this variable is "-" which indicates that only
+# the 'root' account will be able to perform power management functions.
+# For more information, refer to the /etc/default/power file.  This variable
+# is used in the set-power-restrictions.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_POWER_MGT_USER}" ]; then
+   JASS_POWER_MGT_USER="-"
+fi
+export JASS_POWER_MGT_USER
+
+# ============================================================================
+# JASS_REC_PATCH_OPTIONS
+#
+# This variable contains a string value that specifies options to be
+# passed to the patchadd/installpatch command when installing the
+# Solaris Recommended/Security Patch Cluster.  The default is to pass
+# no arguments.  For information on the available options, refer to the
+# patchadd(1M) manual page or the installpatch program code.  This variable
+# is used by the install-recommended-patches.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_REC_PATCH_OPTIONS}" ]; then
+   JASS_REC_PATCH_OPTIONS=""
+fi
+export JASS_REC_PATCH_OPTIONS
+
+# ============================================================================
+# JASS_RHOSTS_FILE
+#
+# This variable contains a filename value that specifies the location where
+# the print-rhosts.fin Finish script will store its output.  If no value is
+# specified, then the script will print its output to "standard output".
+# ============================================================================
+
+if [ -z "${JASS_RHOSTS_FILE}" ]; then
+   JASS_RHOSTS_FILE=""
+fi
+export JASS_RHOSTS_FILE
+
+# ============================================================================
+# JASS_ROOT_GROUP
+#
+# This variable contains a numeric value that will be used as root's
+# primary group identifier value.  By default, this value is set to
+# "0" (root).  This will override the OS shipped default value of "1"
+# (other).  This variable is used in the set-root-group.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_ROOT_GROUP}" ]; then
+   JASS_ROOT_GROUP="0"
+fi
+export JASS_ROOT_GROUP
+
+# ============================================================================
+# JASS_ROOT_PASSWORD
+#
+# This variable contains a string value that will be used as root's
+# encrypted password by the set-root-password.fin Finish script.  Note that
+# this script will only operate when the system is running from miniroot
+# during a JumpStart installation to prevent root's password from being
+# accidentally overwritten.  From more information on this default password,
+# refer to the JASS documentation.
+# ============================================================================
+
+if [ -z "${JASS_ROOT_PASSWORD}" ]; then
+   JASS_ROOT_PASSWORD="JdqZ5HrSDYM.o"
+fi
+export JASS_ROOT_PASSWORD
+
+# ============================================================================
+# JASS_SADMIND_OPTIONS
+#
+# This variable contains a string value that specifies the options that
+# will be used with the "sadmind" daemon that is executed from the "inetd"
+# process.  By default, a value of "-S 2" is used to enable strong
+# authentication (AUTH_DES) when communicating with clients.  This variable
+# is used in the install-sadmind-options.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_SADMIND_OPTIONS}" ]; then
+   JASS_SADMIND_OPTIONS="-S 2"
+fi
+export JASS_SADMIND_OPTIONS
+
+# ============================================================================
+# JASS_SENDMAIL_MODE
+#
+# This variable contains a string value that specifies the options that
+# will be used by /usr/lib/sendmail for its mode.  For example, if the
+# daemon should accept incoming SMTP connections, then the string "-bd"
+# should be used.  If the daemon should only perform queue processing, then
+# the empty string ("") should be used.  This variable is used in the
+# disable-sendmail.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_SENDMAIL_MODE}" ]; then
+   JASS_SENDMAIL_MODE="\"\""
+fi
+export JASS_SENDMAIL_MODE
+
+# ============================================================================
+# JASS_SGID_FILE
+#
+# This variable contains a filename value that specifies the location where
+# the print-sgid-files.fin Finish script will store its output.  If no value
+# is specified, then the script will print its output to "standard output".
+# ============================================================================
+
+if [ -z "${JASS_SGID_FILE}" ]; then
+   JASS_SGID_FILE=""
+fi
+export JASS_SGID_FILE
+
+# ============================================================================
+# JASS_SHELLS
+#
+# This variable contains a list of shells to be added to the /etc/shells
+# file.  The default shells for each version of the Solaris Operating
+# System are included below.  This variable is used by the
+# install-shells.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_SHELLS}" ]; then
+
+   # These shells are by default found in Solaris 2.5.1 to Solaris 7
+
+   JASS_SHELLS="
+      /usr/bin/sh     /usr/bin/csh     /usr/bin/ksh
+      /usr/bin/jsh    /bin/sh          /bin/csh
+      /bin/ksh        /bin/jsh         /sbin/sh
+      /sbin/jsh"
+
+   # This is to handle special cases by OE.
+
+   case ${JASS_OS_REVISION} in
+      5.8 | 5.9 | 5.10)
+         JASS_SHELLS="${JASS_SHELLS}
+            /bin/bash       /bin/pfcsh       /bin/pfksh
+            /bin/pfsh       /bin/tcsh        /bin/zsh
+            /usr/bin/bash   /usr/bin/pfcsh   /usr/bin/pfksh
+            /usr/bin/pfsh   /usr/bin/tcsh    /usr/bin/zsh"
+      ;;
+   esac
+fi
+export JASS_SHELLS
+
+# ============================================================================
+# JASS_SUID_FILE
+#
+# This variable contains a filename value that specifies the location where
+# the print-suid-files.fin Finish script will store its output.  If no value
+# is specified, then the script will print its output to "standard output".
+# ============================================================================
+
+if [ -z "${JASS_SUID_FILE}" ]; then
+   JASS_SUID_FILE=""
+fi
+export JASS_SUID_FILE
+
+# ============================================================================
+# JASS_SUSPEND_PERMS
+#
+# This variable contains a string value that will be used to define
+# what user(s) will be permitted to perform system suspend/resume functions.
+# This default value for this variable is "-" which indicates that only
+# the 'root' account will be able to perform these management functions.
+# For more information, refer to the /etc/default/sys-suspend file.  This
+# variable is used in the set-sys-suspend-restrictions.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_SUSPEND_PERMS}" ]; then
+   JASS_SUSPEND_PERMS="-"
+fi
+export JASS_SUSPEND_PERMS
+
+# ============================================================================
+# JASS_SVCS_DISABLE
+#
+# This variable contains a (possibly empty) list of services (from smf(5) or
+# the /etc/inet/inetd.conf file) to be disabled as part of the
+# update-inetd-conf.fin Finish script.  FMRI entries will be ignored on
+# releases prior to Solaris 10
+#
+# Baseline from Solaris 2.5.1:
+#    100068,  100083,  100221,  100232,  chargen, comsat, daytime,
+#    discard, discard, echo,    exec,    finger,  fs,     ftp,
+#    login,   name,    netstat, rexd,    rquotad, rstatd, rusersd,
+#    shell,   sprayd,  systat,  talk,    telnet,  tftp,   time,
+#    ufsd,    uucp,    walld
+# Added in Solaris 2.6:
+#    100235,  dtspc,   kerbd,   printer, xaudio
+# Added in Solaris 7:
+#    100234
+# Added in Solaris 8:
+#    100134, 100146, 100147, 100150, sun-dr
+# Added in Solaris 9:
+#    100155
+# Added in Solaris 10:
+#    100166, 100424, 100422
+# Baseline from Solaris 10 smf:
+# svc:/network/telnet:default   svc:/network/ftp:default
+# svc:/network/finger:default   svc:/network/fs/tpc6:default
+# svc:/network/login:rlogin     svc:/network/shell:default
+# svc:/network/fs/tpc6:default  svc:/network/shell:kshell
+# svc:/network/login:eklogin    svc:/network/login:klogin
+# svc:/network/shell:kshell     svc:/application/font/stfsloader:default
+# svc:/network/security/ktkt_warn:default
+# svc:/network/rpc-100083_1/rpc_tcp:default
+# svc:/network/rpc-100235_1/rpc_ticotsord:default
+# svc:/network/rpc-100422_1/rpc_tcp:default
+# svc:/network/rpc/smserver:default
+# svc:/network/rpc/rstat:default
+# svc:/network/rpc/rusers:default
+# svc:/network/rpc/rquota:default
+# svc:/network/rpc/gss:default
+#
+# From Solaris 11:
+# svc:/system/rad:local
+# ============================================================================
+
+if [ -z "${JASS_SVCS_DISABLE}" ]; then
+   JASS_SVCS_DISABLE="
+      100068  100083    100087  100134  100146  100147
+      100150  100155    100166  100221  100229  100230
+      100232  100234    100235  100242  100422  100424  300326
+      536870916 chargen comsat  daytime discard dtspc
+      echo    exec      finger  fs      ftp
+      kerbd   login     name    netstat
+      printer rexd      rquotad rstatd  rusersd rwalld
+      shell   smtp      sprayd  sun-dr  systat  talk
+      telnet  tftp      time    ufsd    uucp    walld
+      xaudio
+      svc:/network/telnet:default  svc:/network/ftp:default
+      svc:/network/finger:default  svc:/network/fs/tpc6:default
+      svc:/network/login:rlogin    svc:/network/shell:default
+      svc:/network/login:eklogin   svc:/network/login:klogin
+      svc:/network/shell:kshell
+      svc:/application/font/stfsloader:default
+      svc:/network/security/ktkt_warn:default
+      svc:/network/rpc-100235_1/rpc_ticotsord:default
+      svc:/network/rpc/smserver:default
+      svc:/network/rpc/rstat:default
+      svc:/network/rpc/rusers:default
+      svc:/network/nfs/rquota:default
+      svc:/network/rpc/gss:default
+      svc:/network/rpc-100068_2-5/rpc_udp:default
+      svc:/network/rpc-100083_1/rpc_tcp:default
+      svc:/system/rad:local
+      svc:/network/rpc-100422_1/rpc_tcp:default"
+fi
+export JASS_SVCS_DISABLE
+
+# ============================================================================
+# JASS_SVCS_ENABLE
+#
+# This variable contains a (possibly empty) list of services (from smf(5) or
+# the /etc/inet/inetd.conf file) to be enabled as part of the
+# update-inetd-conf.fin Finish script.  FMRI entries will be ignored on
+# releases prior to Solaris 10
+# ============================================================================
+
+if [ -z "${JASS_SVCS_ENABLE}" ]; then
+   JASS_SVCS_ENABLE=""
+fi
+export JASS_SVCS_ENABLE
+
+# ============================================================================
+# JASS_TMPFS_SIZE
+#
+# This variable contains a string value representing the amount of space
+# to be allocated to the /tmp (tmpfs) filesystem.  This value should be
+# set to be large enough to handle your current /tmp needs.  This variable
+# is used in the set-tmpfs-limit.fin Finish script.
+# ============================================================================
+
+if [ -z "${JASS_TMPFS_SIZE}" ]; then
+   JASS_TMPFS_SIZE="512m"
+fi
+export JASS_TMPFS_SIZE
+
+# ============================================================================
+# JASS_UMASK
+#
+# This variable contains a numeric (octal) value to be used for both the
+# system and user default file creation masks.  This variable is used in
+# the set-system-umask.fin and set-user-umask.fin Finish scripts.
+# ============================================================================
+
+if [ -z "${JASS_UMASK}" ]; then
+   JASS_UMASK="022"
+fi
+export JASS_UMASK
+
+# ============================================================================
+# JASS_UNOWNED_FILE
+#
+# This variable contains a filename value that specifies the location where
+# the print-unowned-objects.fin Finish script will store its output.  If no
+# value is specified, then the script will print its output to
+# "standard output".
+# ============================================================================
+
+if [ -z "${JASS_UNOWNED_FILE}" ]; then
+   JASS_UNOWNED_FILE=""
+fi
+export JASS_UNOWNED_FILE
+
+# ============================================================================
+# JASS_WRITABLE_FILE
+#
+# This variable contains a filename value that specifies the location where
+# the print-world-writable-objects.fin Finish script will store its output.
+# If no value is specified, then the script will print its output to
+# "standard output".
+# ============================================================================
+
+if [ -z "${JASS_WRITABLE_FILE}" ]; then
+   JASS_WRITABLE_FILE=""
+fi
+export JASS_WRITABLE_FILE
+
+#-----------------------------------------------------------------------------

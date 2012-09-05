@@ -1,0 +1,153 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)update-cron-log-size.fin	3.12	05/04/12 SMI"
+#
+# This purpose of this script is to adjust the maximum size limit to be used
+# for the storage of cron log information.  In Solaris 9, this is done by
+# adjusting the value of the "-s" parameter in the /etc/logadm.conf (for the
+# /var/cron/log entry).  Prior to Solaris 9, this is done by adjusting the
+# LIMIT variable in the /etc/cron.d/logchecker script.
+#
+DEFAULT_SOLARIS_CRON_LOG_SIZE="512k" # includes "k" at end
+
+logMessage "Setting maximum size limits for the CRON facility log file."
+echo ""
+
+if check_os_min_revision 5.6 ; then
+   if check_os_min_revision 5.9 ; then
+      LOGADM="${JASS_ROOT_DIR}etc/logadm.conf"
+      LOGADMTMP="${JASS_REPOSITORY}/logadm.conf.$$"
+      newSize="`expr ${JASS_CRON_LOG_SIZE} / 2`"
+
+      if [ -f ${LOGADM} ]; then
+         if egrep -s "^/var/cron/log.*-s ${newSize}k" \
+            ${LOGADM} 2>/dev/null; then
+            : # The change has already been applied.
+
+         else # set maximum log size
+
+            # Save size (after -s) or use initial Solaris default, if none:
+            oldSize=`grep -s '^/var/cron/log.*-s' ${LOGADM} 2>/dev/null \
+               | tail -1 | sed 's/^.*-s[ 	]*//g' | nawk '{print $1;}'`
+            if [ -z "${oldSize}" ] ; then
+               oldSize="$DEFAULT_SOLARIS_CRON_LOG_SIZE"
+            fi
+	
+            # Can't use backup_file as /etc/init.d/acct modifies logadm.conf
+            # each time it is started (it adds -P datestamp to /var/adm/pacct).
+            # Instead restore old value in manifest file below
+            #backup_file ${LOGADM}; echo ""
+
+            # Create a temporary file to hold logadm.conf modifications
+            rm -rf ${LOGADMTMP}
+            if cat /dev/null > ${LOGADMTMP} ; then
+               chmod go-wx ${LOGADMTMP}
+	
+               logMessage 'Setting the maximum size of the CRON facility log to
+${newSize}k in ${LOGADM}.'
+
+               cat ${LOGADM} |\
+                  nawk ' $1 ~ /^\/var\/cron\/log/ {
+                     n = split($0, a);
+                     newl = a[1];
+                     endl = "";
+                     found_s = 0;
+                     for (i = 2; i <= n; i++) {
+                       endl = endl" "a[i];
+                       if (a[i] ~ /\-s/) {
+                         endl = endl" "value"k";
+                         found_s = 1;
+                         i++;
+                       }
+                     }
+                     if (found_s == 0) {
+                        newl = newl" -s "value"k";
+                     }
+                     newl = newl" "endl;
+                     printf("%s\n", newl);
+                     continue;
+                  } { print $0 }' value="${newSize}" > ${LOGADMTMP}
+
+               if [ -s "${LOGADMTMP}" ] ; then # file modified OK--copy it
+                  cat ${LOGADMTMP} >${LOGADM}
+                  rm -f ${LOGADMTMP}
+
+                  # Restore "-s $oldSize" for undo:
+                  add_to_manifest X "/usr/bin/rm -rf ${LOGADMTMP}; \
+/usr/bin/cp ${LOGADM} ${LOGADMTMP}; \
+/usr/bin/sed '/^.var.cron.log/s/-s[ 	]*${newSize}k/-s ${oldSize}/' ${LOGADMTMP} >${LOGADM}; \
+/usr/bin/rm -f ${LOGADMTMP}"
+
+               else
+                  logError 'Unable to create temporary file ${LOGADMTMP}.'
+               fi
+            else
+               logError 'Unable to create temporary file ${LOGADMTMP}.'
+            fi
+         fi
+      else
+         logFileNotFound "${LOGADM}"
+      fi
+
+   else # Solaris 6, 7, or 8
+      LOGCHECKER="${JASS_ROOT_DIR}etc/cron.d/logchecker"
+      if [ -f ${LOGCHECKER} ]; then
+         if egrep -s "LIMIT=${JASS_CRON_LOG_SIZE}" ${LOGCHECKER} \
+            2>/dev/null ; then
+            : # The change has already been applied.
+         else
+            backup_file ${LOGCHECKER}
+            echo ""
+
+            logMessage 'Setting the maximum size of the CRON facility log to
+${JASS_CRON_LOG_SIZE} in ${LOGCHECKER}.'
+
+            # Note that this command should also remove the comment following
+            # the default value since it would now be out of date.  So, for
+            # example:
+            #    LIMIT=1024     # better than nothing: 0.5MB file
+            # would become
+            #    LIMIT=20480
+            #
+            # This code also adjusts the if/fi check to make sure the sizes
+            # are in agreement.
+
+            cat ${LOGCHECKER}.${JASS_SUFFIX} |\
+               sed "s/LIMIT=[0-9][0-9]*.*$/LIMIT=${JASS_CRON_LOG_SIZE}/g" |\
+               sed "s/-gt [0-9][0-9]*/-gt ${JASS_CRON_LOG_SIZE}/g" > \
+               ${LOGCHECKER}
+
+            chmod 555      ${LOGCHECKER}
+            chown root:bin ${LOGCHECKER}
+         fi
+      else
+         logFileNotFound "${LOGCHECKER}"
+      fi
+   fi
+
+else
+   logInvalidOSRevision "5.6+"
+fi

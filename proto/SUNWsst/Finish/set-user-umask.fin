@@ -1,0 +1,124 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-user-umask.fin	3.16	05/06/30 SMI"
+#
+# This programs sets the default file creation mask (umask) to the value
+# defined by JASS_UMASK for the startup files for users in /etc and
+# /etc/skel as appropriate.  This script also sets the UMASK parameter
+# in /etc/default/login to the value of JASS_UMASK as well.
+#
+
+USERFILES="
+   ${JASS_ROOT_DIR}etc/.login
+   ${JASS_ROOT_DIR}etc/profile
+   ${JASS_ROOT_DIR}etc/skel/local.cshrc
+   ${JASS_ROOT_DIR}etc/skel/local.login
+   ${JASS_ROOT_DIR}etc/skel/local.profile
+   ${JASS_ROOT_DIR}etc/default/login
+"
+
+logMessage "Configuring default file creation mask parameters for users."
+echo ""
+
+for userfile in ${USERFILES}; do
+
+   # If the file was not found, then create it.
+
+   if [ ! -f ${userfile} ]; then
+      create_a_file -m 640 -o root:sys ${userfile}
+      echo ""
+   fi
+
+   # Determine if we are dealing with /etc/default/login.  This is
+   # a special case since its parameter is different than the others.
+
+   if [ "${userfile}" = "${JASS_ROOT_DIR}etc/default/login" ]; then
+
+      if [ `grep -c "^UMASK=${JASS_UMASK}" ${userfile}` = 0 ]; then
+
+         backup_file ${userfile}
+         echo ""
+
+         logMessage 'Setting umask (UMASK) value to ${JASS_UMASK} in ${userfile}.'
+
+         # Enable the UMASK parameter and set its value to ${JASS_UMASK}.
+         # NOTE that the UMASK value is explicitly set in the
+         # following sed statement as I couldn't figure out how
+         # to get it to expand the environment variable
+
+         cat ${userfile}.${JASS_SUFFIX} |\
+            sed 's/#.*UMASK=/UMASK=/g' |\
+            sed "s/^UMASK=.*$/UMASK=${JASS_UMASK}/g" > ${userfile}
+
+         # The following case is needed if the UMASK line was not
+         # found in the file.
+
+         if [ "`grep -c '^UMASK=' ${userfile}`" = 0 ] ; then
+            echo "UMASK=${JASS_UMASK}" >> ${userfile}
+         fi
+      fi
+
+   else # all files except /etc/default/login
+
+      # Change "umask ${JASS_UMASK}" in file ${userfile}
+      # Note if not present (excluding comment lines), add the
+      # "umask" definition to the beginning of the file.
+
+      if [ "`grep -c \"umask ${JASS_UMASK}\" ${userfile}`" = 0 ] ; then
+
+	 # /etc/skel backup files need to be moved, so they don't pollute
+         # new accounts
+	 skel_file=`echo "${userfile}" | grep -c "/skel/"`
+	 if [ "${skel_file}" = "1" ]; then
+	    backup_file_in_safe_directory ${userfile}
+	 else
+	    backup_file ${userfile}
+	 fi
+	 
+         echo ""
+
+         logMessage 'Setting umask (UMASK) value to ${JASS_UMASK} in ${userfile}.'
+
+	 # To avoid races, we need to save a copy of the file
+	 create_file_timestamp ${userfile}
+	 cp ${userfile} ${userfile}.${JASS_SUFFIX}
+
+	 # Add a umask line to the beginning, if it's not in the file
+         # (excluding comment lines):
+         if [ "`grep -c '[ 	]*umask' ${userfile} 2>/dev/null`" = 0 ] ; then
+            echo "umask ${JASS_UMASK}" > ${userfile}
+         else
+            cat /dev/null  > ${userfile}
+         fi
+
+	 cat ${userfile}.${JASS_SUFFIX} | \
+	    sed "s/umask.*$/umask ${JASS_UMASK}/" >> ${userfile}
+
+	 rm ${userfile}.${JASS_SUFFIX}
+
+      fi
+   fi
+done

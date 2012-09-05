@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)install-local-syslog.aud		1.1	06/12/21 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Minimal local syslog configuration"
+servfil="install-local-syslog.aud"
+
+SYSLOG=${JASS_ROOT_DIR}etc/syslog.conf
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   Syslog is an important part of system configuration, allowing proper
+   notification of system events to be handled.  This script sets some
+   minimal parameters for a local syslog configuration.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the syslog.conf file does
+   not have every line in the syslog.conf file template.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+changed=0
+if check_fileExists "${SYSLOG}" 1; then
+   MYSYSLOG=`get_expanded_file_name ${SYSLOG}`
+   check_file_for_contents ${SYSLOG} < ${MYSYSLOG}
+   changed=$?
+
+   if [ ${changed} -eq 1 ]; then
+      logFailure "${SYSLOG} was missing lines from the file template" 
+      adjustScore 1
+   else
+      logSuccess "${SYSLOG} contained all lines from the file template"
+   fi
+else
+   logFailure "${SYSLOG} file is not present"
+fi
+
+finish_audit

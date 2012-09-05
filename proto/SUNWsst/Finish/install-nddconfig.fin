@@ -1,0 +1,117 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-nddconfig.fin 1.3     05/01/26     SMI"
+#
+# This script installs the "nddconfig" file that is used to set
+# various networking parameters to more secure values based on
+# the Sun BluePrint article "Solaris OE Network Settings for
+# Security".  
+
+# $1 = prop name
+# $2 = protocol
+# $3 = value to append
+append_value() {
+ echo "Appending $3 to $CURR_VAL for $2 $1"
+ echo ipadm set-prop -p $1+="$3" $2
+ ipadm set-prop -p $1+="$3" $2
+}
+
+# overwrite values
+# $1 = prop name
+# $2 = protocol
+# $3 = value to set
+set_value() {
+ echo "setting $1 to $3 for $2"
+ echo ipadm set-prop -p $1="$3" $2
+ ipadm set-prop -p $1="$3" $2
+}
+
+# eliminate all values
+# $1 = prop name
+# $2 = protocol
+eliminate_values() {
+ # First set a bogus value
+ # and then delete it
+ # this might not work for all protocol/property combinations...
+ echo "Attempting to set value of 1 for property $1 protocol $2"
+ ipadm set-prop -p $1="1" $2
+ # Now subtract out the value we just set
+ echo "Attempting to subtract out the 1 for property $1 protocol $2"
+ ipadm set-prop -p $1-="1" $2
+}
+
+
+if check_os_min_revision 5.11; then
+ logMessage "Configuring network tunables"
+ if [ "${JASS_STANDALONE}" = "1" ]; then
+   # First ndd settings
+   append_value extra_priv_ports tcp 6112
+   eliminate_values extra_priv_ports udp 
+   set_value _forward_directed_broadcasts ip 0
+   set_value _rev_src_routes tcp 0
+   set_value _conn_req_max_q0 tcp 4096
+   set_value _conn_req_max_q tcp 1024
+   set_value smallest_anon_port tcp 32768
+   set_value smallest_anon_port udp 32768
+   set_value largest_anon_port tcp 65535
+   set_value largest_anon_port udp 65535
+   set_value smallest_nonpriv_port tcp 1024
+   set_value smallest_nonpriv_port udp 1024
+   set_value _respond_to_echo_broadcast ip 0
+   set_value _respond_to_echo_multicast ipv4 0
+   set_value _respond_to_echo_multicast ipv6 0
+   set_value _respond_to_timestamp ip 0
+   set_value _respond_to_timestamp_broadcast ip 0
+   set_value _respond_to_address_mask_broadcast ip 0
+   set_value _ignore_redirect ipv4 0
+   set_value _ignore_redirect ipv6 0
+   set_value _forward_src_routed ipv4 0
+   set_value _forward_src_routed ipv6 0
+   set_value _send_redirects ipv4 0
+   set_value _send_redirects ipv6 0
+   set_value ttl ipv4 255
+   set_value hoplimit ipv6 255
+   set_value hostmodel ipv4 strong
+   set_value hostmodel ipv6 strong
+   set_value forwarding ipv4 off
+   set_value forwarding ipv6 off
+ else
+    logMessage "Copying over startup script since we're not in standalone mode"
+    cp -p ${JASS_HOME_DIR}/etc/rc2.d/S99solaris11-net-tune ${JASS_ROOT_DIR}etc/rc2.d/
+fi
+else
+logMessage 'Installing the \\\"nddconfig\\\" run-control script.'
+echo ""
+ 
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+   copy_files "
+      /etc/init.d/nddconfig
+      /etc/rc2.d/S70nddconfig
+   "
+else
+   logNotGlobalZone
+fi
+fi

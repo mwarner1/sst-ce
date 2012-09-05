@@ -1,0 +1,80 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-mesg.aud 1.2     07/01/26     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="mesg service"
+servfil="disable-mesg.aud"
+
+USERFILES="
+   ${JASS_ROOT_DIR}etc/.login 
+   ${JASS_ROOT_DIR}etc/profile 
+"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This check determines if the users's default mesg setting is set to n.
+   This controls the write and talk availability.
+
+`printPretty \"${USERFILES}\"`
+
+Determination of Compliance:
+
+   For each file listed above, this script will indicate a failure if the 
+   file does not set mesg n.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+for userfile in ${USERFILES}; do
+   if check_fileExists ${userfile} 1 ; then
+      if check_fileContentsExist ${userfile} \
+       "mesg[ 	]*n" 1 ; then
+	 logSuccess 'mesg n is set in ${userfile}.'
+      else
+	 if check_fileContentsExist ${userfile} "mesg[ 	]*" 0 ; then
+	    logFailure 'mesg is not set to n in ${userfile}.'
+	 else
+	    logFailure 'mesg is not set in ${userfile}.'
+	 fi
+      fi
+   else
+      logFileNotFound "${userfile}" 1
+   fi
+done
+   
+finish_audit

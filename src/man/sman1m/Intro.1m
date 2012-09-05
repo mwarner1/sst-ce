@@ -1,0 +1,79 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY loc-tt CDATA "LIST OF COMMANDS">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry id = "alias-1" lang = "en" os = "solaris"><refmeta>
+<refentrytitle lang = "en">Intro</refentrytitle>
+<manvolnum>1m</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "software">Solaris Security Toolkit 4.2</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary></primary></indexterm>
+<refmiscinfo class = "sectdesc">System Administration</refmiscinfo></refmeta>
+<refnamediv>
+<refname>Intro</refname><refpurpose>introduce Solaris Security Toolkit
+administration</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<cmdsynopsis os = "solaris"><command>Intro</command></cmdsynopsis></refsynopsisdiv>
+<refsect1 id = "alias-1-desc" lang = "en"><title id = "z40000329937">&desc-tt;</title>
+<para>Describes the commands you can execute in the Solaris Security Toolkit, also known as JumpStart Architecture and Security Scripts (JASS).</para>
+<para>Sun support for Solaris Security Toolkit software is available only for its use in the Solaris 8, 9, and 10 Operating Systems. While the software can be used in the Solaris 2.5.1, Solaris 2.6, and Solaris 7 Operating Systems, Sun support is not available for its use in those operating systems.</para>
+<para>The Solaris Security Toolkit software automatically detects which version of the Solaris Operating System software is installed, then runs tasks appropriate for that operating system version.</para></refsect1>
+<refsect1 id = "alias-1-opts" lang = "en"><title id = "z400003210451">&loc-tt;</title>
+<para>The following commands, functions, and drivers are supported by the Solaris Security Toolkit 4.2 software:</para>
+<variablelist termlength = "narrow" os = "solaris">
+<varlistentry>
+<term os = "solaris"><literal>Intro</literal></term>
+<listitem os = "solaris"><para>Lists Solaris Security Toolkit commands, functions, and drivers.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">add-client</term>
+<listitem os = "solaris"><para>Simplifies adding JumpStart&trade; clients to a JumpStart server that has Solaris Security Toolkit installed. add-client is a wrapper around the add_install_client script.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><literal>audit_public_funcs</literal></term>
+<listitem os = "solaris"><para>Lists all public audit functions for the Solaris Security Toolkit that are in the audit_public.funcs file.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><literal>common_log_funcs</literal></term>
+<listitem os = "solaris"><para>Lists all common log functions in common_log.funcs file that control all logging and reporting Solaris Security Toolkit functions.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><literal>common_misc_funcs</literal></term>
+<listitem os = "solaris"><para>Lists all miscellaneous framework Solaris Security Toolkit functions in common_misc.funcs file.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><literal>driver_public_funcs</literal></term>
+<listitem os = "solaris"><para>Lists all public functions for the Solaris Security Toolkit drivers that are in the driver_public.funcs file.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><literal>jass-check-sum</literal></term>
+<listitem os = "solaris"><para>Identifies file changes made since the last Security Toolkit hardening run by using checksums.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><literal>jass-execute</literal></term>
+<listitem os = "solaris"><para>Performs most of the functionality of the Solaris Security Toolkit software.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><literal>make-jass-pkg</literal></term>
+<listitem os = "solaris"><para>Allows the creation of a customized Solaris Security Toolkit package from a customized version installed on a system.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris"><literal>rm-client</literal></term>
+<listitem os = "solaris"><para>Simplifies removing JumpStart clients from a JumpStart server that has Solaris Security Toolkit installed. rm-client is a wrapper around the rm-install-client script.</para></listitem>
+</varlistentry>
+<varlistentry>
+<term os = "solaris">security_drivers</term>
+<listitem os = "solaris"><para>Lists all Solaris Security Toolkit drivers in the security.drivers file.</para></listitem>
+</varlistentry>
+</variablelist></refsect1></refentry>

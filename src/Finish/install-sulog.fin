@@ -1,0 +1,62 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-sulog.fin 3.9     04/06/02     SMI"
+#
+# This script is used to enable tracking of attempts by users to use the 
+# 'su' command.
+#
+
+SULOG=${JASS_ROOT_DIR}var/adm/sulog
+
+logMessage 'Creating \\\"sulog\\\" file to track the use or attempted use of \\\"su\\\".'
+echo ""
+
+# At this point, the file either existed or was just created.
+# Either way, to be sure it has the correct permissions, they
+# will be reset here.
+
+if [ ! -f ${SULOG} ]; then
+   logMessage 'Creating the file, ${SULOG}.'
+   echo ""
+   create_a_file -m 0600 -o root:root ${SULOG}
+else
+     logNotice 'The file, ${SULOG}, already exists.'
+fi
+
+if check_fileOwnerNoMatch ${SULOG} root 0; then
+   logNotice 'Setting owner of ${SULOG} to \\\"root\\\".'
+   chown root ${SULOG}
+fi
+
+if check_fileGroupNoMatch ${SULOG} root 0; then
+   logNotice 'Setting group of ${SULOG} to \\\"root\\\".'
+   chgrp root ${SULOG}
+fi
+
+if check_fileModeNoMatch ${SULOG} 600 0; then
+   logNotice 'Setting permissions of ${SULOG} to \\\"600\\\".'
+   chmod 0600 ${SULOG}
+fi

@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)update-at-deny.fin	3.9	05/04/12 SMI"
+#
+# This script searches the local password file looking for user names that
+# can be added to the "at.deny" file.  If a user is listed in the "at.deny"
+# file, that user is not permitted to use the "at" facility.
+#
+
+ATALLOW=${JASS_ROOT_DIR}etc/cron.d/at.allow
+ATDENY=${JASS_ROOT_DIR}etc/cron.d/at.deny
+
+logMessage "Updating 'at' facility access controls (at.deny)"
+echo ""
+
+if [ ! -f ${ATDENY} ]; then
+   create_a_file -m 644 -o root:sys ${ATDENY}
+   echo ""
+fi
+
+backupPerformed="0"
+
+for ACCT in `echo ${JASS_AT_DENY} | xargs -n 1 echo | sort -u`; do
+
+   # First check to see if the account is in /etc/passwd
+
+   if [ `nawk -F: '$1==user { print $1; }' user="${ACCT}" ${JASS_PASSWD} |\
+      wc -l` = 0 ]; then
+      logNotice "Account, ${ACCT}, does not exist in ${JASS_PASSWD}."
+      continue
+   fi
+
+   # Then check to see if the account is in cron.allow
+
+   if [ -f ${ATALLOW} ]; then
+      if [ "${ACCT}" != "root" ]; then
+         if [ `grep -c "^${ACCT}$" ${ATALLOW}` != 0 ]; then
+            logNotice 'Account, ${ACCT}, exists in ${ATALLOW}.'
+            continue
+         fi
+      fi
+   fi
+
+   # All checks passed, add to at.deny if not already there
+
+   if [ `grep -c "^${ACCT}$" ${ATDENY}` = 0 ]; then
+      if [ "${backupPerformed}" = "0" ]; then
+         backup_file ${ATDENY}
+         backupPerformed="1"
+         echo ""
+      fi
+      logMessage 'Adding ${ACCT} to ${ATDENY}'
+      echo "${ACCT}" >> ${ATDENY}
+   fi
+done
+
+if [ "${backupPerformed}" = "1" ]; then
+   chown root:sys ${ATDENY}
+   chmod 644      ${ATDENY}
+fi

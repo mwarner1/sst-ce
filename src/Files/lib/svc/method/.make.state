@@ -1,0 +1,19 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/Files/lib/svc/method:
+	[ -d ../../../../../proto/SUNWsst/Files/lib/svc/method ] || /bin/mkdir -p ../../../../../proto/SUNWsst/Files/lib/svc/method
+.BUILT_LAST_MAKE_RUN:
+nddconfig:
+	/usr/bin/rm -f nddconfig
+	/usr/bin/ln ../../../etc/init.d/nddconfig nddconfig
+	/usr/bin/chmod 555 nddconfig
+	/usr/bin/rm -f ../../../../../proto/SUNWsst/Files/lib/svc/method/nddconfig
+	( cd ../../../../../proto/SUNWsst/Files/lib/svc/method; /usr/bin/ln ../../../etc/init.d/nddconfig nddconfig; /usr/bin/chmod 555 nddconfig )
+.BUILT_LAST_MAKE_RUN:
+nddconfig-15k_sc:
+	/usr/bin/rm -f nddconfig-15k_sc
+	/usr/bin/ln ../../../etc/init.d/nddconfig-15k_sc nddconfig-15k_sc
+	/usr/bin/chmod 555 nddconfig-15k_sc
+	/usr/bin/rm -f ../../../../../proto/SUNWsst/Files/lib/svc/method/nddconfig-15k_sc
+	( cd ../../../../../proto/SUNWsst/Files/lib/svc/method; /usr/bin/ln ../../../etc/init.d/nddconfig-15k_sc nddconfig-15k_sc; \
+		/usr/bin/chmod 555 nddconfig-15k_sc )

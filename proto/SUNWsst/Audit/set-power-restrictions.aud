@@ -1,0 +1,111 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-power-restrictions.aud 1.8     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Power Management Access Control (power)"
+servfil="set-power-restrictions"
+
+POWER="${JASS_ROOT_DIR}etc/default/power"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Access to the power management configuration is controlled using two 
+   parameters in the ${POWER} file.  These parameters are used to control 
+   access to the system's power management configuration (PMCHANGEPERM) and 
+   the system's suspend-resume configuration (CPRCHANGEPERM).
+
+Rationale for Verification Check:
+
+   This script checks the ${POWER} file to determine if the PMCHANGPERM and
+   CPRCHANGEPERM parameters are set appropriately.
+
+   Note that if the PMCHANGEPERM and CPRCHANGEPERM parameters are set to '-',
+   then only the root account change the power settings.  Also, if the
+   settings are not defined in ${POWER}, the default is to permit access 
+   to the owner of the system console.
+
+Determination of Compliance:
+
+   This script will check the ${POWER} file and indicate a failure if the 
+   PMCHANGEPERM and CPRCHANGEPERM parameters do not have the following values:
+
+
+   PMCHANGEPERM  - ${JASS_POWER_MGT_USER}
+
+   CPRCHANGEPERM - ${JASS_CPR_MGT_USER}
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+   if check_fileExists ${POWER} 1 ; then
+      
+      # PMCHANGEPERM
+
+      if check_fileContentsExist ${POWER} \
+         "^PMCHANGEPERM=${JASS_POWER_MGT_USER}" 1 ; then
+         logSuccess 'PMCHANGEPERM is set to \\\"${JASS_POWER_MGT_USER}\\\" in ${POWER}.'
+      else
+         if check_fileContentsExist ${POWER} "^PMCHANGEPERM=" 0 ; then
+            logFailure 'PMCHANGEPERM is not set to \\\"${JASS_POWER_MGT_USER}\\\" in ${POWER}.'
+         else
+            logFailure 'PMCHANGEPERM is not defined in ${POWER}.'
+         fi
+      fi
+
+      # CPRCHANGEPERM
+
+      if check_fileContentsExist ${POWER} \
+         "^CPRCHANGEPERM=${JASS_CPR_MGT_USER}" 1 ; then
+         logSuccess 'CPRCHANGEPERM is set to \\\"${JASS_CPR_MGT_USER}\\\" in ${POWER}.'
+      else
+         if check_fileContentsExist ${POWER} "^CPRCHANGEPERM=" 0 ; then
+            logFailure 'CPRCHANGEPERM is not set to \\\"${JASS_CPR_MGT_USER}\\\" in ${POWER}.'
+         else
+            logFailure 'CPRCHANGEPERM is not defined in ${POWER}.'
+         fi
+      fi
+
+   else
+      logFileNotFound ${POWER} 1
+   fi   
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

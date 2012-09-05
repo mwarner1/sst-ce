@@ -1,0 +1,192 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-bsm.aud	1.19	05/05/10 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Basic Security Module (BSM)"
+servfil="enable-bsm.aud"
+
+AUDITCLASS="${JASS_ROOT_DIR}etc/security/audit_class"
+SYSTEM="${JASS_ROOT_DIR}etc/system"
+ALIASES="${JASS_ROOT_DIR}etc/mail/aliases"
+JASS_AUDIT_FILES="	/etc/security/audit_control
+   			/etc/security/audit_class
+   			/etc/security/audit_event"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Solaris Basic Security Module (BSM) is a set of functions and
+   commands that provides fine-grained auditing of events on a system.
+   For more information on BSM, see bsmconv(1M), auditd(1M) and praudit(1M).
+
+Rationale for Verification Check:
+
+   This script checks to see if the BSM functionality is enabled and running
+   on the system.  This is done by querying the service using the
+   auditconfig(1M) command.
+
+   In addition, this script checks the ${SYSTEM} file to verify that
+   the c2audit module is being loaded.  This check does not apply to
+   non-global zones.
+
+   Lastly, this script checks the the ${ALIASES} file to verify
+   that the 'audit_warn' aliases exists for capturing error and warning 
+   messages from the auditing subsystem. This check applies to global
+   zones, to non-global zones if per-zone configuration is enabled, or
+   to Solaris 9 and earlier.
+
+Determination of Compliance:
+
+   This check will indicate a failure if the BSM auditing functionality is not
+   enabled and running on the system.  Further, this script will also indicate
+   an failure condition if the service is not loaded in the ${SYSTEM} file
+   (for global zones).  Lastly, a failure condition will also occur if the
+   'audit_warn' alias is not defined in ${ALIASES} (for global zones or
+   if per-zone configuration is enabled).
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision "5.8" ; then
+   #
+   # See if we are in a non-global zone and, if so,
+   # if per-zone configurations are enabled.
+   #
+   perZoneAuditing=0
+   if check_os_min_revision 5.10; then
+      if [ "${JASS_ZONE_NAME}" != "global" ] ; then
+         /usr/sbin/chroot ${JASS_ROOT_DIR} /usr/sbin/auditconfig -getpolicy \
+            2>/dev/null | grep -w perzone >/dev/null
+         if [ $? -eq 0 ] ; then
+            perZoneAuditing=1
+         fi
+      fi
+   fi
+
+
+   #
+   # Verify BSM auditing line is present in /etc/system.
+   # Check is not done for non-global zones, as non-global zones
+   # don't use /etc/system.
+   #
+   if [ "${JASS_ZONE_NAME}" = "global" ] ; then
+
+      auditLoad=`grep -c "^[^*]*set.*c2audit:audit_load.*=.*1" ${SYSTEM}`
+
+      if [ ${auditLoad} -eq 1 ]; then
+         logSuccess 'BSM auditing is configured to load in ${SYSTEM}.'
+      else
+         logFailure 'BSM auditing is not configured to load in ${SYSTEM}.'
+         adjustScore 1
+      fi
+   fi
+
+
+   #
+   # Verify auditing is enabled
+   #
+
+   auditState=`/usr/sbin/chroot ${JASS_ROOT_DIR} \
+      /usr/sbin/auditconfig -getcond 2>/dev/null | nawk '{ print $4 }'`
+
+   if [ "${auditState}" != "" ]; then
+      case ${auditState} in
+
+         auditing) logSuccess "BSM auditing is enabled."
+                   logSuccess "BSM auditing is running / turned on."
+                   ;;
+
+         noaudit)  logSuccess "BSM auditing is enabled."
+                   logFailure "BSM auditing is not running / turned off."
+                   adjustScore 1
+                   ;;
+
+         disabled) logFailure "BSM auditing is not enabled."
+                   adjustScore 1
+                   if [ "${perZoneAuditing}" = "1" ] ; then
+                      # explain special action required with zones for error
+                      logNotice "When per-zone BSM auditing is configured, auditing must\
+be enabled for each zone.  To enable, run from the global zone:\
+/etc/security/bsmconv /root/directory/name/for/zone"
+                   fi
+                   ;;
+
+         nospace)  logFailure "BSM auditing is not enabled, but no space exists."
+                   adjustScore 1
+                   ;;
+
+         *)        logWarning 'Unknown BSM condition: ${auditState}'
+                   ;;
+      esac
+
+   else
+      logFailure "BSM auditing is not enabled or running on the system."
+      adjustScore 1
+   fi
+
+
+   #
+   # Verify configuration files
+   #
+   # Do this for Solaris 9 or earlier, global zones, and non-global zones 
+   # when per-zone configuration is enabled.
+   #
+   if [ "${JASS_ZONE_NAME}" = "global" -o "${perZoneAuditing}" = "1" ] ; then
+      # Verify audit_* files for a particular Solaris version
+      check_fileTemplate "${JASS_AUDIT_FILES}" 1 LOG
+
+      #
+      # Verify audit_warn email alias is defined.
+      #
+      if check_fileExists ${ALIASES} 1 ; then
+         if check_fileContentsExist "${ALIASES}" "^audit_warn:" 1 ; then
+            logSuccess '\\\"audit_warn\\\" e-mail alias is defined in ${ALIASES}.'
+         else
+            logFailure '\\\"audit_warn\\\" e-mail alias is not defined in ${ALIASES}.'
+         fi
+
+      else
+         logFileNotFound "${ALIASES}" 1
+      fi
+   fi
+
+else
+   logInvalidOSRevision "5.8+"
+fi
+
+
+finish_audit

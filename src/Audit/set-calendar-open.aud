@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)set-calendar-open.aud		1.2	06/10/23 SMI"
+# 
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Calendar Manager Service"
+servfil="set-calendar-open.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+   The Common Desktop Environment Calendar Manager is a small database
+   manager  for  appointment and resource-scheduling  data.  Its primary
+   client is dtcm, a productivity  tool  included  with  CDE.
+
+Rationale for Verification Check:
+
+   It may be necessary to allow non-remote users to access the Calendar Manager
+   service.In this case, the ability of the service to accept remote
+   connections should be enabled.
+
+Determination of Compliance:
+
+   When Secure by Default is available, the Calendar Mananger service will
+   checked for whether or not it is listening to external connections.  If
+   it is not, a failure will be indicated.
+
+   If SBD is not available, this script does nothing.
+"
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWdtdmn SUNWdtdmr SUNWdtma
+"
+
+#-----------------------------------------------------------------------------
+
+svc="svc:/network/rpc/cde-calendar-manager:default"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_sbd_available; then
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   if check_serviceInstalled "${svc}" 0; then
+      check_servicePropEnabled "${svc}" "inetd/proto" \
+       "udp" 1 LOG
+   fi
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceEnabled "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceRunning "${svc}" 1 LOG
+else
+   logNoSBD
+fi
+
+finish_audit

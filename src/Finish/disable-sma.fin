@@ -1,0 +1,53 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-sma.fin 1.6     04/12/20     SMI"
+#
+# This script prevents the System Management Agent (SMA, based
+# on NET-SNMP) service from starting.
+#
+
+logMessage "Disabling the service: System Management Agent (SMA)"
+echo ""
+
+SNMPCONF="${JASS_ROOT_DIR}etc/sma/snmp/snmpd.conf"
+
+if check_os_min_revision 5.10 ; then
+   disable_service_immediate "lrc:/etc/rc3.d/S82initsma" 
+   if check_fileExists ${SNMPCONF} 0 ; then
+      if check_fileContentsNotExist ${SNMPCONF} "#DISABLE=YES" 0 ; then
+
+         backup_file ${SNMPCONF}
+         echo ""
+
+         logMessage 'Setting \\\"#DISABLE\\\" to \\\"YES\\\" in ${SNMPCONF}'
+
+         cat ${SNMPCONF}.${JASS_SUFFIX} |\
+            sed 's/^#DISABLE=.*/#DISABLE=YES/g' > ${SNMPCONF}
+      fi
+   fi
+else
+   logInvalidOSRevision "5.10+"
+fi

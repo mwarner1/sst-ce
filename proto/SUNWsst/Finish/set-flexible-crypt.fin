@@ -1,0 +1,158 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-flexible-crypt.fin 1.2     05/04/11     SMI"
+#
+# This script changes the encryption algorithms used for local
+# passwords.
+
+logMessage "Installing stronger algorithms for local passwords."
+echo ""
+
+expire="0"
+
+if check_os_min_revision 5.10; then
+
+   POLICY=${JASS_ROOT_DIR}etc/security/policy.conf
+   CRYPT=${JASS_ROOT_DIR}etc/security/crypt.conf
+   SHADOW_FILE=${JASS_ROOT_DIR}/etc/shadow
+
+   if [ ! -f ${POLICY} ]; then
+      create_a_file -m 0444 -o root:sys ${POLICY}
+      echo ""
+   fi
+
+   if [ ! -f ${CRYPT} ]; then
+      create_a_file -m 0444 -o root:sys ${CRYPT}
+      echo ""
+   fi
+
+
+   # Determine the values to be used.  If values are 
+   # already in place, then use them.  Otherwise, use the
+   # defaults that are included below.
+
+   # This is required before using check_and_log_change_needed
+   change_needed="0"
+
+   check_and_log_change_needed "${POLICY}" "CRYPT_ALGORITHMS_ALLOW" "${JASS_CRYPT_ALGORITHMS_ALLOW}"
+   allow="${new_var}"
+
+   check_and_log_change_needed "${POLICY}" "CRYPT_DEFAULT" "${JASS_CRYPT_DEFAULT}"
+   default="${new_var}"
+
+   if [ "${change_needed}" != "0" ]; then
+
+      # We need to check the CRYPT file to make sure that some of 
+      # these values are valid.
+
+      algs="`echo ${allow} | sed 's/,/ /g'`"
+      for alg in ${algs}; do
+	 defined=`egrep -c "^${alg}[ 	]" ${CRYPT}`
+	 if [ "${defined}" != "1" ]; then
+	    logError 'An algorithm undefined in ${CRYPT} is used in JASS_CRYPT_ALGORITHMS_ALLOW.'
+	 fi
+      done
+      
+      backup_file ${POLICY}
+      echo ""
+
+      # Remove the old entries and insert the new ones.
+      
+      cat ${POLICY}.${JASS_SUFFIX} | egrep -v "((^#.*)|(^[	 ]*))(CRYPT_DEFAULT|CRYPT_ALGORITHMS_ALLOW)=" > ${POLICY}
+
+      # Note : It is safe to write out all variables here, since nulls won't
+      # be written. So we don't have to check for nonalpha/special
+      # since we set the ones we don't want to null above.
+
+      write_val_to_file "${POLICY}" "CRYPT_DEFAULT" "${default}"
+      write_val_to_file "${POLICY}" "CRYPT_ALGORITHMS_ALLOW" "${allow}"
+
+      chown root:sys ${POLICY}
+      chmod 0444     ${POLICY}
+
+      if [ "${change_needed}" != "0" ]; then
+	 # Store the information that the Crypto Configuration changed this run
+	 set_stored_keyword_val "JASS_CRYPT_CHANGED" "1"
+      fi
+
+   fi
+
+   # Only Expire passwords when JASS_CRYPT_FORCE_EXPIRE is set
+   # and its value is 1.
+   if [ "${JASS_CRYPT_FORCE_EXPIRE}" = "1" ]; then
+
+      # We want to expire all passwords if 
+      
+      # The last run where  JASS_CRYPT_CHANGED was stored is older than the
+      # last run with JASS_CRYPT_FORCE_EXPIRE set.
+      # or
+      # the configuration changed this run.
+
+      if [ "${change_needed}" != "0" ]; then
+	 expire="1"
+      fi
+
+      last_expired_date=`find_sst_run_with "JASS_CRYPT_FORCE_EXPIRE" "1"`
+      last_changed_date=`find_sst_run_with "JASS_CRYPT_CHANGED" "1"`
+
+      if [ ! -z "${last_changed_date}" ]; then
+	 # there has been a run where the configuration changed, but 
+	 # passwords weren't expired.  So we might need to expire
+
+	 if [ -z "${last_expired_date}" ]; then
+	    expire=1
+	 elif [ ${last_expired_date} -lt ${last_changed_date} ]; then
+	    expire=1
+	 fi
+      fi
+   fi
+ 
+   if [ "${expire}" = "1" ]; then
+
+      # We only store JASS_CRYPT_FORCE_EXPIRE when the passwords were expired
+      # this run.  That means it must have been set to 1. If it wasn't set,
+      # or was non-1, it will not be stored.
+      set_stored_keyword_val "JASS_CRYPT_FORCE_EXPIRE" "${JASS_CRYPT_FORCE_EXPIRE}"
+
+      logNotice 'Expiring all local user passwords due to change in policy'
+
+      backup_file ${SHADOW_FILE}
+
+      for USER in `egrep -v '^#|^$' ${SHADOW_FILE} | awk -F: '{print $1}'`; do
+
+	 if is_user_account_passworded "${USER}"; then
+	    # If a user account is locked, the password does not need to be
+	    # expired, since the expiration resets upon unlocking. There may
+	    # be a Solaris hole here.
+	    
+	    chroot ${JASS_ROOT_DIR} /usr/bin/passwd -f ${USER}
+	 fi
+      done
+   fi
+else
+   logInvalidOSRevision "5.10+"
+fi
+

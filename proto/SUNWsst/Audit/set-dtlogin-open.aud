@@ -1,0 +1,107 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)set-dtlogin-open.aud		1.4	07/02/05 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="dtlogin remote Service"
+servfil="set-dtlogin-open.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The dtlogin(1X) client supports the following key tasks: (1) the launch of
+   the dtgreet(1) login screen for explicitly managed local and remote 
+   displays and XDMCP managed remote displays, access to traditional terminal
+   (character) login from GUI login screen, system dependent user 
+   authentication and login, and launching the selected session.
+
+   The dtlogin client provides services similar to those  provided by init(1M),
+   getty(1M) and login(1) on character terminals: prompting for login and 
+   password, authenticating the user, and running a 'session'.
+
+Rationale for Verification Check:
+
+   It may be necessary to allow remote access to the dtlogin service.  In this
+   case, the ability of the service to accept remote connections should be 
+   enabled.
+
+Determination of Compliance:
+
+   When Secure by Default is available, dtlogin will checked for whether
+   or not it is listening to external connections.  If it is not, a failure
+   will be indicated.
+
+   If SBD is not available, this script does nothing.
+"
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWdtlog SUNWdtdte
+"
+
+#-----------------------------------------------------------------------------
+
+svc="
+   svc:/application/graphical-login/cde-login
+"
+
+svcfmri="
+   svc:/application/graphical-login/cde-login:default
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_sbd_available; then
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized_service "${svcfmri}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   if check_serviceInstalled "${svcfmri}" 0; then
+      check_serviceOptionDisabled "${svc}" "dtlogin/args" "" \
+       "-udpPort\\\\ 0" 1 LOG
+   fi
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceEnabled "${svcfmri}" 1 LOG
+   
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceRunning "${svcfmri}"  1 LOG
+
+else
+   logNoSBD
+fi
+
+finish_audit

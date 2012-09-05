@@ -1,0 +1,171 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-uucp.aud 1.20     05/06/16 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Unix-to-Unix Copy (UUCP) Service"
+servfil="disable-uucp.aud"
+
+INETD="${JASS_ROOT_DIR}etc/inet/inetd.conf"
+CRONTAB=${JASS_ROOT_DIR}var/spool/cron/crontabs/uucp
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Unix to Unix Copy (UUCP) facility provides a store and forward 
+   transport mechanism for moving files between Unix systems.  This service
+   was typically used for transferring electronic mail.  This service is 
+   not often used on modern systems.
+
+Rationale for Verification Check:
+
+   While the UUCP service can be a useful function, it may not be critical for
+   system operation.  If this service is not needed, then it should be 
+   disabled.
+
+   In addition, this script will check to determine if the UUCP service has
+   been denied permission to use the cron facility by checking for the 
+   existence of the ${CRONTAB} crontab file.  This script will also check
+   to determine if the 'nuucp' user has been removed from the system.
+
+Determination of Compliance:
+
+   This script determines if the UUCP service is installed, configured or 
+   running on the system.  This script will indicate a failure if the software
+   is installed, configured to run (via a run-control script) or actually 
+   running on the system.  This script will also indicate a failure if the 
+   nuucp user exists, in.uucpd exists in ${INETD} or if there is a uucp 
+   crontab file installed.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWbnur
+   SUNWbnuu
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S70uucp
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/bin/uux
+   /usr/bin/uccp
+   /usr/bin/uustat
+   /usr/lib/uucp/uuxqt
+   /usr/lib/uucp/uucico
+"
+
+svc="
+   svc:/network/uucp:default
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+#
+# Verify UUCP service is disabled.
+#
+logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+if check_os_min_revision 5.10 ; then
+   check_minimized_service "${svc}" 1 LOG
+else
+   check_minimized "$servpkg" 1 LOG
+fi
+
+if check_os_min_revision 5.10 ; then
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceDisabled "${svc}" 1 LOG  
+   check_serviceNotInstalled lrc:/etc/rc2_d/S70uucp 1 LOG
+
+else
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   check_startScriptNotExists "$servsrc" 1 LOG
+
+fi
+
+logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+
+if check_os_min_revision 5.10 ; then
+   check_serviceNotRunning "${svc}"  1 LOG
+fi
+
+check_processNotExists "$servcmd" 1 LOG
+
+
+logMessage "\n# Checking if the 'in.uucpd' service exists.\n"
+
+if check_fileExists ${INETD} 0 ; then
+   if check_fileContentsNotExist \
+      "${INETD}" "^uucp[ 	]*.*in\.uucpd" 1 ; then
+      logSuccess 'Service uucp is not listed in ${INETD}.'
+   else
+      logFailure 'Service uucp is listed in ${INETD}.'
+   fi
+else
+   logFileNotFound "${INETD}"
+fi
+
+#
+# Verify account 'nuucp' has been disabled or removed.
+#
+if check_os_min_revision 5.10 ; then # disable nuucp
+   logMessage "\n# Checking if account 'nuucp' is locked.\n"
+   check_userLocked "nuucp" 1 LOG
+
+else # Solaris 9 or earlier: remove nuucp
+   logMessage "\n# Checking if the 'nuucp' user has been removed.\n"
+
+   if check_fileContentsNotExist "${JASS_PASSWD}" '^nuucp:' 1 ; then
+      logSuccess 'User nuucp has been removed from ${JASS_PASSWD}.'
+   else
+      logFailure 'User nuucp has not been removed from ${JASS_PASSWD}.'
+   fi
+fi
+
+#
+# Verify 'uucp' crontab entry has been removed.
+#
+logMessage "\n# Checking if the 'uucp' crontab has been removed.\n"
+
+check_fileNotExists "${CRONTAB}" 1 LOG
+
+finish_audit

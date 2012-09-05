@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)install-strong-permissions.aud 1.12     05/03/31 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Strong Permissions"
+servfil="install-strong-permissions.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script checks to determine if the modifications made by the 
+   install-strong-permissions.fin Finish script have been implemented.  These
+   settings include a variety of changes designed to strengthen ownership and 
+   permissions of various filesystem objects.
+
+Determination of Compliance:
+
+   This script will indicate a failure if any of the modifications recommended
+   by the install-strong-permissions.fin Finish script have not been 
+   implemented.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10 ; then
+   logInvalidOSRevision "5.9-"
+else
+   for file in `find ${JASS_ROOT_DIR}etc -type -l -print` \
+      ${JASS_ROOT_DIR}var ${JASS_ROOT_DIR}var/spool; do
+      if check_fileModeNoMatch ${file} "-0020" 1 ; then
+         logSuccess 'File ${file} is not group writable.'
+      else
+         logFailure 'File ${file} is group writable.'
+      fi
+   done
+
+   check_fileModeMatch ${JASS_ROOT_DIR}var/cron          "0700" 1 LOG
+   check_fileModeMatch ${JASS_ROOT_DIR}etc/security      "0750" 1 LOG
+   check_fileModeMatch ${JASS_ROOT_DIR}usr/lib/exrecover "0555" 1 LOG
+fi
+finish_audit 

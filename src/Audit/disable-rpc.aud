@@ -1,0 +1,149 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-rpc.aud	1.17	05/04/12 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Remote Procedure Call (RPC) Service"
+servfil="disable-rpc.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The rpcbind(1M) service converts Remote Procedure Call (RPC) program numbers
+   into universal addresses.  It must be running on the host to be able to make
+   RPC calls on a server on that machine.
+
+   When an RPC service is started, it tells rpcbind the address at which it is
+   listening, and the  RPC program numbers it is prepared to serve.  When a
+   client wishes to make an  RPC call to a given program number, it first
+   contacts rpcbind on the server machine to determine the address where RPC
+   requests should be sent.
+
+Rationale for Verification Check:
+
+   While the RPC service can be a useful function, it may not be critical for
+   system operation.  If this service is not needed, then it should be
+   disabled.
+
+   Note that the following are just some of the services that require the
+   rpcbind service to be running in order to operate properly: automount,
+   NFS client, NFS server, and dtlogin.
+
+Determination of Compliance:
+
+   This script determines if the RPC service is installed, configured or
+   running on the system.  This script will indicate a failure if the
+   software is installed, configured to run (via a run-control script) or
+   actually running on the system.  In addition, this script will
+   indicate a failure for each service registered with the rpcbind
+   port mapper.
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S71rpc
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rcS.d/K41rpc
+   ${JASS_ROOT_DIR}etc/rc0.d/K41rpc
+   ${JASS_ROOT_DIR}etc/rc0.d/K85rpc
+   ${JASS_ROOT_DIR}etc/rc1.d/K41rpc
+   ${JASS_ROOT_DIR}etc/rc1.d/K67rpc
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/sbin/rpcbind
+   /usr/sbin/keyserv
+"
+
+svc="
+   svc:/network/rpc/bind:default
+   svc:/network/rpc/keyserv:default
+"
+
+check_rpc_port_mapper()
+{
+
+   logMessage "\n# Checking services registered with the RPC port mapper.\n "
+
+   regsvcs=""
+   regsvcs="`rpcinfo -s 2>&1 | nawk '{ print $1":"$4 }' |\
+      grep -v "program:service" | sort | uniq`"
+
+   if [ "${regsvcs}" != "" ]; then
+      for entry in ${regsvcs}; do
+         program="`echo ${entry} | nawk -F: '{ print $1 }'`"
+         service="`echo ${entry} | nawk -F: '{ print $2 }'`"
+         logFailure 'Program ${program} (${service}) is registered with rpcbind.'
+         adjustScore 1
+      done
+   else
+      logSuccess "No services were registered with rpcbind."
+   fi
+}
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10 ; then
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceDisabled "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   if check_serviceNotRunning "${svc}"  1 LOG; then
+      :
+   else
+      check_rpc_port_mapper
+   fi
+else
+   logMessage "${JASS_MSG_SOFTWARE_CONFIGURED}"
+   check_startScriptNotExists "$servsrc" 1 LOG
+   check_stopScriptNotExists  "$servkrc" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   if check_processNotExists     "$servcmd" 1 LOG ; then
+      :
+   else
+      check_rpc_port_mapper
+   fi
+fi
+
+finish_audit

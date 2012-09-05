@@ -1,0 +1,68 @@
+.MAKE_VERSION:	VERSION-1.0
+../proto/SUNWsst:
+	[ -d ../proto/SUNWsst ] || /bin/mkdir -p ../proto/SUNWsst
+../proto/SUNWsst/LICENSE:
+	/usr/bin/cp -f LICENSE ../proto/SUNWsst/LICENSE
+	/usr/bin/chmod 444 ../proto/SUNWsst/LICENSE
+../proto/SUNWsst/nomatch.beg:
+	/usr/bin/cp -f nomatch.beg ../proto/SUNWsst/nomatch.beg
+	/usr/bin/chmod 444 ../proto/SUNWsst/nomatch.beg
+../proto/SUNWsst/rules.SAMPLE:
+	/usr/bin/cp -f rules.SAMPLE ../proto/SUNWsst/rules.SAMPLE
+	/usr/bin/chmod 444 ../proto/SUNWsst/rules.SAMPLE
+.BUILT_LAST_MAKE_RUN:
+Audit:
+	cd Audit; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+Documentation:
+	cd Documentation; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+Drivers:
+	cd Drivers; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+Files:
+	cd Files; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+Finish:
+	cd Finish; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+MANIFEST:
+	( cd ../proto/SUNWsst;  \
+	/usr/bin/rm -f MANIFEST ; \
+	/usr/bin/find . -type f ! -name MANIFEST -exec /usr/bin/digest -v -a md5 {} \+ | /usr/bin/sed 's/^md5/MD5/' > MANIFEST ; \
+	/usr/bin/chmod 444 MANIFEST )
+.BUILT_LAST_MAKE_RUN:
+OS:
+	[ -d ../proto/SUNWsst/OS ] || \
+		( /usr/bin/rm -f ../proto/SUNWsst/OS ; /bin/mkdir -p ../proto/SUNWsst/OS ; )
+.BUILT_LAST_MAKE_RUN:
+Packages:
+	cd Packages; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+Patches:
+	[ -d ../proto/SUNWsst/Patches ] || \
+		( /usr/bin/rm -f ../proto/SUNWsst/Patches ; /bin/mkdir -p ../proto/SUNWsst/Patches ; )
+.BUILT_LAST_MAKE_RUN:
+Profiles:
+	cd Profiles; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+Sysidcfg:
+	cd Sysidcfg; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+bin:
+	cd bin; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+install:
+	( cd ../Releases ; \
+	/bin/tar -cvf SUNWsst-5_0.pkg.tar SUNWsst.pkg ; \
+	/bin/compress -f SUNWsst-5_0.pkg.tar ; \
+	/usr/bin/digest -v -a md5 SUNWsst-5_0.pkg.tar.Z | /usr/bin/sed 's/^md5/MD5/' > SUNWsst-5_0.pkg.tar.Z.md5 ; )
+.BUILT_LAST_MAKE_RUN:
+lib:
+	cd lib; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+man:
+	cd man; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+pkgdefs:
+	cd pkgdefs; pwd; make install

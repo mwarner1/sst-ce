@@ -1,0 +1,1460 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)jass-execute	3.87	05/07/18 SMI"
+#
+# The purpose of this script is to provide a clean wrapper around the
+# standalone JASS functionality.  Using this script, JASS can be
+# executed in standalone mode.  Options to select a driver, alter
+# the target root directory and record output to a file have been
+# provided to permit this script to be more easily used.
+#
+# Return Values:
+#
+# 0	Success
+# 1	Execution error
+# 2	Security violation(s) detected
+# 3	Another instance of jass-execute is running
+# 4	Terminated due to user request
+#
+
+# ****************************************************************************
+# Explicitly define a path.
+# ****************************************************************************
+
+PATH=/usr/bin:/usr/sbin
+export PATH
+
+# ****************************************************************************
+# Obtain a fully qualified path to this script.
+# ****************************************************************************
+
+oldDirectory="`pwd`"
+newDirectory="`dirname $0`"
+cd ${newDirectory}
+jass_base_dir="`pwd`"
+
+if [ "`basename ${jass_base_dir}`" = "bin" ]; then
+   cd ..
+   jass_base_dir="`pwd`"
+fi
+
+cd ${jass_base_dir}
+
+# ****************************************************************************
+# Define localization settings.
+# ****************************************************************************
+
+TEXTDOMAIN="jass"
+TEXTDOMAINDIR="${jass_base_dir}/lib/locale"
+export TEXTDOMAIN TEXTDOMAINDIR
+
+# ****************************************************************************
+# Define the global variables that will be used throughout the script.
+# ****************************************************************************
+
+JASS_EMAIL_ADDRESS=""
+export JASS_EMAIL_ADDRESS
+
+JASS_STANDALONE=1
+export JASS_STANDALONE
+
+JASS_ROOT_DIR=""
+export JASS_ROOT_DIR
+
+JASS_HOME_DIR=""
+export JASS_HOME_DIR
+
+JASS_MODE=""
+export JASS_MODE
+
+JASS_RESTORE_LIST=""
+export JASS_RESTORE_LIST
+
+JASS_QUIET_MODE="0"
+export JASS_QUIET_MODE
+
+JASS_UNDO_TYPE="ASK"
+export JASS_UNDO_TYPE
+
+JASS_VERBOSITY="3"
+export JASS_VERBOSITY
+
+if [ -z "${JASS_DISPLAY_SCRIPTNAME}" ]; then
+   JASS_DISPLAY_SCRIPTNAME="1"
+   export JASS_DISPLAY_SCRIPTNAME
+fi
+
+jass_output_file=""
+
+jass_usage="
+usage:
+
+To apply this Toolkit to a system, using the syntax:
+   jass-execute [-r root_directory -p os_version ] [ -q | -o output_file ]
+      [ -m e-mail_address ] [ -V [3|4] ] [ -d ] driver
+
+To undo a previous application of the Toolkit from a system:
+   jass-execute -u [ -b | -f | -k ] [ -q | -o output_file ]
+      [ -m e-mail_address ] [ -V [3|4] ]
+
+To audit a system against a pre-defined profile:
+   jass-execute -a driver [ -V [0-4] ] [ -q | -o output_file ]
+      [ -m e-mail_address ]
+
+To remove saved files from a previous run of the Toolkit:
+   jass-execute -c [ -q | -o output_file ]
+      [ -m e-mail_address ]  [ -V [3|4] ]
+
+To display the history of Toolkit applications on a system:
+   jass-execute -H
+
+To display the last application of the Toolkit on a system:
+   jass-execute -l
+
+To display this help message:
+   jass-execute -h
+   jass-execute -?
+
+To display version information for this program:
+   jass-execute -v
+
+"
+
+jass_usage_options="
+Note that just the driver name should be specified when using
+the '-d' or '-a' options.  A path need not be specified as the
+script is assumed to exist in the Drivers directory.
+
+The '-u' undo, '-c' cleanup, '-a' audit, and '-d' driver options
+are all mutually exclusive.
+
+The default undo behavior is to ask the user what to do if
+a file to be restored has been modified as the checksum is
+incorrect.
+
+The -u option can be combined with the '-k', '-b', or '-f'
+to override the default interactive behavior.  The use of one
+of these options is required when run in quiet mode ('-q').
+
+The '-k' option can be used to always keep the current file and
+backup if checksum is incorrect.  The 'b' can be used to
+backup the current file and restore original if the checksum is
+incorrect.  The 'f' option will always overwrite the original
+if the checksum is incorrect, without saving the modified original.
+
+The '-c' option is used to remove backup files created by a
+previous run of the toolkit.
+
+"
+
+# ****************************************************************************
+# Function: printUsage
+#
+# The purpose of this function is to display the usage information for this
+# program.  No other processing is done.
+# ****************************************************************************
+
+printUsage()
+{
+   gettext "${jass_usage}"
+}
+
+# ****************************************************************************
+# Function: printVersion
+#
+# The purpose of this function is to display any version information about
+# this program.  No other processing is done.
+# ****************************************************************************
+
+printVersion()
+{
+   toolkitVersion="`grep JASS_VERSION= ${jass_base_dir}/Drivers/driver.init |\
+   nawk -F= '{ print $2 }' | sed 's/\"//g'`"
+   echo `gettext 'Version: '`"${toolkitVersion}"
+}
+
+# ****************************************************************************
+# Function: logNotice
+#
+# This is a temporary declaration of logNotice used before the program is
+# bootstrapped into the JASS framework.  Once this has been done, this
+# function will be superseded by the version stored in the file:
+# Drivers/common_log.funcs.
+# ****************************************************************************
+
+logNotice()
+{
+   _logMessage="${*}"
+   _newMessage="`gettext "${_logMessage}"`"
+   echo "[NOTE] \c"
+   eval printf "%s\\\n" "\"${_newMessage}\""
+}
+
+# ****************************************************************************
+# Function: logWarning
+#
+# This is a temporary declaration of logWarning used before the program is
+# bootstrapped into the JASS framework.  Once this has been done, this
+# function will be superseded by the version stored in the file:
+# Drivers/common_log.funcs.
+# ****************************************************************************
+
+logWarning()
+{
+   _logMessage="${*}"
+   _newMessage="`gettext "${_logMessage}"`"
+   echo "[WARN] \c"
+   eval printf "%s\\\n" "\"${_newMessage}\""
+}
+
+# ****************************************************************************
+# Function: logError
+#
+# This is a temporary declaration of logError used before the program is
+# bootstrapped into the JASS framework.  Once this has been done, this
+# function will be superseded by the version stored in the file:
+# Drivers/common_log.funcs.
+# ****************************************************************************
+
+logError()
+{
+   _logMessage="${*}"
+   _newMessage="`gettext "${_logMessage}"`"
+   echo "[ERR ] \c"
+   eval printf "%s\\\n" "\"${_newMessage}\""
+}
+
+# ****************************************************************************
+# Function: stopProgram
+#
+# This function is called if the user does not warn to proceed with the
+# execution of this program (see: JASS_NOVICE_USER check below).
+# ****************************************************************************
+
+stopProgram()
+{
+   logNotice 'Terminating this Sun Security Toolkit: Community Edition run due to user request.'
+   exit 4
+}
+
+
+# ****************************************************************************
+# Function: exclusiveLock
+#
+# Lock or unlock a resource (usually a program)
+# Print PID of locking process, if any, to stdout.
+#
+# Parameters:
+# $1	"LOCK" or "UNLOCK"
+# $2	lock name (usually the program name)
+#
+# Return, in $?:
+# 0	lock or unlock successful
+# 1	Already locked or unlocked.  PID of locking process echoed to stdout.
+# 2	Timeout error trying to lock or unlock
+# 3-7	Usage or internal error
+#
+# Note:
+# The lock created is a soft link to the owning pid.  E.g.,
+# lrwxrwxrwx 1 root root 4 Apr 14 12:23 $LOCKDIR/myscript.lock -> 5571
+#
+# Usage examples: (for LOCK and UNLOCK for mythical program "myscript")
+# lockPid=`exclusiveLock LOCK myscript` || echo "Lock failed with status $?"
+# trap 'exclusiveLock UNLOCK myscript' TERM HUP INT QUIT EXIT
+# exclusiveLock UNLOCK myscript
+# ****************************************************************************
+
+exclusiveLock()
+{
+	LOCKDIR="${JASS_ROOT_DIR}var/opt/${JASS_PKG}/run"
+
+	# Parameters
+	LOCKARG="$1"
+	LOCKNAME="$2"
+
+	# Sanity checks
+	[ -z "$LOCKARG" ] && return 3	# arg $1 empty
+	[ "$LOCKARG" = "LOCK" -o "$LOCKARG" = "UNLOCK" ] || return 4 # invalid
+	[ -z "$LOCKNAME" ] && return 5	# arg $2 empty
+	[ -z "$LOCKDIR" ] && return 6	# $LOCKDIR empty
+	[ -d "$LOCKDIR" ] || mkdir -p "$LOCKDIR"
+	[ -d "$LOCKDIR" ] || return 7	# directory missing
+
+	main_lock="${LOCKDIR}/${LOCKNAME}.lock"
+	del_lock_base="${LOCKDIR}/${LOCKNAME}.DELETE.lock"
+
+	if [ "$LOCKARG" = "UNLOCK" ];  then
+		lock_pid=`ls -l "$main_lock" 2>/dev/null | nawk '{print $NF}'`
+		# Only UNLOCK if I created the lock.
+		if [ -n "$lock_pid" -a "$lock_pid" -eq $$ ] ; then
+			rm -rf "$main_lock"
+			return 0 # Unlock OK
+		fi
+		return 1 # Not lock owner
+	fi
+
+        # Loop until we get a lock or we timeout
+	retry_count=0
+	while [ "$retry_count" -lt 5 ] ; do
+		retry_count=`expr $retry_count + 1`
+
+		# Try to create the lock, a symbolic that points the PID ($$) of
+		# this process.  This creates the lock with a fixed name along
+		# with the PID in an atomic operation.
+		if ln -s $$ "${main_lock}" 2>/dev/null ; then
+			# Successfully got the lock, delete any delete locks
+			# for clean-up purposes.
+			rm -rf "${del_lock_base}.[1-9]*"
+			return 0 # Won the lock
+		fi
+
+                # A lock already exists.
+		# See if existing lock is valid (associated PID is alive).
+		lock_pid=`ls -l "$main_lock" 2>/dev/null | nawk '{print $NF}'`
+		[ -z "$lock_pid" ] && continue # Lock disappeared! Try again.
+
+		if kill -0 "$lock_pid" 2>/dev/null ; then # pid is alive
+			# Verify process is running this script:
+			short_name=`echo $LOCKNAME | sed 's/\(........\).*/\1/'`
+			ps -eo 'pid,fname' | grep " ${short_name}$" \
+				| nawk '{print $1;}' | grep -w "${lock_pid}" \
+                                >/dev/null
+			if [ $? -eq 0 ]; then
+				echo "$lock_pid" # Return PID of locking process
+				return 1 # Already locked
+			fi
+		fi
+
+		# $main_lock is invalid; try to win a DELETE lock to blow it
+		# away.  The delete lock name is based on the PID of the
+		# process locking $main_lock, plus a sequence number.  There's
+		# a tiny chance that the delete lock will be invalid, so we do
+		# it in a loop, sleeping a random number of seconds each
+		# iteration to avoid a race condition.
+		nbr_del_locks=0
+		del_lock="${del_lock_base}.${lock_pid}.${nbr_del_locks}"
+
+		until ln -s $$ "$del_lock" 2>/dev/null ; do
+			del_lock_pid=`ls -l "$del_lock" 2>/dev/null \
+				| nawk '{print $NF}'`
+			[ -z "$del_lock_pid" ] && break # Lock disappeared.
+			kill -0 $del_lock_pid && break # Valid delete lock.
+			nbr_del_locks=`expr $nbr_del_locks + 1`
+			del_lock="${del_lock_base}.${lock_pid}.${nbr_del_locks}"
+
+			RANDOM=$$ # seeds $RANDOM on ksh; constant on Bourne sh
+			seed=`date +%S` # Bourne sh workaround
+			sleep `expr \( $RANDOM + $seed \) % 5 + 1`
+		done
+
+		# Did we win a delete lock?
+		del_lock_pid=`ls -l $del_lock 2>/dev/null | nawk '{print $NF}'`
+		[ "$del_lock_pid" = $$ ] || continue
+
+		# Yes. Before deleting main lock, make sure it's still there
+		# and is still allocated for the same PID.
+		cur_lock_pid=`ls -l "$main_lock" 2>/dev/null | nawk '{print $NF}'`
+		[ -n "$cur_lock_pid" -a "$cur_lock_pid" = "$lock_pid" ] && \
+			rm -rf "$main_lock" "$del_lock"
+	done
+
+	return 3 # Timeout error
+}
+
+
+
+# ****************************************************************************
+# Function: check_user_variables
+# ****************************************************************************
+
+check_user_variables()
+{
+   # Read the driver.init (which reads the user.init) to determine what
+   # settings it would use.  From this we can determine if there are
+   # any potential problems before starting the driver.
+
+   if [ ! -z "${jass_base_dir}" ]; then
+
+      cd ${jass_base_dir}
+
+      JASS_HOME_DIR="${jass_base_dir}"
+
+      . Drivers/driver.init
+
+      # Now that the state has been initialized, we can verify the state
+      # of the critical variables.
+
+      if [ ! -d "${JASS_ROOT_DIR}" ]; then
+         logError 'Could not find root directory, ${JASS_ROOT_DIR}'
+         exit 1
+      fi
+
+   else
+      logError 'check_user_variables called without jass_base_dir set.'
+      exit 1
+   fi
+}
+
+# ****************************************************************************
+# Function: to_date
+# ****************************************************************************
+
+to_date()
+{
+   # $1 must be a 14 character date string of the form YYYYMMDDHHMMSS
+   if [ -z "${1}" ] ; then
+      echo ""
+      return
+   fi
+
+   # it must be all digits too
+   all_nums=`echo ${1} | sed -e 's/[0-9]//g'`
+   if [ -n "${all_nums}" ] ; then
+      echo ${1}
+      continue
+   fi
+
+   # convert it to human readable date
+   yr=`echo ${1} | cut -c1-4`
+   mo=`echo ${1} | cut -c5-6`
+   dy=`echo ${1} | cut -c7-8`
+   hr=`echo ${1} | cut -c9-10`
+   mn=`echo ${1} | cut -c11-12`
+   sc=`echo ${1} | cut -c13-14`
+   case $mo in
+   01)	month=`gettext "January"`	;;
+   02)	month=`gettext "February"`	;;
+   03)	month=`gettext "March"`		;;
+   04)	month=`gettext "April"`		;;
+   05)	month=`gettext "May"`		;;
+   06)	month=`gettext "June"`		;;
+   07)	month=`gettext "July"`		;;
+   08)	month=`gettext "August"`	;;
+   09)	month=`gettext "September"`	;;
+   10)	month=`gettext "October"`	;;
+   11)	month=`gettext "November"`	;;
+   12)	month=`gettext "December"`	;;
+   esac
+   eval echo `gettext '${month} ${dy}, ${yr} at ${hr}:${mn}:${sc}'`
+}
+
+# ****************************************************************************
+# Function: display_list
+# ****************************************************************************
+
+display_list()
+{
+   if [ -z "${1}" ] ; then
+      echo ""
+      return
+   fi
+
+   echo "${1}" | nawk -F/ '{print $NF , $0}' | while read zdate dir ; do
+      echo "`to_date ${zdate}` ($dir)"
+   done
+}
+
+# ****************************************************************************
+# Function: select_undo_files
+#
+# Get the undo run numbers to undo from the user.
+# Set the whitespace-separated result in JASS_RESTORE_LIST.
+# If nothing selected to undo, set JASS_RESTORE_LIST to empty ("").
+#
+# ****************************************************************************
+
+select_undo_files()
+{
+   parent_dir=`dirname ${JASS_REPOSITORY}`
+
+   reverse_available=`undoable_dirs`
+   if [ -z "${reverse_available}" ] ; then
+      logNotice 'There are no Sun Security Toolkit: Community Edition runs available to undo.'
+      return
+   fi
+   choices=`display_list "${reverse_available}"`
+
+   n=`echo "${reverse_available}" | wc -l | nawk '{print $1}'`
+   echo ""
+   gettext "Please select a Sun Security Toolkit: Community Edition run to restore through:\n"
+   echo "${choices}" | nawk '{ print ++i ".  " $0 }'
+   gettext "Choice ('q' to exit)?  "
+   while read ans
+   do
+      if [ -z "${ans}" ] ; then
+	 eval echo `gettext 'Please select a number between 1 and ${n}.'`
+         gettext "Choice ('q' to exit)?  "
+	 continue
+      fi
+      case ${ans} in
+
+      q|Q)
+         break
+         ;;
+
+      [1-9]|[1-9][0-9])		# we hope there's never more than 99
+	 if [ ${ans} -lt 1 -o ${ans} -gt ${n} ] ; then
+	    eval echo `gettext 'Please select a number between 1 and ${n}.'`
+            gettext "Choice ('q' to exit)?  "
+	 else
+	    break
+	 fi
+	 ;;
+
+      *)
+	 eval echo `gettext 'Please select a number between 1 and ${n}.'`
+         gettext "Choice ('q' to exit)?  "
+	 ;;
+      esac
+   done
+
+   if [ "${ans}" = "q" -o "${ans}" = "Q" ]; then
+      JASS_RESTORE_LIST=""
+      return
+   else
+      JASS_RESTORE_LIST=`echo "${reverse_available}" | head -"${ans}"`
+   fi
+
+   # We are now in a position to tell if a run performed after the runs we
+   # are now undoing was cleaned. It if was, we should warn the users that
+   # using a 'force' option may be a good choice.
+
+   _including_cleans=`undoable_dirs 1`
+
+   # One is a list of all the undoable runs.  Another is a list containing
+   # all the undoable runs, as well as cleaned runs.  The lists are ordered
+   # chronologically, and we look at the nth entry in the undoable only list.
+   # If the nth entry in the list (run_from_clean) containing
+   # undoable + cleans is not the same, there must have been a clean more
+   # recently and we want to warn.
+
+   _run_from_clean=`echo "${_including_cleans}" | head -"${ans}" | tail -1`
+   _run_from_undos=`echo "${reverse_available}" | head -"${ans}" | tail -1`
+
+   if [ "${_run_from_clean}" != "${_run_from_undos}" ]; then
+      logWarning 'You have requested to Undo a Toolkit run performed prior to a Cleaned Toolkit run.'
+      logWarning 'Typically, this will produce many files with incorrect checksums.'
+      if [ "${JASS_UNDO_TYPE}" = "FORCE" ]; then
+	 logWarning 'Running with the "-f" option may place the system in an inconsistent state.'
+	 respond_yes_to_continue
+      fi
+   fi
+}
+
+# ****************************************************************************
+# Function: get_expanded_strings
+#
+# Do the required string expansion on 1-4,7,9
+#    E.g. echo 1 2 3 4 7 9
+# Return 0 on success, 1 on error
+#
+# ****************************************************************************
+
+get_expanded_strings()
+{
+   mystring="$1"
+   retstring=""
+   if [ -z "${mystring}" ]; then
+      return 1
+   fi
+
+   # Commas "," are easy - just turn them into spaces
+   mystring=`echo ${mystring} | sed -e 's/,/ /'`
+
+   # Dash "-" is more difficult.  perl would be easy, but nawk it is.
+   # Strategy - for each block of numbers, pipe it to nawk, and increment
+   # it from the lower to the upper
+   for block in ${mystring};  do
+      hasdash=`echo $block | sed -e 's/[0-9]//g'`
+      if [ -z "${hasdash}" ]; then
+	 # A blank string means there is no dash, i.e. a plain number
+	 retstring="${retstring} ${block}"
+      else
+	 retstring="${retstring} `echo ${block} | nawk -F- \
+            '{if ($1 <= $2) { for (test=$1; test <= $2; test++) { print test } }}'`"
+      fi
+   done
+
+   echo "${retstring}"
+   return 0
+}
+
+# ****************************************************************************
+# Function: select_clean_files
+#
+# Get the undo run numbers to "clean" (remove) from the user.
+# Set the whitespace-separated result in JASS_RESTORE_LIST.
+#
+# ****************************************************************************
+
+select_clean_files()
+{
+   parent_dir=`dirname ${JASS_REPOSITORY}`
+
+   reverse_available=`undoable_dirs`
+   if [ -z "${reverse_available}" ] ; then
+      logNotice 'There are no Sun Security Toolkit: Community Edition runs available to clean.'
+      return
+   fi
+
+   # Typically, runs would be cleaned in chronological order, not reversed
+   # So we need to reverse the list we just got.
+   clean_available=""
+   for clean_run in ${reverse_available}; do
+      if [ -z "${clean_available}" ]; then
+	 clean_available="${clean_run}"
+      else
+	 clean_available="${clean_run}\n${clean_available}"
+      fi
+   done
+
+   choices=`display_list "${clean_available}"`
+
+   n=`echo "${clean_available}" | wc -l | nawk '{print $1}'`
+   echo ""
+   gettext "Please select Sun Security Toolkit: Community Edition runs to clean:\n"
+   echo "${choices}" | nawk '{ print ++i ".  " $0 }'
+   gettext "Choice ('q' to exit)?  "
+   while read ans
+   do
+      if [ -z "${ans}" ] ; then
+	 eval echo `gettext 'Please select runs between 1 and ${n} ( - and , are permitted).'`
+         gettext "Choices ('q' to exit)?  "
+	 continue
+      fi
+      case ${ans} in
+
+      q|Q)
+         break
+         ;;
+
+      [1-9]|[1-9][0-9,-]*)
+	 res=`get_expanded_strings ${ans}`
+	 for myans in ${res}; do
+	    if [ ${myans} -lt 1 -o ${myans} -gt ${n} ] ; then
+	       res=""
+	       break
+	    fi
+	 done
+
+	 if [ -z "${res}" ]; then
+	    eval echo `gettext 'Please select numbers between 1 and ${n}.'`
+	    gettext "Choice ('q' to exit)?  "
+	 else
+	    break
+	 fi
+	 ;;
+
+      *)
+	 eval echo `gettext 'Please select a number between 1 and ${n}.'`
+         gettext "Choice ('q' to exit)?  "
+	 ;;
+      esac
+   done
+
+   if [ "${ans}" = "q" -o "${ans}" = "Q" ]; then
+      JASS_RESTORE_LIST=""
+   else
+      # res is now a whitespace separated list of valid choices. But these choices
+      # need to be translated back to repositories.
+      JASS_RESTORE_LIST=""
+      for myans in ${res}; do
+	 JASS_RESTORE_LIST="${JASS_RESTORE_LIST} `echo \"${clean_available}\" \
+            | tail +\"${myans}\" | head -1`"
+      done
+   fi
+}
+
+
+# ****************************************************************************
+# logFinalScore
+#
+# Print messages giving the total error count.
+# If  ${JASS_QUIET_MODE} is not 1 and ${jass_output_file} is empty,
+# output also to stdout.
+#
+# Input parameters
+# $1		Driver name
+# $2, $3, . . .	One or more filenames to be appended with score output
+#
+# Set return code $? based on return code $? from logSummary:
+#	0	No errors or failures
+#	1	One or more errors or failures
+# ****************************************************************************
+
+logFinalScore()
+{
+   returnCode=""
+
+   SCRIPT_NAME="${1}"
+   shift
+
+   if [ "${JASS_MODE}" = "AUDIT" ]; then
+      # Capture the final score.
+      finalScore="`cat ${JASS_REPOSITORY}/.tmpScore`"
+
+      # Print message
+      if [ "${JASS_QUIET_MODE}" != "1" ] ; then
+         logMessage "${JASS_MSG_GRAND_TOTAL}"
+         logScore 'Grand Total:' "${finalScore}"
+      fi
+      for i in $* ; do
+         if [ -n "$i" ] ; then
+            logMessage "${JASS_MSG_GRAND_TOTAL}" >>$i 2>&1
+            logScore 'Grand Total:' "${finalScore}" >>$i 2>&1
+         fi
+      done
+   fi
+
+   # Print summary
+
+   scripts=`wc -l ${JASS_RUN_SCRIPT_LIST} | nawk '{print $1}'`
+   if [ "${JASS_QUIET_MODE}" != "1" -a -z "${jass_output_file}" ] ; then
+      logSummary ${SCRIPT_NAME} $scripts
+      returnCode=$?
+   fi
+
+   for i in $* ; do
+      if [ -n "$i" ] ; then
+         logSummary ${SCRIPT_NAME} $scripts >>$i 2>&1
+         returnCode=$?
+      fi
+   done
+
+   # Get returnCode if not set yet:
+   if [ -z "$returnCode" ] ; then
+         logSummary ${SCRIPT_NAME} $scripts >/dev/null 2>&1
+         returnCode=$?
+   fi
+
+   # Return code from logSummary
+   return $returnCode
+}
+
+
+# ****************************************************************************
+# print_history
+# Print history of SST apply runs (jass-execute -H).
+#
+# Return value:
+# 0   No errors or failures
+# 1   Execution error
+# ****************************************************************************
+
+print_history()
+{
+   parent_dir=`dirname ${JASS_REPOSITORY}`
+
+   if [ ! -d "${parent_dir}" ]; then
+      return 1
+   fi
+
+   full_list="`cd ${parent_dir}; /bin/ls -r`"
+   if [ -z "${full_list}" ] ; then
+      echo ""
+      return 1
+   fi
+
+   gettext "This information is only applicable for applications of the
+Sun Security Toolkit: Community Edition starting with version 0.3.\n"
+
+   if [ "${JASS_MODE}" = "HISTORY_LAST" ]; then
+      gettext "\nThe last application of the Sun Security Toolkit: Community Edition was:\n\n"
+   else
+      gettext "\nThe following is a listing of the applications of the Sun
+Security Toolkit on this system.  This list is provided in
+reverse chronological order:\n\n"
+   fi
+
+   num=1
+   echo "${full_list}" | while read dir; do
+
+      # skip if there is no manifest file; nothing to display
+      [ ! -f ${parent_dir}/${dir}/jass-manifest.txt  ] && continue
+      # skip if the manifest file is empty; nothing to display
+      [ ! -s ${parent_dir}/${dir}/jass-manifest.txt  ] && continue
+
+      if [ -f ${parent_dir}/${dir}/jass-undo-log.txt ]; then
+         echo "${num}.   `display_list ${dir}`	(UNDONE)"
+      else
+         echo "${num}.   `display_list ${dir}`"
+      fi
+
+      num=`expr ${num} + 1`
+
+      if [ "${JASS_MODE}" = "HISTORY_LAST" ]; then
+         break
+      fi
+   done
+   echo ""
+   return 0
+}
+
+# ****************************************************************************
+# Function: respond_yes_to_continue
+# Stop the Driver unless the user wishes to continue
+#
+# Return value:
+# 0	No errors or failures
+#
+# Other possibilities
+#       If the user chooses NO the driver will exit in this routine
+# ****************************************************************************
+respond_yes_to_continue()
+{
+
+   # xpg4 is not delivered in SUNWmreq.  So using a localized system without
+   # this is going to produce problems. Of course, I'm not sure that's even
+   # possible.
+
+   if [ -x /usr/xpg4/bin/egrep ]; then
+      _resp_y=`locale yesstr`
+      _resp_n=`locale nostr`
+      _no=`locale noexpr`
+      _yes=`locale yesexpr`
+      _grep="/usr/xpg4/bin/egrep"
+   else
+      # This code is not localized. The problem is that if we can't
+      # interpret a localized response, we shouldn't ask for it.
+      _resp_y='YES'
+      _resp_n='NO'
+      _no='^[nN]'
+      _yes='^[yY]'
+      _grep='grep'
+   fi
+   _string="(${_resp_y}/${_resp_n}): [${_resp_n}] "
+   logMessage '\nAre you sure that you want to continue? ${_string}'
+
+   while read ans ; do # loop until a valid or empty answer is received
+      if [ "${ans}" = "" ]; then # no answer
+         break
+      elif echo "${ans}" | ${_grep} "${_no}" >/dev/null 2>&1 ; then
+         break
+      elif echo "${ans}" | ${_grep} "${_yes}" >/dev/null 2>&1 ; then
+         break
+      fi
+      logMessage '\nThe response provided was not valid, please try again.'
+      logMessage '\nAre you sure that you want to continue? ${_string}'
+   done
+
+   if [ "${ans}" = "" ]; then # no answer or read failed
+      stopProgram
+   elif echo "${ans}" |  ${_grep} "${_no}" >/dev/null 2>&1 ; then
+      stopProgram
+   fi
+   return 0
+}
+
+# ****************************************************************************
+# Function: execute_driver
+# Execute the driver after all checks have passed.
+#
+# Return value:
+# 0	No errors or failures
+# 1	Execution error
+# 2	Security violation(s) detected
+# ****************************************************************************
+
+execute_driver()
+{
+   returnCode=1
+
+   cd ${jass_base_dir}
+
+   if [ "${JASS_MODE}" = "HISTORY_FULL" -o "${JASS_MODE}" = "HISTORY_LAST" ]
+   then
+      print_history
+      return $?
+   fi
+
+   if [ -n "${jass_driver}" ]; then
+      if [ -d Drivers ]; then
+         if [ -r "Drivers/${jass_driver}" -a -f "Drivers/${jass_driver}" ]
+         then
+            SCRIPT_NAME="jass-execute"
+            logMessage 'Executing driver, ${jass_driver}'
+
+            # Make sure directory exists if -o jass_output_file specified:
+            if [ -n "${jass_output_file}" ] ; then
+               jass_output_dir=`dirname "${jass_output_file}"`
+               if [ -n "${jass_output_dir}" -a "${jass_output_dir}" != "." ]
+               then
+                  if [ ! -d "${jass_output_dir}" -a ! -f "${jass_output_dir}" ]
+                  then
+                     logNotice "Creating output directory ${jass_output_dir}"
+                     mkdir -p "${jass_output_dir}"
+                  fi
+               fi
+            fi
+
+            #
+            # Take action based on mode we're running in
+            # (undo, clean, and everything else)
+            #
+	    if [ "${JASS_MODE}" = "UNDO" ] ; then
+
+	       select_undo_files
+
+	       if [ -n "${JASS_RESTORE_LIST}" ] ; then
+		  for undo_run in ${JASS_RESTORE_LIST}
+		  do
+		     # need to reset these variables each time through
+		     JASS_REPOSITORY="${undo_run}"
+		     JASS_RUN_VERSION="${JASS_REPOSITORY}/jass-version.txt"
+
+		     JASS_RUN_SCRIPT_LIST="${JASS_REPOSITORY}/jass-script-list.txt"
+                     JASS_RUN_MANIFEST="${JASS_REPOSITORY}/jass-manifest.txt"
+		     JASS_RUN_INSTALL_LOG="${JASS_REPOSITORY}/jass-install-log.txt"
+		     JASS_RUN_UNDO_LOG="${JASS_REPOSITORY}/jass-undo-log.txt"
+		     JASS_RUN_CLEAN_LOG="${JASS_REPOSITORY}/jass-cleanup-log.txt"
+
+		     JASS_RUN_CHECKSUM="${JASS_REPOSITORY}/jass-checksums.txt"
+
+		     JASS_SCRIPT_ERROR_LOG="${JASS_REPOSITORY}/jass-undo-script-errors.txt"
+		     JASS_SCRIPT_FAIL_LOG="${JASS_REPOSITORY}/jass-undo-script-failures.txt"
+		     JASS_SCRIPT_WARN_LOG="${JASS_REPOSITORY}/jass-undo-script-warnings.txt"
+		     JASS_SCRIPT_NOTE_LOG="${JASS_REPOSITORY}/jass-undo-script-notes.txt"
+
+		     touch ${JASS_SCRIPT_ERROR_LOG}
+		     touch ${JASS_SCRIPT_WARN_LOG}
+		     touch ${JASS_SCRIPT_FAIL_LOG}
+		     touch ${JASS_SCRIPT_NOTE_LOG}
+
+
+                     SCRIPT_NAME="jass-execute"
+
+		     if [ ! -f ${JASS_RUN_MANIFEST} ] ; then
+                        logNotice 'There is no manifest file to back out of run ${undo_run}'
+			continue
+		     fi
+
+		     if [ -f ${JASS_RUN_UNDO_LOG} ] ; then
+			logNotice 'Run ${undo_run} has already been backed out, skipping.'
+			continue
+		     fi
+
+		     if [ -f ${JASS_RUN_CLEAN_LOG} ] ; then
+			logNotice 'Run ${undo_run} has already been cleaned up, skipping.'
+			continue
+		     fi
+
+                     logNotice 'Restoring to previous run from ${undo_run}'
+
+		     if [ -z "${jass_output_file}" ]; then
+                        if [ "${JASS_QUIET_MODE}" = "1" ]; then
+			   /bin/sh Drivers/${jass_driver} \
+                              > ${JASS_RUN_UNDO_LOG} 2>&1
+                        else
+			   /bin/sh Drivers/${jass_driver} 2>&1 | /bin/tee -a \
+			      ${JASS_RUN_UNDO_LOG}
+                        fi
+                        logFinalScore ${jass_driver} ${JASS_RUN_UNDO_LOG}
+                        returnCode=$?
+		     else
+                        logNotice 'Recording output to ${jass_output_file}'
+
+		        /bin/sh Drivers/${jass_driver} 2>&1 | /bin/tee -a \
+		           ${JASS_RUN_UNDO_LOG} > ${jass_output_file} 2>&1
+                        logFinalScore ${jass_driver} ${JASS_RUN_UNDO_LOG} \
+                           ${jass_output_file}
+                        returnCode=$?
+		     fi
+
+
+                     if [ ! -z "${JASS_EMAIL_ADDRESS}" ] ; then
+                        subjectString="`gettext 'Sun Security Toolkit: Community Edition Log: ${JASS_MODE} at ${JASS_TIMESTAMP}'`"
+                        mailx -s "`eval echo ${subjectString}`" \
+                           ${JASS_EMAIL_ADDRESS} < ${JASS_RUN_UNDO_LOG}
+                     fi
+		  done
+	       fi
+
+	    elif [ "${JASS_MODE}" = "CLEAN" ] ; then
+
+	       select_clean_files
+
+	       if [ -n "${JASS_RESTORE_LIST}" ] ; then
+		  for clean_run in ${JASS_RESTORE_LIST}
+		  do
+		     # need to reset these variables each time through
+		     JASS_REPOSITORY="${clean_run}"
+		     JASS_RUN_VERSION="${JASS_REPOSITORY}/jass-version.txt"
+
+		     JASS_RUN_SCRIPT_LIST="${JASS_REPOSITORY}/jass-script-list.txt"
+                     JASS_RUN_MANIFEST="${JASS_REPOSITORY}/jass-manifest.txt"
+		     JASS_RUN_INSTALL_LOG="${JASS_REPOSITORY}/jass-install-log.txt"
+		     JASS_RUN_UNDO_LOG="${JASS_REPOSITORY}/jass-undo-log.txt"
+		     JASS_RUN_CLEAN_LOG="${JASS_REPOSITORY}/jass-cleanup-log.txt"
+
+		     JASS_RUN_CHECKSUM="${JASS_REPOSITORY}/jass-checksums.txt"
+
+		     JASS_SCRIPT_ERROR_LOG="${JASS_REPOSITORY}/jass-clean-script-errors.txt"
+		     JASS_SCRIPT_FAIL_LOG="${JASS_REPOSITORY}/jass-clean-script-failures.txt"
+		     JASS_SCRIPT_WARN_LOG="${JASS_REPOSITORY}/jass-clean-script-warnings.txt"
+		     JASS_SCRIPT_NOTE_LOG="${JASS_REPOSITORY}/jass-clean-script-notes.txt"
+
+		     touch ${JASS_SCRIPT_ERROR_LOG}
+		     touch ${JASS_SCRIPT_WARN_LOG}
+		     touch ${JASS_SCRIPT_FAIL_LOG}
+		     touch ${JASS_SCRIPT_NOTE_LOG}
+
+                     SCRIPT_NAME="jass-execute"
+
+		     if [ ! -f ${JASS_RUN_MANIFEST} ] ; then
+                        logNotice 'There is no manifest file to back out of run ${clean_run}'
+			continue
+		     fi
+
+		     if [ -f ${JASS_RUN_UNDO_LOG} ] ; then
+			logNotice 'Run ${clean_run} has already been backed out, skipping.'
+			continue
+		     fi
+
+		     if [ -f ${JASS_RUN_CLEAN_LOG} ] ; then
+			logNotice 'Run ${clean_run} has already been cleaned up, skipping.'
+			continue
+		     fi
+
+                     logNotice 'Cleaning previous run from ${clean_run}'
+
+		     if [ -z "${jass_output_file}" ]; then
+                        if [ "${JASS_QUIET_MODE}" = "1" ]; then
+			   /bin/sh Drivers/${jass_driver} \
+                              > ${JASS_RUN_CLEAN_LOG} 2>&1
+                        else
+			   /bin/sh Drivers/${jass_driver} 2>&1 | /bin/tee -a \
+			      ${JASS_RUN_CLEAN_LOG}
+                        fi
+                        logFinalScore ${jass_driver} ${JASS_RUN_CLEAN_LOG}
+                        returnCode=$?
+
+		     else
+                        logNotice 'Recording output to ${jass_output_file}'
+
+		        /bin/sh Drivers/${jass_driver} 2>&1 | /bin/tee -a \
+		           ${JASS_RUN_CLEAN_LOG} > ${jass_output_file} 2>&1
+                        logFinalScore ${jass_driver} ${JASS_RUN_CLEAN_LOG} \
+		            ${jass_output_file}
+                        returnCode=$?
+		     fi
+
+
+                     if [ ! -z "${JASS_EMAIL_ADDRESS}" ] ; then
+                        subjectString="`gettext 'Sun Security Toolkit: Community Edition Log: ${JASS_MODE} at ${JASS_TIMESTAMP}'`"
+                        mailx -s "`eval echo ${subjectString}`" \
+                           ${JASS_EMAIL_ADDRESS} < ${JASS_RUN_CLEAN_LOG}
+                     fi
+		  done
+	       fi
+
+	    else # not UNDO or CLEAN
+               mkdir -m 700 -p ${JASS_REPOSITORY}
+
+               if [ $? != 0 ]; then
+                  logError 'FATAL: Could not create ${JASS_REPOSITORY}.'
+                  exit 1
+               fi
+
+               if [ "${JASS_MODE}" = "AUDIT" ]; then
+                  jassTmpLogFile="${JASS_RUN_AUDIT_LOG}"
+                  touch ${JASS_REPOSITORY}/.tmpScore
+               else
+	          touch ${JASS_RUN_MANIFEST}
+                  jassTmpLogFile="${JASS_RUN_INSTALL_LOG}"
+               fi
+
+	       touch ${JASS_RUN_CHECKSUM}
+	       touch ${JASS_RUN_SCRIPT_LIST}
+	       touch ${JASS_RUN_VALUES}
+	       touch ${JASS_SCRIPT_ERROR_LOG}
+	       touch ${JASS_SCRIPT_WARN_LOG}
+	       touch ${JASS_SCRIPT_FAIL_LOG}
+	       touch ${JASS_SCRIPT_NOTE_LOG}
+
+               touch ${jassTmpLogFile}
+
+	       echo "${JASS_VERSION}/jass-execute - ${JASS_MODE}/${jass_driver}" > ${JASS_RUN_VERSION}
+
+	       if [ -z "${jass_output_file}" ]; then
+                  if [ "${JASS_QUIET_MODE}" = "1" ]; then
+		     /bin/sh Drivers/${jass_driver} > ${jassTmpLogFile} 2>&1
+                  else
+		     /bin/sh Drivers/${jass_driver} 2>&1 | /bin/tee -a \
+                        ${jassTmpLogFile}
+                  fi
+
+                  logFinalScore ${jass_driver} ${jassTmpLogFile}
+                  returnCode=$?
+
+	       else
+                  logNotice 'Recording output to ${jass_output_file}'
+		  /bin/sh Drivers/${jass_driver} 2>&1 | /bin/tee -a \
+                     ${jassTmpLogFile} > ${jass_output_file} 2>&1
+                  logFinalScore ${jass_driver} ${jassTmpLogFile} \
+                     ${jass_output_file}
+                  returnCode=$?
+	       fi
+
+               if [ ! -z "${JASS_EMAIL_ADDRESS}" ] ; then
+                  subjectString="`gettext 'Sun Security Toolkit: Community Edition Log: ${JASS_MODE} at ${JASS_TIMESTAMP}'`"
+                  mailx -s "`eval echo ${subjectString}`" \
+                     ${JASS_EMAIL_ADDRESS} < ${jassTmpLogFile}
+               fi
+               rm -f ${JASS_REPOSITORY}/.tmpScore
+	    fi
+
+	 else
+            logError 'Could not find a readable driver called, ${jass_driver}.'
+            exit 1
+         fi
+      else
+         logError 'Could not find the Drivers directory.'
+         exit 1
+      fi
+   else
+      printUsage
+      gettext "${jass_usage_options}"
+      exit 1
+   fi
+
+   # Return with the appropriate exit code:
+   return $returnCode
+}
+
+
+# ****************************************************************************
+# MAIN ROUTINE BEGINS HERE
+# ****************************************************************************
+
+# ****************************************************************************
+# Verify user running this script.  Only root can use this script.
+# Note that this section should be updated to account for RBAC.
+# ****************************************************************************
+
+uid=`id | nawk '{ print $1 }' | nawk -F= '{ print $2}' | nawk -F\( '{ print $1 }'`
+
+if [ "${uid}" != "0" ]; then
+   logError 'This script can only be executed by \\\"root\\\".'
+   exit 1
+fi
+
+# ****************************************************************************
+# Parse the command line arguments that were passed to this script.
+# ****************************************************************************
+
+exclUndoOptSelected=0
+
+while getopts a:cHlhubfkfvd:m:r:o:p:V:q\? v; do
+   case ${v} in
+
+      a)
+         if [ ! -z "${JASS_MODE}" ]; then
+            printUsage
+            exit 1
+         fi
+         JASS_MODE="AUDIT"
+         jass_driver="${OPTARG}"
+         ;;
+
+      b)
+         if [ $exclUndoOptSelected -eq 0 ]; then
+            JASS_UNDO_TYPE="BACKUP"
+            exclUndoOptSelected=1
+         else
+            logError 'The \\\"b\\\" option cannot be combined with options \\\"f\\\" or \\\"k\\\".'
+            printUsage
+            exit 1
+         fi
+         ;;
+
+      c)
+         if [ ! -z "${JASS_MODE}" ]; then
+            printUsage
+            exit 1
+         fi
+         JASS_MODE="CLEAN"
+         jass_driver=clean.driver
+         ;;
+
+      d)
+         if [ ! -z "${JASS_MODE}" ]; then
+            printUsage
+            exit 1
+         fi
+         JASS_MODE="APPLY"
+         jass_driver="${OPTARG}"
+         ;;
+
+      f)
+         if [ $exclUndoOptSelected -eq 0 ]; then
+            JASS_UNDO_TYPE="FORCE"
+            exclUndoOptSelected=1
+         else
+            logError 'The \\\"f\\\" option cannot be combined with options \\\"b\\\" or \\\"k\\\".'
+            printUsage
+            exit 1
+         fi
+         ;;
+
+      H)
+         if [ ! -z "${JASS_MODE}" ]; then
+            printUsage
+            exit 1
+         fi
+         JASS_MODE="HISTORY_FULL"
+         ;;
+
+      k)
+         if [ $exclUndoOptSelected -eq 0 ]; then
+            JASS_UNDO_TYPE="KEEP"
+            exclUndoOptSelected=1
+         else
+            logError 'The \\\"k\\\" option cannot be combined with options \\\"b\\\" or \\\"f\\\".'
+            printUsage
+            exit 1
+         fi
+         ;;
+
+      l)
+         if [ ! -z "${JASS_MODE}" ]; then
+            printUsage
+            exit 1
+         fi
+         JASS_MODE="HISTORY_LAST"
+         ;;
+
+      m)
+         JASS_EMAIL_ADDRESS="${OPTARG}"
+         ;;
+
+      o)
+         jass_output_file="${OPTARG}"
+         ;;
+
+      p)
+         JASS_OS_REVISION="${OPTARG}"
+         ;;
+
+      q)
+         JASS_QUIET_MODE="1"
+         ;;
+
+      r)
+         JASS_ROOT_DIR="${OPTARG}"
+         if [ ! -d "${JASS_ROOT_DIR}" ]; then
+            logError 'Could not find root directory, ${JASS_ROOT_DIR}'
+            exit 1
+         fi
+         ;;
+
+      u)
+         if [ ! -z "${JASS_MODE}" ]; then
+            printUsage
+            exit 1
+         fi
+         JASS_MODE="UNDO"
+         jass_driver=undo.driver
+         ;;
+
+      v)
+         printVersion
+         exit 0
+         ;;
+
+      V)
+         JASS_VERBOSITY="${OPTARG}"
+
+         # Check verbosity value.
+         # Note: further checking of verbosity done below, based on mode.
+         case $JASS_VERBOSITY in
+         0|1|2|3|4)	;;
+         *) logError 'Verbosity values must be between 0 and 4.'
+            printUsage
+            exit 1
+         esac
+         ;;
+
+      \?|h)
+         printUsage
+         exit 0
+         ;;
+   esac
+done
+
+shift `expr $OPTIND - 1`
+
+if [ "${JASS_MODE}" = "UNDO" ]; then
+   if [ "${JASS_QUIET_MODE}" = "1" ]; then
+      if [ $exclUndoOptSelected -eq 0 ]; then
+         logError 'The \\\"q\\\" option must be used with either \\\"b\\\", \\\"f\\\", or \\\"k\\\" in undo mode.'
+         printUsage
+         exit 1
+      fi
+   fi
+
+
+   if [ "${JASS_UNDO_TYPE}" = "BACKUP" ]; then
+      logWarning 'Creating backup copies of some files may cause unintended effects.'
+      logWarning 'This is particularly true of /etc/hostname.[interface] files as well
+as crontab files in /var/spool/cron/crontabs.'
+
+   elif [ "${JASS_UNDO_TYPE}" = "ASK" ] ; then
+      # Must use -b, -f, or -k with -o
+      # (because one cannot answer prompts if output is redirected)
+      if [ -n "${jass_output_file}" ] ; then
+         logError 'The \\\"b\\\", \\\"f\\\", or \\\"k\\\" option must be used with the \\\"o\\\" option in undo mode.'
+         printUsage
+         exit 1
+      fi
+   fi
+
+elif [ "${JASS_UNDO_TYPE}" != "ASK" ]; then # -b, -f, or -k option used
+   logError 'The "b", "f", or "k" option can only be used with the "u" option.'
+   printUsage
+   exit 1
+fi
+
+if [ ${JASS_VERBOSITY} -lt 0 -o ${JASS_VERBOSITY} -gt 4 ]; then
+   logError 'Verbosity values must be between 0 and 4.'
+   exit 1
+fi
+
+if [ "${JASS_MODE}" != "AUDIT" -a ${JASS_VERBOSITY} -lt 3 ]; then
+   logNotice 'The verbosity parameter must be either 3 or 4 in this mode.'
+   logNotice 'Setting verbosity parameter to 3.'
+   JASS_VERBOSITY="3"
+fi
+
+if [ "${JASS_ROOT_DIR}" != "" -a "${JASS_OS_REVISION}" = "" ]; then
+   logError 'A Solaris OS version must be specified when calling this program with
+the \\\"-r\\\" option.  The format of the version string is the same as \\\"uname -r\\\".'
+   exit 1
+fi
+
+if [ -z "${jass_driver}" ]; then
+   if [ $# -eq 1 ]; then
+      # jass-execute was called with 1 arguments - the name of a driver.
+      if [ ! -z "${JASS_MODE}" ]; then
+         printUsage
+         exit 1
+      fi
+      JASS_MODE="APPLY"
+      jass_driver="${1}"
+   elif [ $# -gt 1 ]; then
+      # jass-execute was called with > 1 arguments - syntax error
+      logError 'Extraneous command line arguments were detected.'
+      logError 'Only the name of the driver to be applied should be supplied.'
+      printUsage
+      exit 1
+   fi
+else
+   if [ $# -ge 1 ]; then
+      # jass-execute was called with > 1 arguments - syntax error
+      logError 'Extraneous command line arguments were detected.'
+      printUsage
+      exit 1
+   fi
+fi
+
+# If the JASS_MODE parameter is still not defined, then the user did not
+# specify any command-line arguments to the jass-execute program.  If
+# arguments were specified (and a specific mode was not selected), then the
+# above conditional would apply.  If a specific mode were selected, then the
+# JASS_MODE parameter would have been set by the case statement above.
+
+if [ "${JASS_MODE}" = "" ]; then
+   logError 'Execution mode not specified. One of the following options must be used: a, c, d, H, l, u, h, ?, or v.'
+   printUsage
+   exit 1
+fi
+
+# ****************************************************************************
+# Attempt to load helper functions.
+# ****************************************************************************
+
+for common_funcs in common_misc.funcs common_log.funcs ; do
+   if [ -f ${jass_base_dir}/Drivers/${common_funcs} ]; then
+      . ${jass_base_dir}/Drivers/${common_funcs}
+   else
+      logError 'File ${jass_base_dir}/Drivers/${common_funcs} was not found.'
+      exit 1
+   fi
+done
+
+# ****************************************************************************
+# Read the driver.init (which reads the user.init) to determine what settings
+# would be used.  From this we can determine if there are any potential
+# problems before starting the driver.
+# ****************************************************************************
+
+check_user_variables
+
+# ****************************************************************************
+# Check to make sure that only one instance of this program is running.
+# ****************************************************************************
+
+lockPid=`exclusiveLock LOCK jass-execute`
+lockStatus=$?
+case "$lockStatus" in
+0)	# Successful
+	;;
+
+1)	logError 'A jass-execute command, with PID ${lockPid}, is already running.'
+	exit 3
+	;;
+
+*)	logError 'Exclusive lock failed with status ${lockStatus}.'
+	exit 1
+	;;
+esac
+
+# Unlock when we exit or if we are terminated:
+trap 'exclusiveLock UNLOCK jass-execute' EXIT
+trap 'exclusiveLock UNLOCK jass-execute; \
+      logNotice "Terminating this Sun Security Toolkit: Community Edition run due to an
+external interrupt."; \
+      exit 4' HUP INT QUIT TERM
+
+# ****************************************************************************
+# Perform the novice user hardening check to ensure that the user realizes
+# that the Toolkit will disable many/all of the remove access services.
+# Note that this check can be disabled by setting JASS_NOVICE_USER to "0".
+# ****************************************************************************
+
+if [ "${JASS_NOVICE_USER}" = "1" -a "${JASS_MODE}" = "APPLY" ]; then
+   logNotice 'The following prompt can be disabled by setting JASS_NOVICE_USER to 0.'
+   logWarning 'Depending on how the Sun Security Toolkit: Community Edition is configured, it
+is both possible and likely that by default all remote shell and file transfer
+access to this system will be disabled upon reboot effectively locking out any
+user without console access to the system.'
+   respond_yes_to_continue
+fi
+
+# ****************************************************************************
+# All the necessary checks have passed.  Execute the driver.
+# ****************************************************************************
+
+execute_driver

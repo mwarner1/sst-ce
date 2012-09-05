@@ -1,0 +1,173 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-stack-protection.fin	3.12	05/04/12 SMI"
+#
+# This script will modify /etc/system to enable stack protections and
+# logging.  Note that if these parameters are defined in /etc/system,
+# they will be re-written (in place) to verify that they are set properly.
+# Otherwise, they are appended to the file.
+#
+
+logMessage "Enabling the function: kernel-level stack protections and logging"
+echo ""
+
+UNAME_P="`uname -p`"		# sparc or i386
+ISAINFO_B="`isainfo -b`"	# 32 or 64
+
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+   if [ "${UNAME_P}" = "sparc" ]; then
+
+      if check_os_min_revision 5.6 ; then
+
+	 SYSTEM=${JASS_ROOT_DIR}etc/system
+
+	 if [ ! -f ${SYSTEM} ]; then
+	    create_a_file -m 644 -o root:sys ${SYSTEM}
+	    echo ""
+	 fi
+
+	 if [ `egrep "set noexec_user_stack=1" ${SYSTEM} |\
+	    grep -v '*' | wc -l` = 0 ]; then
+
+	    backup_file ${SYSTEM}
+	    echo ""
+
+	    logMessage 'Setting the \\\"set noexec_user_stack\\\" parameter to \\\"1\\\" in ${SYSTEM}.'
+	    logMessage 'Setting the \\\"set noexec_user_stack_log\\\" parameter to \\\"1\\\" in ${SYSTEM}.'
+
+	    cat ${SYSTEM}.${JASS_SUFFIX} |\
+            nawk ' $1 ~ /set/ {
+	       n = split($0, a);
+
+	       if (a[2] ~ /noexec_user_stack_log/) {
+	          printf("set noexec_user_stack_log=1\n");
+	       } else if (a[2] ~ /noexec_user_stack/) {
+	          printf("set noexec_user_stack=1\n");
+	       } else {
+	          printf("%s\n", $0);
+	       }
+	       continue;
+            }
+            { print $0; }' > ${SYSTEM}
+
+	    if [ `grep "set noexec_user_stack_log=1" ${SYSTEM} |\
+	       grep -v '*' | wc -l` = 0 ]; then
+	       echo "set noexec_user_stack_log=1" >> ${SYSTEM}
+	    fi
+
+	    if [ `grep "set noexec_user_stack=1" ${SYSTEM} |\
+	       grep -v '*' | wc -l` = 0 ]; then
+	       echo "set noexec_user_stack=1" >> ${SYSTEM}
+	    fi
+
+	    chmod 644      ${SYSTEM}
+	    chown root:sys ${SYSTEM}
+            # 16 Dec 2011 Matt Warner
+            # no_exec_user_stack is dynamic in Solaris 11, so enable it now if we're not in JumpStart
+            # Note that this only affects 32-bit applications since by default the stack of all 64-bit apps is nonexecutable
+            check_os_min_revision 5.11
+            if [[ $? -eq 0 ]] && [[ "${JASS_STANDALONE}" = "1" ]] ; then
+             echo "noexec_user_stack/W 1" |mdb -kw 
+             echo "noexec_user_stack_log/W 1" |mdb -kw 
+            fi
+	 fi
+      else
+	 logInvalidOSRevision "5.6+"
+      fi
+
+   elif [ "${UNAME_P}" = "i386" ]; then # x86 Architecture (32 or 64 bit)
+
+      if [ "${ISAINFO_B}" -eq 64 ] ; then # x86 64 bit (x64)
+         if check_os_min_revision 5.10 ; then
+
+	    SYSTEM=${JASS_ROOT_DIR}etc/system
+
+	    if [ ! -f ${SYSTEM} ]; then
+	       create_a_file -m 644 -o root:sys ${SYSTEM}
+	       echo ""
+	    fi
+
+	    if [ `egrep "set noexec_user_stack=1" ${SYSTEM} |\
+	       grep -v '*' | wc -l` = 0 ]; then
+
+	       backup_file ${SYSTEM}
+	       echo ""
+
+	       logMessage 'Setting the \\\"set noexec_user_stack\\\" parameter to \\\"1\\\" in ${SYSTEM}.'
+	       logMessage 'Setting the \\\"set noexec_user_stack_log\\\" parameter to \\\"1\\\" in ${SYSTEM}.'
+
+	       cat ${SYSTEM}.${JASS_SUFFIX} |\
+               nawk ' $1 ~ /set/ {
+	          n = split($0, a);
+
+	          if (a[2] ~ /noexec_user_stack_log/) {
+	             printf("set noexec_user_stack_log=1\n");
+	          } else if (a[2] ~ /noexec_user_stack/) {
+	             printf("set noexec_user_stack=1\n");
+	          } else {
+	             printf("%s\n", $0);
+	          }
+	          continue;
+               }
+               { print $0; }' > ${SYSTEM}
+
+	       if [ `grep "set noexec_user_stack_log=1" ${SYSTEM} |\
+	          grep -v '*' | wc -l` = 0 ]; then
+	          echo "set noexec_user_stack_log=1" >> ${SYSTEM}
+	       fi
+
+	       if [ `grep "set noexec_user_stack=1" ${SYSTEM} |\
+	          grep -v '*' | wc -l` = 0 ]; then
+	          echo "set noexec_user_stack=1" >> ${SYSTEM}
+	       fi
+
+	       chmod 644      ${SYSTEM}
+	       chown root:sys ${SYSTEM}
+            # 16 Dec 2011 Matt Warner
+            # no_exec_user_stack is dynamic in Solaris 11, so enable it now if we're not in JumpStart
+            # Note that this only affects 32-bit applications since by default the stack of all 64-bit apps is nonexecutable
+            check_os_min_revision 5.11
+            if [[ $? -eq 0 ]] && [[ "${JASS_STANDALONE}" = "1" ]] ; then
+             echo "noexec_user_stack/W 1" |mdb -kw
+             echo "noexec_user_stack_log/W 1" |mdb -kw
+            fi
+
+	    fi
+         else # must be S10 for x64
+	    logInvalidOSRevision "5.10+"
+         fi
+
+      else
+         logNotice 'This script is not supported on this architecture, ${UNAME_P}, ${ISAINFO_B} bit.'
+      fi
+
+
+   else
+      logNotice 'This script is not supported on this architecture, ${UNAME_P} ${ISAINFO_B}-bit.'
+   fi
+else
+   logNotGlobalZone
+fi

@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-nfs-client.fin 3.9     05/03/30 SMI"
+#
+# This script prevents the Networked File System (NFS) client service from 
+# starting.  Note that this script also installs a new run-control
+# script (/etc/rc2.d/S73swapadd) to replace functionality that would
+# otherwise be disabled - thereby ensuring that local swap files will be
+# added at boot time.
+#
+
+logMessage "Disabling the service: Networked File System (NFS) Client"
+echo ""
+
+svc="
+   svc:/network/nfs/client:default
+   svc:/network/nfs/status:default
+   svc:/network/nfs/nlockmgr:default
+"
+
+if check_os_min_revision 5.10 ; then
+   disable_service_immediate "${svc}"
+else
+   if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K41nfs.client
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K75nfs.client
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K80nfs.client
+   fi
+   disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S73nfs.client
+
+   copy_files "/etc/init.d/swapadd /etc/rc2.d/S73swapadd"
+fi

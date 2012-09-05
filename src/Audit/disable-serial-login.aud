@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-serial-login.aud	1.1	06/12/21 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Disable Serial Login"
+servfil="disable-serial-login.aud"
+PMADM=/usr/sbin/pmadm
+
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Serial login permits login through a serial port.
+
+Rationale for Verification Check:
+
+   By disabling the login: prompt on the system serial devices we make it
+   more difficult for unauthorized users to attach modems, terminals, and
+   other remote access devices to these ports.  This action may safely be
+   performed even if console access to the system is provided via the serial
+   ports, because the login: prompt on the console device is provided
+   through a different mechanism.
+
+Determination of Compliance:
+
+   Use pmadm(1M) to verify serial login is disabled for serial ports ttya
+   and ttyb.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+# Verify logins are disabled
+for i in ttya ttyb ; do
+   chroot ${JASS_ROOT_DIR} ${PMADM} -L -p zsmon -s $i | cut -f4 -d: \
+      | grep 'x' >/dev/null
+   if [ $? -eq 0 ] ; then # enabled
+      logSuccess 'Login disabled for serial port ${i}.'
+   else
+      logFailure 'Login enabled for serial port ${i}.'
+      adjustScore 1
+   fi
+done
+
+finish_audit

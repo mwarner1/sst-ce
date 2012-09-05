@@ -1,0 +1,365 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)common_misc.funcs	1.27	05/07/18 SMI"
+#
+# This file contains all of the miscellaneous or supporting functions used
+# by the Toolkit's functionality.
+#
+
+##############################################################################
+# State Variables
+##############################################################################
+
+# The score associated with the current script being executed.
+SCRIPT_SCORE="0"
+export SCRIPT_SCORE
+
+##############################################################################
+# Checks that a string consists of a positive integer value.
+#
+# Arguments:
+#
+#   _miscStringToCheck - a string checked that must contain a positive integer
+#
+# Returns:
+#
+#   0 - if the string contains only a positive integer
+#   1 - if the string does NOT contain a positive integer
+##############################################################################
+
+isNumeric() {
+   _miscStringToCheck="$1"
+   _miscReturnValue=1
+
+   if [ -z "${_miscStringToCheck}" ]; then
+      _miscReturnValue=1
+   elif [ `echo "${_miscStringToCheck}" | grep -c "^[0-9]*$"` = 1 ]; then
+      _miscReturnValue=0
+   fi
+
+   return $_miscReturnValue
+}
+
+##############################################################################
+# Verifies that the vulnerability value is an integer and positive.
+#
+# Arguments:
+#
+#   _miscVulnVal - the vulnerability value to be checked
+#
+# Returns:
+#
+#   0 - if the vulnerability does meet the required criteria
+#   1 - if the vulnerability does not meet requirements
+##############################################################################
+
+invalidVulnVal() {
+   _miscVulnVal="$1"
+   _miscReturnValue=1
+
+   if isNumeric "$_miscVulnVal"; then
+      _miscReturnValue=1
+   else
+      logError 'invalidVulnValue: Vulnerability value \"${_miscVulnVal}\" is not >= 1.'
+      _miscReturnValue=0
+   fi
+
+   return ${_miscReturnValue}
+}
+
+##############################################################################
+# Evaluates a status variable used for logging purposes.
+#
+# Arguments:
+#
+#   _miscLogStatus - logging status
+#
+# Returns: nothing
+##############################################################################
+
+checkLogStatus() {
+   _miscLogStatus="$1"
+
+   if [ "${_miscLogStatus}" = "LOG" ]; then
+      echo "1"
+   else
+      echo "0"
+   fi
+}
+
+##############################################################################
+# Adjusts the script score based on input provided.
+#
+# Arguments:
+#
+#   _miscScoreVal - value to add to the score
+#
+# Returns: nothing
+##############################################################################
+
+adjustScore() {
+   _miscScoreVal="$1"
+   if isNumeric "$_miscScoreVal"; then
+      SCRIPT_SCORE="`expr $SCRIPT_SCORE + $_miscScoreVal`"
+   else
+      logError 'adjustScore: Score value \"${_miscScoreVal}\" is not >= 1.'
+   fi
+}
+
+##############################################################################
+# Given a string, returns the string wrapped at 72 columns and indented by
+# three characters.  This will be used to print the values of variables
+# in script headers.
+##############################################################################
+
+printPretty() {
+   _miscResult=`echo "${*}" | xargs echo | fmt -w 72 | sed 's/^/   /g'`
+   if [ "`echo ${_miscResult}`" = "" ]; then
+      printf "   %s\n" "`gettext \"<No Value>\"`"
+   else
+      printf "${_miscResult}\n"
+   fi
+}
+
+##############################################################################
+# Given a path name, returns the path name with any redundant '/' characters
+# removed.  This is used to print the values of path names in a more readable
+# way.
+##############################################################################
+
+printPrettyPath() {
+   _miscResult=`echo "${*}" | tr -s '/'`
+   if [ "`echo ${_miscResult}`" = "" ]; then
+      printf "   %s\n" "`gettext \"<No Value>\"`"
+   else
+      printf "${_miscResult}\n"
+   fi
+}
+
+##############################################################################
+# This function will take as input a list of tokens (script names, file
+# names, etc.) and remove any text that is commented out.  This function
+# denotes as comment as any substring of text that begins with a "#" symbol
+# and continues to the end of the line.  If a list of tokens is only on
+# one line, then anything to the right of the "#" symbol will be treated
+# as a comment.
+##############################################################################
+
+extractComments() {
+   tokenList="${1}"
+
+   oIFS="${IFS}"
+   IFS='
+'
+
+   for token in ${tokenList}; do
+      echo "${token}" | sed 's/#.*$//g'
+   done
+
+   IFS="${oIFS}"
+}
+
+##############################################################################
+# This function takes as input a single string argument and returns the
+# same value after any duplicate slash characters ('/') have been removed
+# from the string.  This is used to clean up path names before they are
+# displayed to the user.
+##############################################################################
+
+clean_path() {
+   inputString="${1}"
+
+   if [ ! -z "${inputString}" ]; then
+      tmpString="`echo ${inputString} | sed 's|//|/|g'`"
+      echo "${tmpString}"
+   fi
+}
+
+##############################################################################
+# This function takes as input a single string argument and returns the
+# same value after removing the JASS_ROOT_DIR prefix and replacing it with
+# a simple "/" character.  This is used heavily in conjunction with the
+# add_to_manifest function when storing path names in the JASS manifest file.
+##############################################################################
+
+strip_path() {
+   inputString="${1}"
+
+   if [ ! -z "${inputString}" ]; then
+      tmpString="`echo ${inputString} | sed -e 's,'"${JASS_ROOT_DIR}"'[/]*,/,'`"
+      echo "${tmpString}"
+   fi
+}
+
+
+
+##############################################################################
+# Function: get_lists_disjunction
+#
+# The purpose of this function is take two lists, and return only elements
+# of the first list that are not in the second.  This is a convenience function
+# mainly used in the JASS_SCVS_DISABLE/ENABLE code
+#
+# arguments: listA listB
+#
+# function echos a list containing only those elements of listA not in listB
+# The initial element will be a space if the returned list is not empty.
+# An empty list return is possible.
+##############################################################################
+
+get_lists_disjunction() {
+
+   _listA="${1}"
+   _listB="${2}"
+
+   _retlist=""
+   for _itA in ${_listA}; do
+      _it_found="0"
+      for _itB in ${_listB}; do
+	 if [ "${_itA}" = "${_itB}" ]; then
+	    _it_found="1"
+	 fi
+      done
+      if [ "${_it_found}" = "0" ]; then
+	 _retlist="${_retlist} ${_itA}"
+      fi
+   done
+   echo "${_retlist}"
+}
+
+
+##############################################################################
+# Function: get_lists_conjunction
+#
+# The purpose of this function is take two lists, and return only elements
+# in both lists.  This is a convenience function mainly used in the
+# JASS_SCVS_DISABLE/ENABLE code
+#
+# arguments: listA listB
+#
+# function echos a list containing only those elements of listA in listB
+# The initial element will be a space if the returned list is not empty.
+# An empty list return is possible.
+##############################################################################
+
+get_lists_conjunction() {
+
+   _listA="${1}"
+   _listB="${2}"
+
+   _retlist=""
+   for _itA in ${_listA}; do
+      _it_found="0"
+      for _itB in ${_listB}; do
+	 if [ "${_itA}" = "${_itB}" ]; then
+	    _it_found="1"
+	 fi
+      done
+      if [ "${_it_found}" = "1" ]; then
+	 _retlist="${_retlist} ${_itA}"
+      fi
+   done
+   echo "${_retlist}"
+}
+
+
+##############################################################################
+# Function: undoable_dirs
+#
+# Unfortunately, there is some asymmetry here.  While cleaned runs cannot be
+# undone, they still can be active, which means we need to detect them to
+# find any saved values.  So we are adding a flag to determine whether or not
+# to look for cleaned up runs.
+#
+# Args:  $1 - (optional) set to 1 to return runs that have been cleaned.
+##############################################################################
+
+undoable_dirs()
+{
+   return_cleaned_runs="$1"
+   # do not echo anything but the list of directories from this function
+   parent_dir=`dirname ${JASS_REPOSITORY}`
+   full_list=`/bin/ls -1dr ${parent_dir}/*`
+   if [ -z "${full_list}" ] ; then
+      echo ""
+      return
+   fi
+
+   # this function needs to return the directories one per line
+   echo "${full_list}" | while read dir ; do
+      # skip if there is an undo log here; it was already undone
+      [ -f ${dir}/jass-undo-log.txt  ] && continue
+      # skip if there is no manifest file; nothing to undo
+      [ ! -f ${dir}/jass-manifest.txt  ] && continue
+      # skip if the manifest file is empty; nothing to undo
+      [ ! -s ${dir}/jass-manifest.txt  ] && continue
+      if [ -z "${return_cleaned_runs}" ]; then
+	 # skip if it has been cleaned up
+	 [ -f ${dir}/jass-cleanup-log.txt  ] && continue
+      fi
+      echo $dir
+   done
+}
+
+
+##############################################################################
+# Function: get_driver_report
+#
+# The purpose of this function is to return the number of scripts that
+# reported an error/warning.
+#
+# If a script is specified multiple times, it will
+# be counted as 2 separate scripts.
+#
+# Arguments:
+#           $1 - The log file to check
+#
+# Returns
+#          $? - 0 -pass
+#               1 - the log file was not readable
+#               255 - an unspecified failure
+#
+# Prints
+#          The number of scripts that matched this driver.
+##############################################################################
+get_driver_report()
+{
+   _rep_file="$1"
+   _drv="$2"
+
+   if [ -z "${_rep_file}" ]; then
+      return 255
+   fi
+
+   if [ ! -r "${_rep_file}" ]; then
+      return 1
+   fi
+
+   _rep_score=`wc -l ${_rep_file} | nawk '{print $1}'`
+
+   echo "${_rep_score}"
+   return 0
+}

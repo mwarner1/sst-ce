@@ -1,0 +1,85 @@
+#!/bin/ksh
+
+# 21 December 2011 Matt Warner
+# First-boot script for Solaris 11 systems
+# where the SST is run while the system is still being built
+# with AI (replacement for JumpStart). If the system is already
+# booted into normal, multi-user mode (i.e. not JumpStart), you 
+# should not need this script since SST should be applying these
+# settings already!
+#
+# With special thanks to Steffen Weiberle for taking the time to document
+# http://blogs.oracle.com/stw/entry/solaris_11_express_network_tunables
+#
+# Other useful reference: 
+# http://docs.oracle.com/cd/E23824_01/html/821-1450/appendixa-28.html
+
+LOCATION=`dirname $0`
+SCRIPTNAME=`basename $0`
+
+logger info "Running first boot script from $LOCATION/$SCRIPTNAME"
+
+# Now NSCD parameters
+
+# check whether a property group exists and add it if it doesn't
+# $1 = service
+# $2 = prop_group
+check_and_add_app_propgroup() {
+ if ! svcprop -q -p $2 $1 ; then
+  echo svccfg -s $1 addpg $2 application
+  svccfg -s $1 addpg $2 application
+ else
+  echo "Property group $2 already exists. Skipping."
+ fi
+}
+
+# check whether a property group exists and add it if it doesn't
+# $1 = service
+# $2 = prop_group
+# $3 = object type (integer, astring, etc)
+# $4 = value
+check_and_add_propval() {
+ if ! svcprop -q -p $2 $1 ; then
+  echo svccfg -s $1 addpropvalue $2 $3 $4
+  svccfg -s $1 addpropvalue $2 $3 $4
+ else
+  echo "Property value already exists. Replacing."
+  echo svccfg -s $1 delcust $2
+  svccfg -s $1 delcust $2
+  echo svccfg -s $1 addpropvalue $2 $3 $4
+  svccfg -s $1 addpropvalue $2 $3 $4
+ fi
+}
+
+# Set the positive and negative TTLs to zero in keeping
+# with previous SST/JASS settings
+# Personally, I think this is a mistake and would not
+# run with nscd caching nothing at all, but would use
+# at least a small value
+check_and_add_app_propgroup name-service/cache password
+check_and_add_app_propgroup name-service/cache group
+check_and_add_app_propgroup name-service/cache host
+#check_and_add_app_propgroup name-service/cache ipnode
+
+check_and_add_propval name-service/cache password/positive_time_to_live integer: 0
+check_and_add_propval name-service/cache password/negative_time_to_live integer: 0
+check_and_add_propval name-service/cache group/positive_time_to_live integer: 0
+check_and_add_propval name-service/cache group/negative_time_to_live integer: 0
+check_and_add_propval name-service/cache host/positive_time_to_live integer: 0
+check_and_add_propval name-service/cache host/negative_time_to_live integer: 0
+# ipnodes is strangely absent from the options to configure
+# yet nscd -g shows it. A bug?
+# the closest we can do is to disable the ipnodes cache altogether, 
+# in keeping with previous SST/JASS methodologies...
+nscd -e ipnodes,no
+#check_and_add_propval name-service/cache ipnode/positive_time_to_live integer: 0
+#check_and_add_propval name-service/cache ipnode/negative_time_to_live integer: 0
+
+svccfg -s name-service/cache:default refresh
+svcadm refresh name-service/cache
+svcadm restart name-service/cache
+
+# clean up after ourselves so this doesn't run every time
+# there's not need to run it every time since Solaris 11 keeps
+# the settings
+rm $LOCATION/$SCRIPTNAME

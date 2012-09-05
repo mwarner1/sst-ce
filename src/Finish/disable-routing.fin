@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-routing.fin	1.6	05/06/30 SMI"
+#
+# Disable IPv4/IPv6 routing.
+# Use routeadm(1M) for Solaris 10 or later.
+# Create file /etc/notrouter for Solaris 9 or earlier.
+#
+NOTROUTER=${JASS_ROOT_DIR}etc/notrouter
+ROUTEADM=/usr/sbin/routeadm
+
+logMessage 'Disabling IP routing.'
+echo ""
+routeadmRan=0
+
+if check_os_min_revision 5.11; then
+ logMessage "Disabling IP routing services"
+ disable_service_immediate svc:/network/routing/route:default
+ disable_service_immediate svc:/network/routing-setup:default
+
+ logMessage "Disabling IPv6 discovery daemon"
+ disable_service_immediate svc:/network/routing/ndp:default
+elif check_os_revision 5.10+ ; then
+
+	# Disable IPv4/IPv6 routing, if enabled, with routeadm
+	for i in ipv4-forwarding ipv6-forwarding ; do
+
+		# Disable forwarding for future reboots if persistently enabled
+		( LANG=C; LC_ALL=C; export LANG LC_ALL; \
+			${ROUTEADM} -R ${JASS_ROOT_DIR} -p | grep $i \
+			| grep "persistent=enabled" >/dev/null )
+		if [ $? -eq 0 ] ; then # enabled--disable it
+			logMessage 'Disabling ${i} persistently.'
+			${ROUTEADM} -R ${JASS_ROOT_DIR} -d ${i}
+			if [ "$routeadmRan" = "0" ] ; then # 1st time
+				add_to_manifest X "${ROUTEADM} -u"
+			fi
+			routeadmRan=1
+			add_to_manifest X "${ROUTEADM} -e ${i}"
+		fi
+
+		# Disable forwarding if enabled now by forcing routeadm -u
+		( LANG=C; LC_ALL=C; export LANG LC_ALL; \
+			${ROUTEADM} -R ${JASS_ROOT_DIR} -p | grep $i \
+			| grep "current=enabled" >/dev/null )
+		if [ $? -eq 0 ] ; then # currently enabled--disable it
+			logMessage 'Disabling current ${i}.'
+			routeadmRan="1"
+		fi
+	done
+
+	if [ "$routeadmRan" = "1" ] ; then # apply configuration now
+		${ROUTEADM} -R ${JASS_ROOT_DIR} -u
+	fi
+
+
+elif check_os_revision 5.5.1 5.9 ; then
+
+	# Create if /etc/notrouter if it doesn't exist
+	if [ ! -f ${NOTROUTER} ] ; then
+		create_a_file -o root:root -m 444 ${NOTROUTER}
+                backup_file ${NOTROUTER}
+		cat > ${NOTROUTER} <<-INFO
+		# Created by SUNWsst.
+		# Disables IP routing for Solaris 5.9 or earlier.
+INFO
+		echo ""
+	fi
+
+
+else
+   logInvalidOSRevision "5.5.1+"
+fi

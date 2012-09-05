@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#  ident	"@(#)set-dtlogin-open.fin		1.6	07/02/05 SMI"
+# 
+# This script allowss the Common Desktop Environment (CDE) service to
+# listen for remote connections.
+#
+# If this ability is not provided by the Solaris OE, dtlogin will be disabled
+# instead.
+#
+
+logMessage "Enabling remote connections for the service: Common Desktop Environment (CDE)"
+echo ""
+
+svc="svc:/application/graphical-login/cde-login"
+# You can't check a service for existence on a running system, since a 
+# dependency might have created it.  Instead, check the instance. 
+svcinst="
+   svc:/application/graphical-login/cde-login:default
+"
+
+if check_sbd_available; then
+   if  check_serviceInstalled "${svcinst}" 0 ; then 
+      if check_serviceOptionEnabled "${svc}" "dtlogin/args" "" "-udpPort" 0; then
+	 # udpPort is set, it must be removed.
+
+	 value=""
+	 get_service_property_value 0 "${svc}" "dtlogin/args"
+	 # That functions returns its result in 'value'
+
+	 # Clear any old udpPort value
+	 newval=`echo ${value} | sed -e 's/-udpPort[ 	\\]*[0-9]*//'`
+	 # clear any empty strings as well
+	 newval=`echo ${newval} | sed -e 's/"//g'`
+
+	 # Due to partial pattern matches, the value needs to be
+	 # cleared before being reset.  There should be a force
+	 # parameter to set_service.
+
+	 if [ "${newval}" != "" ]; then
+	    set_service_property_value "${svc}" "dtlogin/args" "" \
+	     "application" "astring"
+	 fi
+
+	 set_service_property_value "${svc}" "dtlogin/args" "${newval}" \
+	  "application" "astring"
+      fi
+      
+      enable_service "${svcinst}"
+   fi
+else
+   logNoSBD
+fi
+
+

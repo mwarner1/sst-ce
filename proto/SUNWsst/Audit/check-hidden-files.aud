@@ -1,0 +1,99 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)check-hidden-files.aud 1.2     07/08/08 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Check Hidden Files in Home Directory Permissions"
+servfil="check-hidden-files.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   This purpose of this check is to verify that hidden files and directories
+   under home directories are not group or world writable (mode mask 0022).
+
+Rationale for Verification Check:
+
+   Group or world-writable user configuration files may enable malicious users
+   to steal or modify other users' data or to gain another user's system
+   privileges.
+
+Determination of Compliance:
+
+   This script reports a failure for each hidden file or directory under a
+   home directory that has group or world write permission.
+"
+
+#-----------------------------------------------------------------------------
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage '# Checking home directory permissions.\n'
+
+infoList=`getent passwd | nawk -F: '{ print $1":"$6 }'`
+
+for info in ${infoList}; do
+   user=`echo ${info}    | nawk -F: '{ print $1 }'`
+   homeDir=`echo ${info} | nawk -F: '{ print $2 }'`
+
+   if check_fileExists ${homeDir} 0 ; then
+      if check_fileTypeMatch ${homeDir} "d" 0 ; then
+         for hiddenFile in $homeDir/.[A-Za-z0-9]* ; do
+            if [ ! -h "$hiddenFile" -a -f "$hiddenFile" ] ; then
+               ls -ld "${hiddenFile}" | nawk '{print $1 }' \
+                  | egrep 'w....$|w.$' >/dev/null 2>&1
+               if [ $? -eq 0 ] ; then
+                  logFailure \
+                     'Path ${hiddenFile} has group or world write permission.'
+                  adjustScore 1
+               fi
+            fi
+         done
+
+      else
+         logWarning \
+            'Home directory ${homeDir} for user ${user} is not a directory.'
+      fi
+   else
+      logWarning 'Home directory ${homeDir} for user ${user} does not exist.'
+   fi
+done
+
+if [ "${SCRIPT_SCORE}" = "0" ] ; then
+   logSuccess 'No hidden files or directories under a home directory were found with group or world write permission.'
+fi
+
+finish_audit

@@ -1,0 +1,67 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-kdc.fin 3.13     05/03/31 SMI"
+#
+# This script prevents the Kerberos Key Distribution Center (KDC) service 
+# from starting.  
+#
+# Note that if JASS_DISABLE_MODE is set to "conf", the "kdc.conf" file will 
+# be disabled thus impacting the ability to act as a Kerberos client.  This 
+# script should not be used in that manner if the system must act as a Kerberos
+# client.  This only applies on Solaris 9, as smf is used to disable the
+# kdc service on Solaris 10.
+# 
+
+logMessage "Disabling the service: Kerberos Key Distribution Center (KDC)"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   disable_service_immediate svc:/network/security/krb5kdc:default
+elif check_os_min_revision 5.9 ; then
+   logNotice "This script will prevent a system from being a Kerberos KDC as
+well as a Kerberos client (only if JASS_DISABLE_MODE = 'conf')."
+   echo ""
+
+   if [ "${JASS_DISABLE_MODE}" = "conf" ]; then
+      disable_conf_file ${JASS_ROOT_DIR}etc/krb5 kdc.conf
+   elif [ "${JASS_DISABLE_MODE}" = "script" ]; then
+      if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+         disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K28kdc.master
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K28kdc.master
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K28kdc.master
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d K28kdc.master
+
+         disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K28kdc
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K28kdc
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K28kdc
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d K28kdc
+      fi
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc3.d S13kdc.master
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc3.d S14kdc
+   fi 
+else
+   logInvalidOSRevision "5.9+"
+fi

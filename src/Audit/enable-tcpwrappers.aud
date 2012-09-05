@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)enable-tcpwrappers.aud 1.10     05/04/04 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="TCP Wrappers"
+servfil="enable-tcpwrappers.aud"
+
+INETD="${JASS_ROOT_DIR}etc/default/inetd"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The functionality provided by the TCP Wrappers software has been integrated
+   into the inetd(1M) program in the Solaris 9 OE.  This software is used to
+   control access to all of the 'streams, nowait' services in the file, 
+   /etc/inet/inetd.conf.  For more information on this functionality, see 
+   inetd(1M), tcpd(1M) and hosts_access(5).  Note that the last two references
+   are should in /usr/sfw/man.
+
+Rationale for Verification Check:
+
+   This script will check to ensure that the TCP Wrappers software is 
+   installed, configured and enabled on the system.  This script will 
+   ensure that the 'ENABLE_TCPWRAPPERS' parameter is set to 'YES' and
+   that the file templates: hosts.allow and hosts.deny have been copied
+   to the target platform.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the TCP Wrappers is not installed,
+   configured (using the above file templates) or enabled (using the 
+   'ENABLE_TCPWRAPPERS' parameter above).
+"
+
+#-----------------------------------------------------------------------------
+
+servcfg="
+   /etc/hosts.allow
+   /etc/hosts.deny
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+if check_os_min_revision 5.10 ; then
+   check_servicePropEnabled "svc:/network/inetd" "defaults/tcp_wrappers" "true" 1 LOG 
+   check_servicePropEnabled "svc:/network/rpc/bind" "config/enable_tcpwrappers" "true" 1 LOG 
+   check_fileTemplate "${servcfg}" 1 LOG   
+elif check_os_min_revision 5.9 ; then
+   if check_fileExists ${INETD} 1; then
+      if check_fileContentsExist ${INETD} "^ENABLE_TCPWRAPPERS=YES" 1 ; then
+         logSuccess 'ENABLE_TCPWRAPPERS is set to \\\"YES\\\" in ${INETD}.'
+      else
+         if check_fileContentsExist ${INETD} "^ENABLE_TCPWRAPPERS=" 0 ; then
+            logFailure 'ENABLE_TCPWRAPPERS is not set to \\\"YES\\\" in ${INETD}.'
+         else
+            logFailure 'ENABLE_TCPWRAPPERS is not defined in ${INETD}.'
+         fi
+      fi
+   else
+      logFileNotFound "${INETD}" 1
+   fi      
+
+   check_fileTemplate "${servcfg}" 1 LOG   
+else
+   logInvalidOSRevision "5.9+"
+fi
+
+finish_audit

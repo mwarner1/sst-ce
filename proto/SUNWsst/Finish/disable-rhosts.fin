@@ -1,0 +1,74 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-rhosts.fin	3.9	05/04/12 SMI"
+#
+# This script prevents the "rlogin" and "rsh" services from using "rhosts"
+# authentication.  This is done by adjusting the Pluggable Authentication
+# Module (PAM) configuration in /etc/pam.conf for those services.
+#
+
+PAM=${JASS_ROOT_DIR}etc/pam.conf
+
+logMessage 'Disabling the function: \\\"rhosts\\\" Authentication'
+echo ""
+
+if check_os_min_revision 5.6 ; then
+
+   if [ -f ${PAM} ]; then
+      if [ `egrep -i "^rsh|^rlogin" ${PAM} |\
+         grep -c "pam_rhosts_auth"` != 0 ]; then
+
+         backup_file ${PAM}
+         echo ""
+
+         logMessage 'Commenting the \\\"pam_rhosts_auth\\\" entries in ${PAM}.'
+
+         cat ${PAM}.${JASS_SUFFIX} |\
+            nawk ' $1 ~ /^[rR][lL][oO][gG][iI][nN]/ {
+               if ( $4 ~ /pam_rhosts_auth/ ) {
+                  printf("# %s\n", $0);
+               } else {
+                  print $0;
+               }
+               next;
+            } $1 ~ /^[rR][sS][hH]/ {
+               if ( $4 ~ /pam_rhosts_auth/ ) {
+                  printf("# %s\n", $0);
+               } else {
+                  print $0;
+               }
+               next;
+            } { print $0; }' > ${PAM}
+
+         chown root:sys ${PAM}
+         chmod 644      ${PAM}
+      fi
+   else
+      logFileNotFound "${PAM}"
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

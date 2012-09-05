@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-oem-banner.aud	1.5	07/01/05 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="OEM Power-on Warning Banner"
+servfil="set-oem-banner.aud"
+OEM_BANNER_MESSAGE='Authorized uses only.  All activity may be monitored and reported.'
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The OEM banner is displayed only when the system is powered on,
+   for systems running the Solaris OS on the SPARC architecture.
+
+Rationale for Verification Check:
+
+   Setting this banner warns against unauthorized use and has the side effect
+   of hiding the standard Sun power-on banner, which normally displays the
+   system host ID, MAC address, etc.
+
+Determination of Compliance:
+
+   This script checks to see if the system has the 'oem-banner?' EEPROM
+   variable set to true and the 'oem-eeprom' EEPROM variable set to the
+   appropriate warning message.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if [ "${JASS_ZONE_NAME}" = "global" ] ; then
+   UNAME_P="`uname -p`"
+
+   if [ "${UNAME_P}" = "sparc" ] ; then
+      oem_banner_q="`eeprom | grep '^oem-banner?=' | nawk -F= '{ print $2 }'`"
+      if [ "${oem_banner_q}" = "true" ] ; then
+         logSuccess 'The EEPROM oem-banner? variable is set to true.'
+      else
+         logFailure 'The EEPROM oem-banner? variable is set to false.'
+         adjustScore 1
+      fi
+
+      oem_banner="`eeprom | grep '^oem-banner=' | nawk -F= '{ print $2 }'`"
+      if [ "${oem_banner}" = "${OEM_BANNER_MESSAGE}" ] ; then
+         logSuccess 'The EEPROM oem-banner variable is correctly set.'
+      else
+         logFailure 'The EEPROM oem-banner variable is incorrectly set.'
+         adjustScore 1
+      fi
+
+   else
+      logNotice \
+         'This script is not supported on this architecture, ${UNAME_P}.'
+   fi
+else
+   logNotGlobalZone
+fi
+
+finish_audit

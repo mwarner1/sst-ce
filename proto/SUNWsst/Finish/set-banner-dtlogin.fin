@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-banner-dtlogin.fin 1.14     05/04/04 SMI"
+#
+# This programs adds the banner ${JASS_BANNER_DTLOGIN} to the 
+# /etc/dt/config/Xsession.d/0050.warning file to be used by 
+# the dtlogin.
+#
+
+logMessage "Setting the service banner for the CDE dtlogin service."
+echo ""
+
+if check_os_min_revision 5.6 ; then
+   if pkginfo -q -R ${JASS_ROOT_DIR} SUNWdtdte ; then
+      DTLOGIN="${JASS_ROOT_DIR}etc/dt/config/Xsession.d/0050.warning"
+      PARAM="dtstart_hello"
+      PREFIX="${PARAM}[0]=\"/usr/dt/bin/dthello -bground white -file"
+      SUFFIX="&\""
+
+      # If the directory was not found, then create it.
+      if [ ! -d ${JASS_ROOT_DIR}etc/dt ]; then
+         mkdir_dashp     ${JASS_ROOT_DIR}etc/dt
+         chown root:root ${JASS_ROOT_DIR}etc/dt
+         chmod 755       ${JASS_ROOT_DIR}etc/dt
+      fi
+
+      # If the directory was not found, then create it.
+      if [ ! -d ${JASS_ROOT_DIR}etc/dt/config ]; then
+         mkdir_dashp     ${JASS_ROOT_DIR}etc/dt/config
+         chown root:root ${JASS_ROOT_DIR}etc/dt/config
+         chmod 755       ${JASS_ROOT_DIR}etc/dt/config
+      fi
+
+      # If the directory was not found, then create it.
+      if [ ! -d ${JASS_ROOT_DIR}etc/dt/config/Xsession.d ]; then
+         mkdir_dashp     ${JASS_ROOT_DIR}etc/dt/config/Xsession.d
+         chown root:root ${JASS_ROOT_DIR}etc/dt/config/Xsession.d
+         chmod 755       ${JASS_ROOT_DIR}etc/dt/config/Xsession.d
+      fi
+
+      # If the file was not found, then create it.
+      if [ ! -f ${DTLOGIN} ]; then
+         create_a_file -m 640 -o root:sys ${DTLOGIN}
+         echo ""
+      fi
+
+      if [ `grep -c "${PARAM}\[0\]=.*-file[ 	]*${JASS_BANNER_DTLOGIN}" ${DTLOGIN}` = 0 ]; then
+         backup_file ${DTLOGIN}
+         echo ""
+         logMessage 'Configuring CDE to display \\\"${JASS_BANNER_DTLOGIN}\\\" at login.'
+         echo "${PREFIX} ${JASS_BANNER_DTLOGIN} ${SUFFIX}" >> ${DTLOGIN}
+      else
+         logMessage 'CDE is configured to display \\\"${JASS_BANNER_DTLOGIN}\\\" at login.'
+      fi
+   else
+      logNotice "CDE (package SUNWdtdte) does not appear to be installed."
+      logNotice "Skipping the setting of the CDE dtlogin service banner."
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

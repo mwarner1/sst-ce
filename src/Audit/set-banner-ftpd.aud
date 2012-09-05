@@ -1,0 +1,150 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-banner-ftpd.aud 1.12     05/03/31 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="FTP Service Banner"
+servfil="set-banner-ftpd.aud"
+
+FTPACCESS="${JASS_ROOT_DIR}etc/ftpd/ftpaccess"
+FTPD="${JASS_ROOT_DIR}etc/default/ftpd"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The File Transfer Protocol (FTP) service provides the ability for users 
+   to transfer files between systems.  This service is typically started by
+   inetd(1M) each time a connection is initiated.  This service provides 
+   various levels of access control based on the installed version of the 
+   Solaris OE.
+
+Rationale for Verification Check:
+
+   This script is designed to verify that the FTP service has a service banner
+   installed.  For Solaris 9 and later, the FTP service banner must match the
+   contents of the file template /etc/ftpd/banner.msg.  In addition, the FTP
+   configuration file ${FTPACCESS} must be configured with variable 'greeting'
+   set to 'brief' and variable 'banner' set to '/etc/ftpd/banner.msg'.
+
+   For Solaris 2.6 through Solaris 8, this script checks that the FTP service
+   banner matches the value defined by the JASS_BANNER_FTPD parameter.  The
+   FTP service banner is defined by the 'BANNER' variable in the ${FTPD} file.
+
+   It is recommended that the service banner be modified from its default value
+   to include a disclaimer or warning message.
+
+Determination of Compliance:
+
+   This script checks that the FTP service banner matches the values as noted
+   above (based on the operating system being evaluated).  This script will 
+   indicate a failure if the service banner or configuration does not match.
+
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.6 ; then
+   if check_os_min_revision 5.9 ; then
+      pkgExists=0
+      if check_os_min_revision 5.10 ; then
+         if check_serviceInstalled svc:/network/ftp 1 LOG; then 
+            pkgExists=1
+         else
+            logNotice "Service svc:/network/ftp is not installed."
+         fi
+      else
+
+         if check_packageExists SUNWftpr 0 ; then
+            pkgExists=1;
+         else
+            logNotice "Package SUNWftpr is not installed."
+         fi
+      fi
+      if [ $pkgExists -eq 1 ] ; then 
+         if check_fileExists ${FTPACCESS} 1 ; then
+
+            bannerFile="${JASS_ROOT_DIR}etc/ftpd/banner.msg"
+
+            if check_fileContentsExist ${FTPACCESS} "^greeting[ 	][ 	]*brief" 1 ; then
+               logSuccess "FTP service parameter 'greeting' is set to 'brief'."
+            else
+               if check_fileContentsExist ${FTPACCESS} "^greeting" 0 ; then
+                  logFailure "FTP service parameter 'greeting' is not set to 'brief'."
+               else
+                  logFailure 'FTP service parameter 'greeting' is not defined in ${FTPACCESS}.'
+               fi
+            fi
+
+            if check_fileContentsExist ${FTPACCESS} "^banner[ 	][ 	]*/etc/ftpd/banner.msg" 1 ; then
+               logSuccess "FTP service parameter 'banner' is set to '/etc/ftpd/banner.msg'."
+            else
+               if check_fileContentsExist ${FTPACCESS} "^banner" 0 ; then
+                  logFailure "FTP service parameter 'banner' is not set to '/etc/ftpd/banner.msg'."
+               else
+                  logFailure 'FTP service parameter 'banner' is not defined in ${FTPACCESS}.'
+               fi
+            fi
+
+            check_fileTemplate   ${bannerFile}      1 LOG
+            check_fileOwnerMatch ${bannerFile} root 1 LOG
+            check_fileGroupMatch ${bannerFile} root 1 LOG
+            check_fileModeMatch  ${bannerFile} 644  1 LOG
+
+         else
+            logFileNotFound "${FTPACCESS}" 1
+         fi
+      fi
+   else
+      if check_fileExists ${FTPD} 1 ; then
+         if check_fileContentsExist ${FTPD} \
+            "^BANNER=${JASS_BANNER_FTPD}" 1 ; then
+            logSuccess "FTP service banner matches value of JASS_BANNER_FTPD."
+         else
+            if check_fileContentsExist ${FTPD} "^BANNER=" 0 ; then
+               logFailure "FTP service banner does not match value of JASS_BANNER_FTPD."
+            else
+               logFailure 'FTP service banner is not defined in ${FTPD}.'
+            fi
+         fi
+      else
+         logFileNotFound "${FTPD}" 1
+       fi 
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

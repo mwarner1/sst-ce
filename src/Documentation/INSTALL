@@ -1,0 +1,186 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)INSTALL 3.14     05/06/22     SMI"
+#
+
+This is the INSTALL guide for the Sun (tm) Security Toolkit (JASS).
+
+The source to the Toolkit can be found at:
+
+http://www.sun.com/security/jass/
+
+Please always install the latest version.
+
+This document is based on the Sun Security Toolkit: Community Edition version 4.2
+alpha release.  For information on Sun Security Toolkit: Community Edition
+documentation, please refer to the README file contained in the
+distribution.
+
+-----------------------------------------------------------------------------
+RUNNING JASS FROM THE COMMAND LINE
+-----------------------------------------------------------------------------
+
+If JASS is being run from the command line (in standalone mode), the following 
+command should be used.  This command will allow a user to run a specific 
+JASS Driver from a shell prompt.
+
+   ~/bin/jass-execute -d secure.driver
+
+To undo a Toolkit run, the following command should be run:
+
+   ~/bin/jass-execute -u
+
+To audit a Toolkit run, use the command:
+
+   ~/bin/jass-execute -a secure.driver 
+
+For information on this script and its options, use the command:
+
+   ~/bin/jass-execute -h
+
+Before issuing these commands, be sure to take the time to review the 
+~/Drivers/finish.init and ~/Drivers/user.init files for the various 
+variables that can be set to alter default behavior. However, JASS can be
+run without changing any of these variables.  For more information on audit
+mode usage, please see the audit section below.
+
+
+-----------------------------------------------------------------------------
+RUNNING JASS FROM JUMPSTART
+-----------------------------------------------------------------------------
+
+If JASS is installed using JumpStart, then the following
+configuration changes might be required to move the Toolkit 
+to a new site.
+
+   ~/Drivers/user.init
+
+      The following variables should be defined in this file:
+ 
+      JASS_PACKAGE_MOUNT
+      JASS_PATCH_MOUNT
+
+      These variables should be altered to use the IP address of
+      the JumpStart server and the full path name to specific
+      Package and Patch directories.
+
+      If JASS is not being installed at the JumpStart root of
+      ${SI_CONFIG_DIR}, then the JASS_HOME_DIR should also
+      be defined using the path name to the JASS code base 
+      (as a suffix from ${SI_CONFIG_DIR}).  For more information,
+      refer to the ~/Drivers/user.init file.
+
+      Using the IP addresses in these variables is not strictly
+      required, but it does avoid problems when no naming service
+      is available for the JumpStart client.
+
+   ~/bin/add-client,  ~/bin/rm-client
+
+      The add-client and rm-client scripts are distributed with the
+      toolkit to provide a wrapper around the standard JumpStart
+      utilities "add_install_client" and "rm_install_client".  The
+      goal of these wrappers is to make the installation and 
+      removal of JumpStart clients easier.
+
+The following configuration requirements are for the JumpStart portion of 
+the installation. Please refer to the Sun BluePrint OnLine article
+'Building a JumpStart Infrastructure' in the Documentation directory 
+for more information on JumpStart. The following are frequently 
+encountered errors:
+
+   NFS - as part of the JumpStart server's configuration make sure that 
+      the required directories are being exported so that the Toolkit 
+      can mount them when necessary.
+
+   rules and rules.ok - a sample rules file is included with the Toolkit 
+       (called rules.SAMPLE).  Be sure to properly configure a valid 
+       ~/rules file and validate it using the JumpStart "check" program.
+
+-----------------------------------------------------------------------------
+RUNNING JASS IN AUDIT MODE
+-----------------------------------------------------------------------------
+
+When running JASS in audit mode, the '-a' option to ~/bin/jass-execute should
+be used.  This mode takes as an argument the name of the driver script to
+audit (similar to '-d' option for application of a profile).  JASS will
+then process the driver script but instead of making changes to the system,
+it will attempt to audit that the changes it would have made are already
+present in the system.
+
+The behavior of JASS in audit mode can be changes using the following 
+configuration parameters:
+
+   - Check Behavior
+
+     JASS_CHECK_MINIMIZED.  This parameter is by default set to '0'
+     (disabled).  When set to '1', JASS will attempt to determine if
+     packages exist on the systems for those disable-*.vfy scripts that use
+     the check_minimized() function.  This check is most useful on 
+     minimized systems where it is expected that those packages do not exist.
+
+   - Display Behavior
+
+     JASS_VERBOSITY.  This parameter controls how JASS will display its
+     output.  This parameter can take one of several values as defined below:
+
+        4	- Debug, multi-line logging with debug messages (logDebug)
+        3	- Full, multi-line logging with script banners.
+        2	- Brief, single-line logging per check per audit script.
+        1	- Consolidated, single-line result per audit script.
+        0       - Final, single-line result for entire run.
+
+     The default verbosity mode used by JASS is 3.
+
+     JASS_DISPLAY_TIMESTAMP.  This parameter is by default undefined (or set
+     to '0').  When set in this manner, JASS will not display timestamp data
+     when run with JASS_VERBOSITY <= 2 (single-line output).  To enable the
+     display of timestamps, set this parameter to '1'.
+
+     JASS_DISPLAY_HOSTNAME.  This parameter is by default undefined (or set
+     to '0').  When set in this manner, JASS will not display hostname data
+     when run with JASS_VERBOSITY <= 2 (single-line output).  To enable the
+     display of the hostname, set this parameter to '1'.
+
+     JASS_DISPLAY_SCRIPTNAME.  This parameter is by default undefined (or set
+     to '0').  When set in this manner, JASS will not display the script name
+     (being run) when run with JASS_VERBOSITY <= 2 (single-line output).  To
+     enable the display of the name of the current script, set this parameter
+     to '1'.
+
+   - Logging Behavior
+
+     All of the following parameters are configured to display their
+     respective messages.  Any of these parameters can be disabled by setting
+     its value to '0'.
+
+     JASS_LOG_BANNER.      Controls logging of banners.
+     JASS_LOG_FAILURE.     Controls logging of failure messages ([FAIL]).
+     JASS_LOG_NOTICE.      Controls logging of notice messages ([NOTE]).
+     JASS_LOG_SUCCESS.     Controls logging of success messages ([PASS]).
+     JASS_LOG_SUMMARY.     Controls logging of summary messages ([SUMMARY]).
+     JASS_LOG_WARNING.     Controls logging of warning messages ([WARN]).
+     
+    
+

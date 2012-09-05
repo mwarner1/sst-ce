@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-autoinst.aud 1.12     05/01/26     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Automated Installation Function"
+servfil="disable-autoinst.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The automated installation function is used to assist in configuring a
+   newly installed system or to re-configure an existing system.
+
+Rationale for Verification Check:
+
+   While the automated installation function can be useful, it may not be
+   critical for system operation.  If this service is not needed, then it 
+   should be disabled.  Note that these scripts are only used if the 
+   /etc/.UNCONFIGURED or /AUTOINSTALL files are created.  
+
+   Do not use this script if there may be a need to use the functionality
+   provided by the 'sys-unconfig' (1M) program.
+
+Determination of Compliance:
+
+   This script determines if the automated installation function is installed, 
+   or enabled on the system.  This script will indicate a failure if the 
+   software is installed or configured to run (via a run-control script).
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWadmr
+"
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S30sysid.net
+   ${JASS_ROOT_DIR}etc/rc2.d/S71sysid.sys
+   ${JASS_ROOT_DIR}etc/rc2.d/S72autoinstall
+"
+# **************************************************************************** 
+# Check processing section.
+# **************************************************************************** 
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+check_minimized             "$servpkg"  1 LOG
+
+logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+
+if check_os_min_revision 5.10 ; then
+   check_serviceNotInstalled "lrc:/etc/rc2_d/S72autoinstall" 1 LOG
+else
+   check_startScriptNotExists  "$servsrc"  1 LOG
+fi
+
+finish_audit

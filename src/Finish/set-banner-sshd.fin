@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-banner-sshd.fin 1.15     05/03/30 SMI"
+#
+# This programs sets the banner file variable to ${JASS_BANNER_SSHD} 
+# in the file /etc/ssh/sshd_config that is used by sshd.
+#
+
+logMessage "Setting the service banner for the SSH daemon."
+echo ""
+
+if check_os_min_revision 5.9 ; then
+   if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsshdr ; then
+
+      if [ ! -f "${JASS_ROOT_DIR}${JASS_BANNER_SSHD}" ]; then
+         # Log that the file does not exist and try to copy it
+         # to the target system.
+         logFileNotFound "${JASS_ROOT_DIR}${JASS_BANNER_SSHD}"
+         copy_files "${JASS_BANNER_SSHD}"
+      fi
+
+      SSHD_CONFIG="${JASS_ROOT_DIR}etc/ssh/sshd_config"
+
+      # If the file was not found, then create it.
+
+      if [ ! -f ${SSHD_CONFIG} ]; then
+         create_a_file -m 640 -o root:sys ${SSHD_CONFIG}
+         echo ""
+      fi
+   
+      if [ `grep -c "^[^#]*Banner .*$" $SSHD_CONFIG` = 0 ]; then
+
+         backup_file ${SSHD_CONFIG}
+         echo ""
+
+         logMessage 'Setting \\\"Banner\\\" to \\\"${JASS_BANNER_SSHD}\\\" in ${SSHD_CONFIG}.'
+
+         cat ${SSHD_CONFIG}.${JASS_SUFFIX} | \
+            sed 's/^Banner .*$/#Banner .*$/g' | \
+            sed "s@^#Banner .*${JASS_BANNER_SSHD}\$@Banner ${JASS_BANNER_SSHD}@g" > ${SSHD_CONFIG}
+      
+         # The following case is needed if the Banner line was not
+         # found in the file.
+   
+         if [ `grep -c '^Banner ' ${SSHD_CONFIG}` = 0 ]; then
+            echo "Banner ${JASS_BANNER_SSHD}" >> ${SSHD_CONFIG}
+         fi
+      fi
+   if check_os_min_revision 5.11 ; then
+    if [ "${JASS_STANDALONE}" = "1" ]; then
+     restart_service_immediate svc:/network/ssh:default
+    fi
+   fi
+   else
+      logNotice "SSH (package SUNWsshdr) does not appear to be installed."
+      logNotice "Skipping the setting of the SSH service banner."
+   fi
+else
+   logInvalidOSRevision "5.9+"
+fi

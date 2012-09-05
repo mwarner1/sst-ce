@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-dhcpd.fin 3.8     05/03/30 SMI"
+#
+# This script prevents the Dynamic Host Configuration Protocol (DHCP) server
+# service from starting.  This script only impacts the ability to act as a 
+# DHCP server.  The use of the DHCP client service is not impacted by this 
+# script.
+#
+
+logMessage "Disabling the service: Dynamic Host Configuration Protocol (DHCP)"
+echo ""
+
+logNotice "This script only prevents a system from being a DHCP server.  DHCP
+client services are not impacted by this script."
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   disable_service_immediate svc:/network/dhcp-server:default
+elif check_os_min_revision 5.8 ; then
+   if [ "${JASS_DISABLE_MODE}" = "conf" ]; then
+      disable_conf_file ${JASS_ROOT_DIR}etc/inet dhcpsvc.conf
+   elif [ "${JASS_DISABLE_MODE}" = "script" ]; then
+      if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+         disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K21dhcp
+         disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K34dhcp
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K21dhcp
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K34dhcp
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K21dhcp
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K34dhcp
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d K21dhcp
+         disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d K34dhcp
+      fi
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc3.d S34dhcp
+   fi
+else
+   logInvalidOSRevision "5.8+"
+fi

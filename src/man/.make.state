@@ -1,0 +1,15 @@
+.MAKE_VERSION:	VERSION-1.0
+../../proto/SUNWsst/man:
+	[ -d ../../proto/SUNWsst/man ] || /bin/mkdir -p ../../proto/SUNWsst/man
+../../proto/SUNWsst/man/windex:
+	/usr/bin/cp -f windex ../../proto/SUNWsst/man/windex
+	/usr/bin/chmod 444 ../../proto/SUNWsst/man/windex
+.BUILT_LAST_MAKE_RUN:
+sman1m:
+	cd sman1m; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+sman4:
+	cd sman4; pwd; make install
+.BUILT_LAST_MAKE_RUN:
+sman7:
+	cd sman7; pwd; make install

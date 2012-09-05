@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-user-umask.aud 1.7     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="User Default File Creation Mask"
+servfil="set-user-umask.aud"
+
+USERFILES="
+   ${JASS_ROOT_DIR}etc/.login 
+   ${JASS_ROOT_DIR}etc/profile 
+   ${JASS_ROOT_DIR}etc/skel/local.cshrc 
+   ${JASS_ROOT_DIR}etc/skel/local.login 
+   ${JASS_ROOT_DIR}etc/skel/local.profile 
+   ${JASS_ROOT_DIR}etc/default/login"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This check determines if the users's default file creation mask (umask)
+   is set to the value defined by the JASS_UMASK parameter.  Note that this
+   parameter is set in a number of locations based on the shell used and
+   the method used to access the system.  The following files checked for 
+   this setting:
+
+`printPretty \"${USERFILES}\"`
+
+Determination of Compliance:
+
+   For each file listed above, this script will indicate a failure if the 
+   file does not set the umask parameter to the value defined by JASS_UMASK.
+   The JASS_UMASK parameter is set to:
+
+   ${JASS_UMASK} 
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+for userfile in ${USERFILES}; do
+   if check_fileExists ${userfile} 1 ; then
+      if [ "${userfile}" = "${JASS_ROOT_DIR}etc/default/login" ]; then
+         if check_fileContentsExist ${userfile} "^UMASK=${JASS_UMASK}" 1 ; then
+            logSuccess 'UMASK parameter set to ${JASS_UMASK} in ${userfile}.'
+         else
+            if check_fileContentsExist ${userfile} "^UMASK=" 0 ; then
+               logFailure 'UMASK parameter is not set to ${JASS_UMASK} in ${userfile}.'
+            else
+               logFailure 'UMASK parameter is not set in ${userfile}.'
+            fi
+         fi
+      else
+         if check_fileContentsExist ${userfile} \
+            "umask[ 	]*${JASS_UMASK}" 1 ; then
+            logSuccess 'umask is set to ${JASS_UMASK} in ${userfile}.'
+         else
+            if check_fileContentsExist ${userfile} "umask[ 	]*" 0 ; then
+               logFailure 'umask is not set to ${JASS_UMASK} in ${userfile}.'
+            else
+               logFailure 'umask is not set in ${userfile}.'
+            fi
+         fi
+      fi
+   else
+      logFileNotFound "${userfile}" 1
+   fi
+done
+   
+finish_audit

@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)s15k-exclude-domains.fin	3.12	05/04/13 SMI"
+#
+# This script excludes all the domains on the Sun Fire 15K from
+# the I1 Management (MAN) network.
+#
+
+if [ "$JASS_SMS_OVERRIDE" = "1" ]; then
+  logMessage "Domain exclusion must be enabled manually for SMS 1.5."
+else
+
+MANCF=${JASS_ROOT_DIR}etc/opt/SUNWSMS/SMS/config/MAN.cf
+SMS_V=${JASS_ROOT_DIR}opt/SUNWSMS/bin/smsversion
+
+logMessage "Excluding all Sun Fire 15K domains from I1 MAN network.\n"
+
+if [ ! -f ${MANCF} ]; then
+   logNotice "${MANCF} does not exist; this script cannot be run."
+elif [ ! -f ${SMS_V} ]; then
+   logNotice "${SMS_V} does not exist; this script cannot be run."
+elif [ ! -x ${SMS_V} ]; then
+   logNotice "${SMS_V} not executable; this script cannot be run."
+else
+   # Excluding domains is only supported on SMS 1.2 and later
+   sms_version=`${SMS_V} -t`
+   case "${sms_version}" in
+   1.2|1.3|1.4|1.4.1)
+      # If you want exclude only a subset of domains in the range A to R,
+      # change ${domain_RE} to the appropriate regular expression.  For
+      # example, setting the regular expression to 'D[A-CE-R]-I1' disables
+      # all domains except D.  The regular expression is case sensitive;
+      # the domains must be in the range uppercase A through R only.
+      # The regular expression may be a full regular expression as described
+      # on the regexp(5) manual page.
+
+      domain_RE='D.-I1'
+
+      # Clean out all domains in the MAN configuration file.
+      backup_file ${MANCF}
+      cat ${MANCF}.${JASS_SUFFIX} | \
+         nawk '$1 ~ /^I1$/ && $2 ~ /'"${domain_RE}"'/ { print $1 "\t"  $2 "\t" "NONE\tNONE" ; next } { print }' > ${MANCF}
+
+      # Send HUP to the MAN daemon so that it re-reads the configuration.
+      /usr/bin/pkill -HUP -x mand
+      ;;
+   *)
+      logNotice "Domain exclusion not supported for SMS ${sms_version}."
+      ;;
+   esac
+fi
+
+# SMS 1.5 exclusion message
+fi

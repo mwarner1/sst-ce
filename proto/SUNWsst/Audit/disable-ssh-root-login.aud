@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-ssh-root-login.aud 1.11     05/03/31 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Remote 'root' Login via SSH"
+servfil="disable-ssh-root-login.aud"
+
+LOGIN="${JASS_ROOT_DIR}etc/ssh/sshd_config"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   Users should never be able to login as 'root' using SSH.
+   To ensure accountability, they should first SSH as a regular user
+   and then \"su\" to the 'root' or other account.  Following this method 
+   helps to ensure that a trail of accountability is maintained.
+
+   This check ensures that the 'PermitRootLogin' parameter in ${LOGIN} is 
+   set to \"no\".
+
+Determination of Compliance:
+
+   This script will indicate a failure if the root user is permitted to 
+   login to the system over the network using SSH.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.9 ; then
+   pkgExists=0
+   if check_os_min_revision 5.10 ; then
+      if check_serviceInstalled svc:/network/ssh:default 1 LOG ; then 
+         pkgExists=1
+      else
+         logNotice "Sun Secure Shell (svc:/network/ssh:default) does not appear to be installed."
+      fi    
+   else
+      if check_packageExists SUNWsshdr 0 ; then
+         pkgExists=1
+      else
+         logNotice "Sun Secure Shell (SUNWsshdr) does not appear to be installed."
+      fi
+   fi
+   if [ ${pkgExists} -eq  1 ] ; then  
+      if check_fileExists "${LOGIN}" 1; then
+         if check_fileContentsExist "${LOGIN}" "^PermitRootLogin.*$" 0; then
+            if check_fileContentsExist "${LOGIN}" "^PermitRootLogin no$" 1; then
+               logSuccess 'PermitRootLogin parameter is set to \\\"no\\\" in ${LOGIN}.'
+            else
+               logFailure 'PermitRootLogin parameter is not set to \\\"no\\\" in ${LOGIN}.'
+            fi
+         else
+            logFailure 'PermitRootLogin parameter is not set in ${LOGIN}.'
+         fi
+      fi
+   else
+      logNotice "Sun Secure Shell (SUNWsshdr) does not appear to be installed."
+   fi
+else
+   logInvalidOSRevision "5.9+"
+fi
+
+finish_audit

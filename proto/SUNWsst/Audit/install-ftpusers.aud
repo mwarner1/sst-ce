@@ -1,0 +1,114 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)install-ftpusers.aud 1.14     05/03/31 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="FTP Access Control (ftpusers)"
+servfil="install-ftpusers.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The File Transfer Protocol (FTP) service provides the ability for users 
+   to transfer files between systems.  This service is typically started by
+   inetd(1M) each time a connection is initiated.  This service provides 
+   various levels of access control based on the installed version of the 
+   Solaris OE.
+
+Rationale for Verification Check:
+
+   Those users who are not explicitly permitted to use the FTP service should
+   be restricted.  The FTP service provides this capability using the 
+   ftpusers(4) file.  This file is found in /etc/ftpd for the Solaris OE 
+   version 9 and later.  For older releases, the file is found in /etc.  The
+   users defined by the JASS_FTPUSERS variable should be listed in this file.
+
+Determination of Compliance:
+
+   This script will return a failure for each user listed in the JASS_FTPUSERS
+   parameter that does not already exist in the ftpusers file.  The list of
+   users defined by JASS_FTPUSERS parameter is:
+
+`printPretty \"${JASS_FTPUSERS}\"`
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWftpr SUNWftpu
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+# Determine if the software is installed.  If it is not installed, we do
+# not need to examine the configuration file ${FTPUSERS}.
+
+ftpInstalled=0
+ 
+if check_os_min_revision 5.7 ; then
+   if check_os_min_revision 5.10 ; then
+      if check_serviceInstalled svc:/network/ftp 1 LOG ; then
+         ftpInstalled=1
+      fi
+   elif check_packageExists "${servpkg}" 0 ; then
+      ftpInstalled=1
+   fi
+else 
+   ftpInstalled=1
+fi
+
+if [ $ftpInstalled -eq 1 ]; then
+   FTPUSERS="${JASS_ROOT_DIR}etc/ftpusers"
+   if check_os_min_revision 5.9; then
+      FTPUSERS="${JASS_ROOT_DIR}etc/ftpd/ftpusers"
+   fi
+
+   if check_fileExists ${FTPUSERS} 1; then
+      for user in `echo ${JASS_FTPUSERS} | xargs -n 1 echo | sort -u`; do
+         if check_fileContentsExist "${FTPUSERS}" "^${user}$" 1; then
+            logSuccess 'User ${user} is listed in ${FTPUSERS}.'
+         else
+            logFailure 'User ${user} is not listed in ${FTPUSERS}.'
+         fi
+      done
+   else
+      logFileNotFound "${FTPUSERS}" 1
+   fi
+else
+   logNotice "Service FTP is not installed on the system."
+fi
+
+finish_audit

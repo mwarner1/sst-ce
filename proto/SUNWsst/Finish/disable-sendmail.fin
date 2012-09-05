@@ -1,0 +1,209 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-sendmail.fin	3.22	05/06/23 SMI"
+#
+# This script prevents the sendmail service from receiving mail from
+# other hosts. Note that sendmail is still available to process mail
+# that has been queued locally.
+#
+
+CRONTAB=${JASS_ROOT_DIR}var/spool/cron/crontabs/root
+
+check_crontab_for_sendmail()
+{
+   if [ -f ${CRONTAB} -a `grep "sendmail" ${CRONTAB} | wc -l` != 0 ]; then
+      logNotice 'Please verify that \\\"/usr/lib/sendmail\\\" is not being started from \\\"cron\\\"
+to perform queuing functions.  The sendmail operational mode is now configured
+using the \\\"MODE\\\" parameter in ${SENDMAIL}.'
+   fi
+}
+
+bad_sendmail_installation()
+{
+   logFileNotFound "${1}"
+   echo ""
+   logNotice "Please check your sendmail installation (packages SUNWsndmr and SUNWsndmu)."
+   logNotice "Skipping disabling of sendmail."
+}
+
+logMessage "Disabling the service: sendmail (for mail receipt)"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   svc="
+   svc:/network/sendmail-client:default
+   svc:/network/smtp:sendmail
+"
+   disable_service_immediate "${svc}"
+elif check_os_min_revision 5.9 ; then
+
+   # Create and install a modified sendmail configuration which makes
+   # the sendmail daemon listen only on the IPv4 loopback interface.
+   # Listening on the IPv6 interface is not enabled owing to difficulties
+   # in determining if the IPv6 loopback interface will be enabled or not.
+
+   # The Message Submission Agent listening on port 587 is disabled.
+   # In future mail clients should be migrating to using port 587 instead of
+   # port 25 for initial mail message submission so use of this feature should
+   # be periodically checked.
+
+
+   if check_os_revision 5.9; then
+      SENDMAIL_CONF_BASE="${JASS_ROOT_DIR}usr/lib/mail/cf"
+   else # Solaris 10 or later
+      SENDMAIL_CONF_BASE="${JASS_ROOT_DIR}etc/mail/cf/cf"
+   fi
+
+   #
+   # Check packages SUNWsndm[ru] and file sendmail.cf are present
+   #
+   pkginfo -q -R ${JASS_ROOT_DIR} SUNWsndmr
+   if [ $? != 0 ]; then
+      logNotice "Sendmail (package SUNWsndmr) does not appear to be installed."
+      logNotice "Skipping disabling of sendmail."
+
+   else
+      pkginfo -q -R ${JASS_ROOT_DIR} SUNWsndmu
+      if [ $? != 0 ]; then
+         logNotice "Sendmail (package SUNWsndmu) does not appear to be installed."
+         logNotice "Skipping disabling of sendmail."
+
+      elif [ ! -d ${SENDMAIL_CONF_BASE} ]; then
+         bad_sendmail_installation ${SENDMAIL_CONF_BASE}
+      elif [ ! -f ${JASS_ROOT_DIR}etc/mail/sendmail.cf ]; then
+         bad_sendmail_installation /etc/mail/sendmail.cf
+
+      else # ok
+         #
+         # Modify sendmail.cf from m4 macro files.
+         #
+         grep 'DaemonPortOptions=Name=NoMTA4' \
+           ${JASS_ROOT_DIR}etc/mail/sendmail.cf >/dev/null 2>&1
+         if [ $? != 0 ]; then
+            # Modify local.mc file to generate sendmail.cf file
+            conf=local
+	    create_file_timestamp ${SENDMAIL_CONF_BASE}/${conf}
+	    conf=${SENDMAIL_CONF_BASE}/${conf}.${JASS_SUFFIX}
+
+	    cp ${SENDMAIL_CONF_BASE}/subsidiary.mc ${conf}.mc
+
+	    ed -s ${conf}.mc <<'EEOF' >/dev/null 2>&1
+/^MAILER/i
+FEATURE(`no_default_msa')dnl
+DAEMON_OPTIONS(`Name=NoMTA4, Family=inet, Addr=127.0.0.1')dnl
+.
+w
+q
+EEOF
+
+            # Generate sendmail.cf file from just-edited local.mc file
+            (  cd ${SENDMAIL_CONF_BASE}
+               ${JASS_ROOT_DIR}usr/ccs/bin/m4 \
+                  ../m4/cf.m4 ${conf}.mc > ${conf}.cf
+            )
+
+	    if [ $? != 0 ]; then
+               logError 'Creating sendmail configuration file, ${conf}.cf.'
+	    else
+	       copy_a_file ${conf}.cf \
+                   ${JASS_ROOT_DIR}etc/mail/sendmail.cf
+	    fi
+
+	    rm -f ${conf}.cf ${conf}.mc
+
+	    check_crontab_for_sendmail
+         fi
+      fi
+   fi
+
+elif check_os_min_revision 5.8 ; then
+
+   SENDMAIL="${JASS_ROOT_DIR}etc/default/sendmail"
+
+   if [ ! -f ${SENDMAIL} ]; then
+      SENDMAIL_MASTER="/etc/default/sendmail"
+      copy_files ${SENDMAIL_MASTER}
+   fi
+
+   oldValue=`grep '^MODE=' ${SENDMAIL} | nawk -F= '{ print $2 }' 2>/dev/null`
+
+   if [ "${oldValue}" != "${JASS_SENDMAIL_MODE}" ]; then
+
+      backup_file ${SENDMAIL}
+      echo ""
+
+      logMessage 'Setting \\\"MODE\\\" parameter to \\\"${JASS_SENDMAIL_MODE}\\\" in ${SENDMAIL}.'
+
+      cat ${SENDMAIL}.${JASS_SUFFIX} |\
+         sed 's/#.*MODE=/MODE=/g' |\
+         sed "s/^MODE=.*$/MODE=${JASS_SENDMAIL_MODE}/g" > ${SENDMAIL}
+
+      # The following case is needed if the MODE line was not
+      # found in the file.
+
+      if [ `grep -c '^MODE=' ${SENDMAIL}` = 0 ]; then
+         echo "MODE=${JASS_SENDMAIL_MODE}" >> ${SENDMAIL}
+      fi
+   fi
+
+   check_crontab_for_sendmail
+
+else # Solaris 7 or earlier
+
+   if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+      disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K36sendmail
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K36sendmail
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K57sendmail
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K36sendmail
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K57sendmail
+   fi
+   disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S88sendmail
+
+   # Now that sendmail has been disabled, it is important to
+   # process the mail spool occasionally, otherwise mail
+   # originating from this system will not be delivered.
+   # This spool processing is enabled using the "-q" option
+   # to sendmail.  This command will run hourly from root's crontab.
+
+   if [ -f ${CRONTAB} ]; then
+      if [ `grep '/usr/lib/sendmail -q' ${CRONTAB} | wc -l` = 0 ]; then
+
+         # This is necessary in order to preserve the original.
+         # This does not break the backout functionality as backout
+         # records this as a simple move which will move the original
+         # (saved) copy back in an undo operation is executed.
+
+         backup_file_in_safe_directory ${CRONTAB}
+         echo ""
+
+         logMessage 'Adding \\\"/usr/lib/sendmail -q\\\" to ${CRONTAB}.'
+         echo ""
+
+         echo "0 * * * * [ -x /usr/lib/sendmail ] && /usr/lib/sendmail -q > /dev/null 2>&1" >> ${CRONTAB}
+
+      fi
+   fi
+fi

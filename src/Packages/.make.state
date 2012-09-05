@@ -1,0 +1,12 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Packages:
+	[ -d ../../proto/SUNWsst/Packages ] || /bin/mkdir -p ../../proto/SUNWsst/Packages
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Packages/noask_pkgadd:
+	/usr/bin/cp -f noask_pkgadd ../../proto/SUNWsst/Packages/noask_pkgadd
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Packages/noask_pkgadd
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Packages/noask_pkgrm:
+	/usr/bin/cp -f noask_pkgrm ../../proto/SUNWsst/Packages/noask_pkgrm
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Packages/noask_pkgrm

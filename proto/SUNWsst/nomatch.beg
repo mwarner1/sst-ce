@@ -1,0 +1,106 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)nomatch.beg	3.5	05/04/18 SMI"
+#
+# This begin script outputs debug information and halts the system when the
+# system doesn't match a rule during a custom JumpStart installation.
+#
+# To use this begin script, put the following rule at the end of the
+# rules file:
+#
+#   any - nomatch.beg - -
+#
+
+# ****************************************************************************
+# Explicitly define a path.
+# ****************************************************************************
+
+PATH=/usr/bin:/usr/sbin
+export PATH
+
+# ****************************************************************************
+# Display all of the relevant JumpStart variables.
+# ****************************************************************************
+
+echo "
+==============================================================================
+JumpStart Variable Listing
+==============================================================================
+"
+
+echo "SI_ARCH                 $SI_ARCH"
+echo "SI_BEGIN                $SI_BEGIN"
+echo "SI_CLASS                $SI_CLASS"
+echo "SI_CONFIG_DIR           $SI_CONFIG_DIR"
+echo "SI_CONFIG_FILE          $SI_CONFIG_FILE"
+echo "SI_CONFIG_PROG          $SI_CONFIG_PROG"
+echo "SI_CUSTOM_PROBES_FILE   $SI_CUSTOM_PROBES_FILE"
+echo "SI_DISKLIST             $SI_DISKLIST"
+echo "SI_DISKSIZES            $SI_DISKSIZES"
+echo "SI_DOMAINNAME           $SI_DOMAINNAME"
+echo "SI_FINISH               $SI_FINISH"
+echo "SI_HOSTADDRESS          $SI_HOSTADDRESS"
+echo "SI_HOSTID               $SI_HOSTID"
+echo "SI_HOSTNAME             $SI_HOSTNAME"
+echo "SI_INSTALLED            $SI_INSTALLED"
+echo "SI_INST_OS              $SI_INST_OS"
+echo "SI_INST_VER             $SI_INST_VER"
+echo "SI_KARCH                $SI_KARCH"
+echo "SI_MEMSIZE              $SI_MEMSIZE"
+echo "SI_MODEL                $SI_MODEL"
+echo "SI_NETWORK              $SI_NETWORK"
+echo "SI_NUMDISKS             $SI_NUMDISKS"
+echo "SI_OSNAME               $SI_OSNAME"
+echo "SI_PROFILE              $SI_PROFILE"
+echo "SI_ROOTDISK             $SI_ROOTDISK"
+echo "SI_ROOTDISKSIZE         $SI_ROOTDISKSIZE"
+echo "SI_SYS_STATE            $SI_SYS_STATE"
+echo "SI_TOTALDISK            $SI_TOTALDISK"
+echo "SI_TYPE                 $SI_TYPE"
+
+echo "
+==============================================================================
+
+This system (`uname -n`) did not match a JumpStart rule.  The following is a
+brief summary of the system's hardware configuration.  This information may
+be useful in debugging the cause of this problem.
+
+Model Name       : `prtconf -p | grep '^Node' | sed 's/Node //g'`
+Hardware Platform: `uname -i`
+Machine Class    : `uname -m`
+Processor Type   : `uname -p`
+
+This system attempted to install from the following system:
+
+Profile Server:      `mount | grep install_config | nawk '{ print $3 }'`
+
+This system will now be halted as no further processing can be done.
+
+==============================================================================
+"
+
+sync
+halt

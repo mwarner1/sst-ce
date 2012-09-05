@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-preserve.aud	1.12	05/06/09 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="File PRESERVE functionality"
+servfil="disable-preserve.aud"
+
+PKGCHK="/usr/sbin/pkgchk"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The file preserve functionality saves any temporary files created by editors,
+   which were left behind due to a system crash.
+
+Rationale for Verification Check:
+
+   While this preserve capability can be a useful function, it may not be
+   critical for system operation.  If this service is not needed, then it
+   should be disabled.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the preserve functionality is
+   enabled to run (via a run-control script).
+"
+#-----------------------------------------------------------------------------
+
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "${JASS_MSG_SOFTWARE_CONFIGURED}"
+if check_os_min_revision 5.10 ; then
+   check_serviceNotInstalled lrc:/etc/rc2_d/S89PRESERVE 1 LOG
+
+else # check startup script is not present
+
+   # Startup script is version-dependent:
+   if check_os_revision 5.9 ; then
+      servsrc="${JASS_ROOT_DIR}etc/rc2.d/S89PRESERVE"
+
+   elif check_os_revision 5.8 ; then
+      # Newer, patched versions of Solaris 8 use S89PRESERVE,
+      # and original fcs versions use S80PRESERVE
+
+      ( LANG=C; LC_ALL=C; export LANG LC_ALL;
+         # Warning: pkgchk returns status 0, whether or not the file was found
+         $PKGCHK -R {JASS_ROOT_DIR} -l -p "/etc/rc2.d/S89PRESERVE" 2>/dev/null \
+            | grep installed >/dev/null
+      )
+      if [ $? -eq 0 ] ; then # check for newer S89PRESERVE
+         servsrc="${JASS_ROOT_DIR}etc/rc2.d/S89PRESERVE"
+      else # check for older S80PRESERVE
+         servsrc="${JASS_ROOT_DIR}etc/rc2.d/S80PRESERVE"
+      fi
+
+   else # Solaris 7 and earlier
+      servsrc="${JASS_ROOT_DIR}etc/rc2.d/S80PRESERVE"
+   fi
+
+   # Verify appropriate S8?PRESERVE script(s) is not present:
+   check_startScriptNotExists "$servsrc" 1 LOG
+
+fi
+
+finish_audit

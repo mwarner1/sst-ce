@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)install-loginlog.aud	1.7	05/04/28 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="loginlog"
+servfil="install-loginlog.aud"
+
+LOGINLOG="${JASS_ROOT_DIR}var/adm/loginlog"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The loginlog(4) file is used to capture unsuccessful login attempts made
+   to the system.  An entry is generated after five unsuccessful attempts.
+   Each record contains the login name, tty specification and the time.
+
+Rationale for Verification Check:
+
+   By default, in the Solaris OE, this file does not exist.  It must be
+   created manually.  This script is used to verify that the ${LOGINLOG}
+   file has been created.
+
+Determination of Compliance:
+
+   This script will check for the existence and proper ownership and
+   permissions for the ${LOGINLOG} file.  This script will indicate a failure
+   if the file does not exist, has invalid permissions or is not owned by
+   the root account.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_fileExists     ${LOGINLOG}      1 LOG; then
+   check_fileOwnerMatch ${LOGINLOG} root 1 LOG
+   check_fileModeMatch  ${LOGINLOG} 0600 1 LOG
+fi
+
+finish_audit

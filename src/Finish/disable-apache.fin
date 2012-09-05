@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)disable-apache.fin 3.14	05/01/26	SMI"
+#
+# This script prevents the Apache web server from starting.  Note that this 
+# script is only intended to be used with the Apache service that is shipped 
+# with the Solaris OE.
+#
+
+logMessage "Disabling the service: Apache"
+echo ""
+
+
+if check_os_min_revision 5.10 ; then
+   disable_service_immediate lrc:/etc/rc3_d/S50apache
+elif check_os_min_revision 5.8 ; then
+   if [ "${JASS_DISABLE_MODE}" = "conf" ]; then
+      disable_conf_file ${JASS_ROOT_DIR}etc/apache httpd.conf
+      disable_conf_file ${JASS_ROOT_DIR}etc/apache tomcat.conf
+   elif [ "${JASS_DISABLE_MODE}" = "script" ]; then
+       if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+          disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K16apache
+          disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K16apache
+          disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K16apache
+          disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d K16apache
+       fi
+       disable_rc_file ${JASS_ROOT_DIR}etc/rc3.d S50apache
+   fi
+else
+   logInvalidOSRevision "5.8+"
+fi

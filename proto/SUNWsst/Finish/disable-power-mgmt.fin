@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-power-mgmt.fin 3.12     05/03/30 SMI"
+#
+# This script prevents power management service from starting.  In addition,
+# a "/noautoshutdown" file must be created in order to prevent the user 
+# from being asked about the state of power management during an 
+# automated (Jumpstart) installation.
+# 
+logMessage "Disabling the service: Power Management"
+echo ""
+
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+   if check_os_min_revision 5.10 ; then
+      disable_service_immediate svc:/system/power:default
+   elif check_os_min_revision 5.6 ; then
+      if [ "${JASS_DISABLE_MODE}" = "conf" ]; then
+	 disable_conf_file ${JASS_ROOT_DIR}etc power.conf
+      elif [ "${JASS_DISABLE_MODE}" = "script" ]; then
+	 if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+	    disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K37power
+	    disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K37power
+	    disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K37power
+	    disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K85power
+	 fi
+	 disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S85power
+      fi
+
+      NOAUTOSHUTDOWN=noautoshutdown
+      if [ ! -f ${JASS_ROOT_DIR}${NOAUTOSHUTDOWN} ] ; then
+	 confFile="${JASS_ROOT_DIR}etc/power.conf"
+	 if [ -f ${confFile} ]; then
+	    if [ `grep -c "^autoshutdown[ 	].*[ 	]noshutdown" ${confFile}` = 0 ]; then
+	       echo ""
+	       logMessage 'Creating the ${JASS_ROOT_DIR}noautoshutdown file to prevent the system prompting the
+user to determine power management status at the first system boot after
+installation.'
+	       echo ""
+
+	       rm -rf          ${JASS_ROOT_DIR}${NOAUTOSHUTDOWN}
+
+	       # Do not use create_a_file since the sysidpm script will remove
+	       # the file and confuse the undo process.  Using this method an
+	       # undo conflict should not be generated.
+	       
+	       touch           ${JASS_ROOT_DIR}${NOAUTOSHUTDOWN}
+	       chown root:root ${JASS_ROOT_DIR}${NOAUTOSHUTDOWN}
+	       chmod 444       ${JASS_ROOT_DIR}${NOAUTOSHUTDOWN}
+	       add_to_manifest X "/bin/rm -f ${NOAUTOSHUTDOWN}"
+	    fi
+	 fi
+      fi
+   else
+      logInvalidOSRevision "5.6+"
+   fi
+else
+   logNotGlobalZone
+fi

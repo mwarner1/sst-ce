@@ -1,0 +1,81 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-remote-root-login.aud 1.10     05/07/12     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Direct, Remote 'root' Login"
+servfil="disable-remote-root-login.aud"
+
+LOGIN="${JASS_ROOT_DIR}etc/default/login"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   Users should never be able to login directly as 'root' over the network.
+   To ensure accountability, they should first login with a regular user
+   and then 'su' to the 'root' or other account.  Following this method 
+   helps to ensure that a trail of accountability is maintained.
+
+   This check ensures that the 'CONSOLE' parameter in ${LOGIN} is defined.
+   Note that if this parameter is set, that it will also prevent the 
+   execution of remote commands by rsh(1).  For more information, see 
+   login(1).
+
+   Note that this functionality will only prevent remote, direct root
+   login for those services using the login(1) command.  Some programs
+   such as Secure Shell can be configured to bypass login by using their
+   own similar functionality and will therefore not be effected by this
+   check.
+
+Determination of Compliance:
+
+   This script will indicate a failure of the root user is permitted to 
+   directly login to or execute commands on this system remotely.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_fileExists "${LOGIN}" 1; then
+   if check_fileContentsExist "${LOGIN}" "^CONSOLE=.*$" 1; then
+      logSuccess 'CONSOLE parameter is set in ${LOGIN}.'
+   else
+      logFailure 'CONSOLE parameter is not set in ${LOGIN}.'
+   fi
+else
+   logFileNotFound "${LOGIN}" 1
+fi
+
+finish_audit

@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-banner-sendmail.fin	1.14	05/05/12 SMI"
+#
+# This programs adds the banner ${JASS_BANNER_SENDMAIL} to the
+# /etc/mail/sendmail.cf file to be used by sendmail(1M).
+#
+
+logMessage "Setting the service banner for the sendmail."
+echo ""
+
+if check_os_min_revision 5.9 ; then
+   if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsndmr ; then
+      if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsndmu ; then
+
+         PARAM="O SmtpGreetingMessage"
+         SENDMAIL="${JASS_ROOT_DIR}etc/mail/sendmail.cf"
+
+         # If the file was not found, then create it.
+
+         if [ ! -f ${SENDMAIL} ]; then
+            create_a_file -m 640 -o root:sys ${SENDMAIL}
+            echo ""
+         fi
+
+         oldValue=`grep "^$PARAM=" ${SENDMAIL} | \
+            nawk -F= '{ print $2 }' 2>/dev/null`
+
+         if [ "${oldValue}" != "${JASS_BANNER_SENDMAIL}" ]; then
+            backup_file ${SENDMAIL}
+            echo ""
+
+            logMessage 'Setting \\\"$PARAM\\\" to \\\"${JASS_BANNER_SENDMAIL}\\\" in ${SENDMAIL}.'
+
+            cat ${SENDMAIL}.${JASS_SUFFIX} |\
+               sed "s/^${PARAM}=.*$/${PARAM}=${JASS_BANNER_SENDMAIL}/g" \
+               > ${SENDMAIL}
+
+            # The following case is needed if De or SmtpGreetingMessage line
+            # was not found in the file.
+
+            if [ `grep -c "^${PARAM}=" ${SENDMAIL}` = 0 ]; then
+               echo "${PARAM}=${JASS_BANNER_SENDMAIL}" >> ${SENDMAIL}
+            fi
+         fi
+
+      else
+         logNotice "Sendmail (package SUNWsndmu) does not appear to be installed."
+         logNotice "Skipping setting banner for sendmail."
+      fi
+   else
+      logNotice "Sendmail (package SUNWsndmr) does not appear to be installed."
+      logNotice "Skipping setting banner for sendmail."
+   fi
+
+else
+  logInvalidOSRevision "5.9+"
+fi
+

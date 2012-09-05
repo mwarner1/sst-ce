@@ -1,0 +1,134 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-samba.aud	1.18	05/04/28 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Samba Service"
+servfil="disable-samba.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Samba service provides file and print sharing capabilities for
+   Microsoft Windows clients.  This is accomplished by the smbd daemon
+   that provides filespace and printer services to clients using the SMB (or
+   CIFS) protocol.  This is compatible with the LanManager protocol, and can
+   service LanManager clients.  These include MSCLIENT 3.0 for DOS, Windows
+   for Workgroups,  Windows 95/98/ME, Windows NT, Windows 2000, Windows XP,
+   OS/2, DAVE for Macintosh, and smbfs for Linux.  Similarly, the nmbd daemon
+   understands and can reply to NetBIOS over IP name service requests, like
+   those produced by SMB/CIFS clients such as Windows 95/98/ME, Windows NT,
+   Windows 2000, Windows XP, and LanManager clients.
+
+Rationale for Verification Check:
+
+   While the Samba service can be a useful function, it may not be critical
+   for system operation.  If this service is not needed, then it should be
+   disabled.
+
+Determination of Compliance:
+
+   This script determines if the Samba service is installed, configured or
+   running on the system.  This script will indicate a failure if the
+   software is installed, configured to run (via a run-control script) or
+   actually running on the system.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWsmbac
+   SUNWsmbar
+   SUNWsmbau
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc3.d/S90samba
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rcS.d/K03samba
+   ${JASS_ROOT_DIR}etc/rc0.d/K03samba
+   ${JASS_ROOT_DIR}etc/rc1.d/K03samba
+   ${JASS_ROOT_DIR}etc/rc2.d/K03samba
+"
+
+#-----------------------------------------------------------------------------
+
+servcfg="
+   ${JASS_ROOT_DIR}etc/sfw/smb.conf
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/sfw/bin/smbd
+   /usr/sfw/bin/nmbd
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.9 ; then
+
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized                 "$servpkg"   1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+
+   if check_os_min_revision 5.10 ; then
+      check_serviceNotInstalled "lrc:/etc/rc3_d/S90samba" 1 LOG
+   else
+
+      if [ "${JASS_DISABLE_MODE}" = "conf" ]; then
+         check_serviceConfigNotExists "${servcfg}" 1 LOG
+      elif [ "${JASS_DISABLE_MODE}" = "script" ]; then
+         check_startScriptNotExists   "$servsrc"   1 LOG
+         check_stopScriptNotExists    "$servkrc"   1 LOG
+      fi
+
+   fi
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists          "$servcmd"   1 LOG
+
+else
+   logInvalidOSRevision "5.9+"
+fi
+
+finish_audit

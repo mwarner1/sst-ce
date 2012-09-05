@@ -1,0 +1,50 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)README	3.7	04/09/22	SMI"
+#
+
+This is the README file for the Solaris (tm) Security Toolkit ("JASS")
+
+----------------- Documentation --------------------
+
+The Sun BluePrints articles that were originally found in this directory
+containing Sun's recommended practices on securing the Solaris Operating
+Enviroment in addition to the articles outlining the installation, 
+configuration and use of the Sun Security Toolkit: Community Edition have been removed
+in order help ensure that our users have access to the most current 
+information.  The Sun BluePrints for a variety of information security
+topics can be found at:
+
+   http://www.sun.com/security/blueprints/
+
+The most current version of Sun Security Toolkit: Community Edition documentation takes
+the form of the Administration Guide and Reference Guide.  These are
+downloadable from the same location as the Sun Security Toolkit: Community Edition
+software was downloaded from.
+
+The previous version of Sun Security Toolkit: Community Edition documentation takes
+the form of the Sun BluePrint publication "Securing Systems with the 
+Sun Security Toolkit: Community Edition" (ISBN 0131410717, Prentice Hall).  
+

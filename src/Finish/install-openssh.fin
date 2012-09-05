@@ -1,0 +1,72 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-openssh.fin 3.11     05/07/22     SMI"
+#
+# This script installs OpenSSH into /opt/OBSDssh.  The distribution for which
+# this script is written is based on the July, 2001 BluePrint OnLine article
+# on building the OpenBSD port of OpenSSH for Solaris.  Note that this script 
+# will not overwrite host key files if they already exist. 
+#
+# NOTE: This script is not intended to be used for Solaris 9+.
+#
+
+logMessage "Installing Software: OpenSSH"
+echo ""
+
+if [ -z "${JASS_OPENSSH_VERSION}" ]; then
+   OPENSSH_VERSION="3.5p1"
+else
+   OPENSSH_VERSION="${JASS_OPENSSH_VERSION}"
+fi
+
+if check_os_revision 5.5.1 5.8 ; then
+   OPENSSH_NAME="OBSDssh"
+   OPENSSH_PKG_SRC="${OPENSSH_NAME}-${OPENSSH_VERSION}-`uname -p`-`uname -m`-`uname -r`.pkg"
+   OPENSSH_PKG_DIR="${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}"
+
+   # Install the OpenSSH package onto the client
+
+   if [ "${JASS_STANDALONE}" = "1" ]; then
+      logNotice "This script cannot be used in standalone mode due to the potential for
+overwriting the local OBSDssh installation."
+   else
+      logMessage 'Installing ${OPENSSH_NAME} from ${OPENSSH_PKG_DIR}/${OPENSSH_PKG_SRC}.'
+      echo ""
+      if [ -f ${OPENSSH_PKG_DIR}/${OPENSSH_PKG_SRC} ]; then
+         add_pkg -d ${OPENSSH_PKG_DIR}/${OPENSSH_PKG_SRC} ${OPENSSH_NAME}
+         add_to_manifest X "rm_pkg ${OPENSSH_NAME}"
+      else
+         logFileNotFound "${OPENSSH_NAME}"
+         logMessage '\nThe OpenSSH program is not included as part of the distribution of the Sun
+Security Toolkit.  A procedure for building this tool can be obtained from the
+Sun BluePrints site in the article titled \\\"Building and Deploying OpenSSH on
+the Solaris OE\\\".  For more information, see:
+http://www.sun.com/security/blueprints.'
+      fi
+   fi
+else
+   logInvalidOSRevision "5.5.1-5.8"
+fi

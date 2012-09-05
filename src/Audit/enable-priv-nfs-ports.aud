@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)enable-priv-nfs-ports.aud 1.7     05/03/17     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="NFS Privileged Ports"
+servfil="enable-priv-nfs-ports.aud"
+
+SYSTEM="${JASS_ROOT_DIR}etc/system"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Networked File System (NFS) service can be configured to only accept
+   client requests originating from ports in the privileged range (1-1024).
+   This is typically used to help prevent unauthorized services, that is
+   those not running with privileged access, from communicating with the
+   NFS server.  While this is certainly not a foolproof solution, this
+   mechanism does add an incremental layer of defense to the NFS service.
+
+Rationale for Verification Check:
+
+   The purpose of this script is to verify that the NFS service has been
+   configured to only accept client communication that originates from a
+   port in the privileged range.  This is done by setting the 
+   'nfssrv:nfs_portmon' parameter to '1' in the ${SYSTEM} file.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the NFS service has not been
+   configured to only accept client communication that originates from
+   a port in the privileged range.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+   if check_fileExists ${SYSTEM} 1 ; then
+      if check_fileContentsExist ${SYSTEM} "set nfssrv:nfs_portmon=1" 1 ; then
+	 logSuccess 'nfssrv:nfs_portmon is set to \\\"1\\\" in ${SYSTEM}.'
+      else
+	 if check_fileContentsExist ${SYSTEM} "set nfssrv:nfs_portmon=" 0 ; then
+	    logFailure 'nfssrv:nfs_portmon is not set to \\\"1\\\" in ${SYSTEM}.'
+	 else
+	    logFailure 'nfssrv:nfs_portmon is not configured in ${SYSTEM}.'
+	 fi
+      fi
+   else
+      logFileNotFound "${SYSTEM}" 1
+   fi
+else
+   logNotGlobalZone
+fi
+
+finish_audit

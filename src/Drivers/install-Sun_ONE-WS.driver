@@ -1,0 +1,48 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)install-Sun_ONE-WS.driver	3.7	05/06/13 SMI"
+#
+# The purpose of this driver is to install the Sun ONE Web Server.  This 
+# script not only installs the server software, but also minimizes the 
+# Solaris Operating System distribution for use with the Sun ONE Web 
+# Server.
+
+DIR="`/bin/dirname $0`"
+export DIR
+
+. ${DIR}/driver.init
+
+. ${DIR}/config.driver
+
+JASS_SCRIPTS="
+   minimize-Sun_ONE-WS.fin
+   install-Sun_ONE-WS.fin
+"
+
+. ${DIR}/driver.run
+
+. ${DIR}/hardening.driver
+

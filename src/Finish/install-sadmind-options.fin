@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)install-sadmind-options.fin 3.12     05/03/31 SMI"
+#
+# This script adds the options specified in the JASS_SADMIND_OPTIONS variable 
+# to the "sadmind" daemon entry in /etc/inet/inetd.conf.
+#
+
+INETD=${JASS_ROOT_DIR}etc/inet/inetd.conf
+
+logMessage "Define the security level for the system administration (sadmind) service."
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   logInvalidOSRevision "5.9-"
+else
+   if [ -f ${INETD} -a -s ${INETD} ]; then
+
+      # This code is necessary to cope with issues involving
+      # passing strings to the 'grep' command that begin with
+      # a dash ('-').  The dashes are transformed to underscores
+      # for this comparison.
+
+      if check_fileContentsExist ${INETD} "/usr/sbin/sadmind" 0 ; then
+
+         arg1=`echo "${JASS_SADMIND_OPTIONS}" | sed 's/-/_/g'`
+         arg2=`grep "/usr/sbin/sadmind" ${INETD} | sed 's/-/_/g'`
+
+         if [ `echo "${arg2}" | grep -c "${arg1}"` = 0 ]; then
+ 
+            backup_file ${INETD}
+            echo ""
+
+            logMessage 'Adding the \\\"${JASS_SADMIND_OPTIONS}\\\" options to sadmind in ${INETD}.'
+
+            nawk '
+               /100232\/10/	{ if ($7 == "sadmind")
+                  printf "%s\t%s\t%s\t%s\t%s\t%s\t%s %s\n", $1, $2, $3, $4, $5, $6, 
+                     $7, sadmindOptions;
+               else
+                  if ($8 == "sadmind")
+                     printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s %s\n", $1, $2, $3, $4, $5, 
+                        $6, $7, $8, sadmindOptions;
+                  else
+                     print $0;
+               next;
+            } { print $0; }' sadmindOptions="${JASS_SADMIND_OPTIONS}" \
+               ${INETD}.${JASS_SUFFIX} > ${INETD}
+         fi 
+      else
+         logNotice 'The \\\"sadmind\\\" service was not found in ${INETD}.'
+      fi
+   else
+      logFileNotFound "${INETD}"
+   fi
+fi

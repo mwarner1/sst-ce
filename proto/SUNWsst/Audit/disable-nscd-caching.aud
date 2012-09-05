@@ -1,0 +1,123 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)disable-nscd-caching.aud 1.9     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Name Service Cache Daemon"
+servfil="disable-nscd-caching.aud"
+
+NSCD="${JASS_ROOT_DIR}etc/nscd.conf"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Name Service Cache Daemon (nscd) is a process that provides a cache for
+   the most common name service requests.  At multi-user boot, the nscd(1M) 
+   daemon is started to provide this functionality.  The default configuration
+   file for this service, ${NSCD}, handles behavior of the cache daemon.  For 
+   more information, see nscd.conf(4).
+
+Rationale for Verification Check:
+
+   This script will check the nscd configuration file, ${NSCD}, to verify
+   that both the positive-time-to-live and negative-time-to-live parameters
+   have been set to '0'.  This will prevent the nscd service from caching
+   information.  This check only applies to the 'passwd', 'group', 'hosts'
+   services.  For the Solaris OE version 8 and higher, the 'ipnodes' service
+   is also checked.
+
+   Note that this is the only supported way to disable nscd caching.  The
+   nscd service should not be disabled or otherwise prevented from starting
+   as it may cause other services to fail on service entry lookups.
+
+Determination of Compliance:
+
+   This check will indicate a failure if any of the services checked has
+   a positive-time-to-live or negative-time-to-live parameter that is not
+   set to '0'.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+serviceList="passwd group hosts"
+if check_os_min_revision 5.8; then
+   serviceList="${serviceList} ipnodes"
+fi
+
+logMessage "# Checking the nscd time-to-live parameters.\n "
+
+if check_fileExists ${NSCD} 1 ; then
+
+   error=0
+   if check_os_revision 5.8 ; then
+      if [ "`uname -p`" = "sparc" ]; then
+         nscdPatch="110386-02"
+      else
+         nscdPatch="110400-01"
+      fi
+
+      if check_patchExists ${nscdPatch} 1 LOG ; then
+         : 
+      else
+         logError 'Patch ${nscdPatch} or later should be installed.  This script will
+not check for other changes to the NSCD configuration until this patch is
+applied to the system.'
+         error=1
+      fi
+   fi
+
+   if [ $error -eq 0 ]; then
+      for svc in ${serviceList}; do
+         if check_fileContentsExist "${NSCD}" \
+            "[ 	]*positive-time-to-live[ 	]*${svc}[ 	]*0" 1 ; then
+            logSuccess 'positive-time-to-live for \\\"${svc}\\\" is \\\"0\\\".'
+         else
+            logFailure 'positive-time-to-live for \\\"${svc}\\\" is not \\\"0\\\".'
+         fi
+   
+         if check_fileContentsExist "${NSCD}" \
+            "[ 	]*negative-time-to-live[ 	]*${svc}[ 	]*0" 1 ; then
+            logSuccess 'negative-time-to-live for \\\"${svc}\\\" is \\\"0\\\".'
+         else
+            logFailure 'negative-time-to-live for \\\"${svc}\\\" is not \\\"0\\\".'
+         fi
+      done
+   fi
+else
+   logFileNotFound "${NSCD}" 1
+fi
+
+finish_audit

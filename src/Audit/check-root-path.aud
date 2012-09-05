@@ -1,0 +1,114 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)check-root-path.aud	1.4	07/05/18 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Check for . and World-writable Directories in root's PATH"
+servfil="check-root-path.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   This purpose of this check is to detect if the current working directory
+   ('.') or a world-writable directory is in root's executable path.
+
+Rationale for Verification Check:
+
+  Having the current working directory ('.') or a world-writable directory
+  makes it likely that an attacker can gain superuser access by forcing an
+  administrator operating as root to execute a Trojan horse program.
+
+Determination of Compliance:
+
+   This script reports a failure for each element in root's PATH that is either
+   world-writable or the current working directory ('.').
+"
+
+#-----------------------------------------------------------------------------
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+
+logMessage '# Checking root PATH directories.\n'
+
+# Get root PATH (can't use $PATH as it may have been modified by these scripts).
+# Must execute in a subshell:
+rootPath=`
+   if [ -f "${JASS_ROOT_DIR}etc/profile" ] ; then
+      . ${JASS_ROOT_DIR}etc/profile >/dev/null 2>&1
+   fi
+   if [ -f "${JASS_ROOT_HOME_DIR}/.profile" ] ; then
+      . ${JASS_ROOT_HOME_DIR}/.profile >/dev/null 2>&1
+   fi
+   echo $PATH
+`
+
+for directory in \
+      `echo $rootPath | sed 's/^/"/' | sed 's/:/" "/g' | sed 's/$/"/' ` ; do
+   eval directory=$directory
+
+   if [ -z "${directory}" ] ; then
+      logFailure 'Empty directory in root PATH.'
+      adjustScore 1
+      continue
+   elif [ "${directory}" = '.' ] ; then
+      logFailure 'Current working directory . is in root PATH.'
+      adjustScore 1
+      continue
+   fi
+
+   # Follow soft links to get real directory:
+   directoryType=`find -L ${directory} -type d | grep "^${directory}$" `
+   if [ -z "${directoryType}" ] ; then
+      logNotice 'Path ${directory} does not exist or is not a directory.'
+
+   else
+      # Follow soft links to get real permissions:
+      worldWritable=`find -L ${directory} -type d -a -perm -2 \
+         | grep "^${directory}$" `
+      if [ -n "${worldWritable}" ] ; then
+         logFailure 'Root PATH directory ${directory} is world-writable.'
+         adjustScore 1
+      fi
+   fi
+done
+
+if [ "${SCRIPT_SCORE}" = "0" ] ; then
+   logSuccess \
+      'No current working or world-writable directories are in root PATH.'
+fi
+
+finish_audit

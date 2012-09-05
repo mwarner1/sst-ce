@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-bart.fin	1.15	05/06/08 SMI"
+#
+# This script will enable BART (Basic Auditing and Reporting Tool)
+# on Solaris 10 or later.  This script creates a BART rules file and
+# creates a control manifest for future BART runs with enable-bart.aud.
+
+BART="${JASS_ROOT_DIR}usr/bin/bart"
+BART_DIR="var/opt/SUNWsst/BART"
+RULES="${BART_DIR}/rules"
+MANIFESTS="${JASS_ROOT_DIR}${BART_DIR}/manifests"
+CONTROL_MANIFEST_FILE="${MANIFESTS}/${JASS_TIMESTAMP}.txt"
+FAILED_MANIFEST_FILE="${MANIFESTS}/${JASS_TIMESTAMP}.failed.txt"
+
+logMessage 'Enabling the function: Basic Auditing and Reporting Tool (BART)'
+echo ""
+
+if check_os_min_revision 5.10 ; then
+
+   if [ -x "${BART}" ] ; then
+
+      # Setup $MANIFESTS directory if not present.
+      # Don't use mkdir_dashp as we don't want it undone.
+      if [ ! -d "${MANIFESTS}" ] ; then
+         mkdir -p ${MANIFESTS}
+      fi
+
+      #
+      # Setup BART rules file based on driver we're running
+      #
+      # Overwrite previously-existing rules file, if any, as it
+      # may be rules for another driver.
+      #
+      copy_files "/${RULES}"
+
+      #
+      # Run BART to create a control manifest (baseline):
+      # Note: egrep is workaround for BART bug 6276935.
+      # Note: S82mkdtab is filtered out to avoid false failures. This
+      # file is deleted after Solaris is first booted.
+      #
+      logMessage 'Running bart create -r ${JASS_ROOT_DIR}${RULES}.'
+      ${BART} create -R "${JASS_ROOT_DIR}" -r "${JASS_ROOT_DIR}${RULES}" \
+         | egrep -v '^/var/|^/etc/rc2.d/S82mkdtab' \
+         > "${CONTROL_MANIFEST_FILE}"
+      bart_status=$?
+
+      if [ "$bart_status" = "0" ] ; then
+         logMessage 'BART control manifest ${CONTROL_MANIFEST_FILE}
+created.'
+      else
+         mv "${CONTROL_MANIFEST_FILE}" "${FAILED_MANIFEST_FILE}"
+         logError \
+            'BART create failed; return code ${bart_status}. Manifest file
+${FAILED_MANIFEST_FILE}.'
+      fi
+
+   else
+      logError '${JASS_ROOT_DIR}usr/bin/bart is not installed.'
+   fi
+
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+echo

@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)install-Sun_ONE-WS.fin 3.12     05/03/31 SMI"
+#
+# This script installs the Sun ONE Web Server version 6.0SP2 onto the
+# target platform.  This script is provided as a sample of how software
+# installation can be automated using JumpStart.
+#
+
+logMessage "Installing Software: Sun ONE Web Server"
+echo ""
+
+# name of software location
+
+# Sun ONE Web Server 4.x
+# SUNONE="enterprise-4.1SP3-domestic-us.sparc-sun-solaris2.6.tar"
+# SUNONE_PATH="${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}/${SUNONE}"
+# SUNONE_DIR="${JASS_ROOT_DIR}opt/iWS4.1sp3"
+
+# Sun ONE Web Server 6.x
+SUNONE="iws60sp2-solaris.tar"
+SUNONE_PATH="${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}/${SUNONE}"
+SUNONE_DIR="${JASS_ROOT_DIR}opt/iWS6.0sp2"
+
+# Extract the new code into its version specific directory.
+
+if check_os_min_revision 5.10 ; then
+   logInvalidOSRevision "5.9-"
+elif [ -d ${SUNONE_DIR} ]; then
+   logNotice 'The directory, ${SUNONE_DIR}, already exists.'
+else
+   logMessage 'Extracting the Sun ONE Web Server into ${SUNONE_DIR}.'
+   echo ""
+
+   mkdir -p ${SUNONE_DIR}
+   cd ${SUNONE_DIR}
+   if [ -f ${SUNONE_PATH} ]; then
+      tar xvf ${SUNONE_PATH}
+   else
+      logFileNotFound "${SUNONE_PATH}"
+   fi
+fi

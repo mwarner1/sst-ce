@@ -1,0 +1,116 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved
+# All rights reserved.
+#
+# ident  "@(#)disable-automount.aud 1.10     05/03/30 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="NFS Automount Service"
+servfil="disable-automount.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The automountd(1M) service is an RPC server that answers file system mount
+   and unmount requests from the autofs file system.  It uses local files or
+   name service maps to locate file  systems to be mounted.  These maps are 
+   described with the automount(1M) command.
+
+Rationale for Verification Check:
+
+   While the automount service can be a useful function, it may not be
+   critical for system operation.  If this service is not needed, then it 
+   should be disabled.
+
+Determination of Compliance:
+
+   This script determines if the automount service is installed, configured 
+   or running on the system.  This script will indicate a failure if the
+   software is installed, configured to run (via a run-control script) or 
+   actually running on the system.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWatfsr SUNWatfsu
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S74autofs
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rcS.d/K41autofs
+   ${JASS_ROOT_DIR}etc/rc0.d/K41autofs
+   ${JASS_ROOT_DIR}etc/rc0.d/K69autofs
+   ${JASS_ROOT_DIR}etc/rc1.d/K41autofs
+   ${JASS_ROOT_DIR}etc/rc1.d/K68autofs
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/lib/autofs/automountd
+"
+svc="
+   svc:/system/filesystem/autofs:default
+"
+
+# **************************************************************************** 
+# Check processing section.
+# **************************************************************************** 
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+if check_os_min_revision 5.10 ; then
+   check_minimized_service "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceDisabled "${svc}" 1 LOG  
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceNotRunning "${svc}"  1 LOG
+
+else
+   check_minimized            "$servpkg"    1 LOG
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   check_startScriptNotExists "$servsrc"    1 LOG
+   check_stopScriptNotExists  "$servkrc"    1 LOG
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists     "$servcmd"    1 LOG
+fi
+finish_audit

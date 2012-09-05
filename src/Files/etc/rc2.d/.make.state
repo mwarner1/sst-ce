@@ -1,0 +1,40 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/rc2.d:
+	[ -d ../../../../proto/SUNWsst/Files/etc/rc2.d ] || /bin/mkdir -p ../../../../proto/SUNWsst/Files/etc/rc2.d
+.BUILT_LAST_MAKE_RUN:
+S00set-tmp-permissions:
+	/usr/bin/rm -f S00set-tmp-permissions
+	/usr/bin/ln -s ../init.d/set-tmp-permissions S00set-tmp-permissions
+	/usr/bin/rm -f ../../../../proto/SUNWsst/Files/etc/rc2.d/S00set-tmp-permissions
+	( cd ../../../../proto/SUNWsst/Files/etc/rc2.d; /usr/bin/ln -s ../init.d/set-tmp-permissions S00set-tmp-permissions )
+.BUILT_LAST_MAKE_RUN:
+S07set-tmp-permissions:
+	/usr/bin/rm -f S07set-tmp-permissions
+	/usr/bin/ln -s ../init.d/set-tmp-permissions S07set-tmp-permissions
+	/usr/bin/rm -f ../../../../proto/SUNWsst/Files/etc/rc2.d/S07set-tmp-permissions
+	( cd ../../../../proto/SUNWsst/Files/etc/rc2.d; /usr/bin/ln -s ../init.d/set-tmp-permissions S07set-tmp-permissions )
+.BUILT_LAST_MAKE_RUN:
+S70nddconfig:
+	/usr/bin/rm -f S70nddconfig
+	/usr/bin/ln -s ../init.d/nddconfig S70nddconfig
+	/usr/bin/rm -f ../../../../proto/SUNWsst/Files/etc/rc2.d/S70nddconfig
+	( cd ../../../../proto/SUNWsst/Files/etc/rc2.d; /usr/bin/ln -s ../init.d/nddconfig S70nddconfig )
+.BUILT_LAST_MAKE_RUN:
+S70nddconfig-15k_sc:
+	/usr/bin/rm -f S70nddconfig-15k_sc
+	/usr/bin/ln -s ../init.d/nddconfig-15k_sc S70nddconfig-15k_sc
+	/usr/bin/rm -f ../../../../proto/SUNWsst/Files/etc/rc2.d/S70nddconfig-15k_sc
+	( cd ../../../../proto/SUNWsst/Files/etc/rc2.d; /usr/bin/ln -s ../init.d/nddconfig-15k_sc S70nddconfig-15k_sc )
+.BUILT_LAST_MAKE_RUN:
+S73sms_arpconfig:
+	/usr/bin/rm -f S73sms_arpconfig
+	/usr/bin/ln -s ../init.d/sms_arpconfig S73sms_arpconfig
+	/usr/bin/rm -f ../../../../proto/SUNWsst/Files/etc/rc2.d/S73sms_arpconfig
+	( cd ../../../../proto/SUNWsst/Files/etc/rc2.d; /usr/bin/ln -s ../init.d/sms_arpconfig S73sms_arpconfig )
+.BUILT_LAST_MAKE_RUN:
+S73swapadd:
+	/usr/bin/rm -f S73swapadd
+	/usr/bin/ln -s ../init.d/swapadd S73swapadd
+	/usr/bin/rm -f ../../../../proto/SUNWsst/Files/etc/rc2.d/S73swapadd
+	( cd ../../../../proto/SUNWsst/Files/etc/rc2.d; /usr/bin/ln -s ../init.d/swapadd S73swapadd )

@@ -1,0 +1,11 @@
+Intro		Intro (1m)	- Solaris Security Toolkit Administration.
+add-client	add-client (1m) - install JumpStart client for the Solaris Security Toolkit (JASS)
+audit_public_funcs		audit_public_funcs (4)	- change audit behavior of the Solaris Security Toolkit (JASS)
+common_log_funcs		common_log_funcs (4)	- control all logging and reporting functions for the Solaris Security Toolkit (JASS)
+common_misc_funcs		common_misc_funcs (4)	- miscellaneous framework functions for the Solaris Security Toolkit (JASS)
+driver_funcs	driver_funcs (4)    - Solaris Security Toolkit (JASS) driver functions
+jass-check-sum	jass-check-sum (1m) - identify file changes made since the last Solaris Security Toolkit (JASS) backup
+jass-execute	jass-execute (1m)   - configure the Solaris Security Toolkit (JASS) application       
+make-jass-pkg	make-jass-pkg (1m)  - create Solaris Security Toolkit (JASS) package stream file
+rm-client	rm-client (1m)	- remove JumpStart client for the Solaris Security Toolkit (JASS).
+security_drivers		security_drivers (7)	- Solaris Security Toolkit (JASS) drivers

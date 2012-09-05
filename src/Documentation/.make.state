@@ -1,0 +1,29 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Documentation:
+	[ -d ../../proto/SUNWsst/Documentation ] || /bin/mkdir -p ../../proto/SUNWsst/Documentation
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Documentation/CHANGES:
+	/usr/bin/cp -f CHANGES ../../proto/SUNWsst/Documentation/CHANGES
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Documentation/CHANGES
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Documentation/EOL_NOTICE:
+	/usr/bin/cp -f EOL_NOTICE ../../proto/SUNWsst/Documentation/EOL_NOTICE
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Documentation/EOL_NOTICE
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Documentation/INSTALL:
+	/usr/bin/cp -f INSTALL ../../proto/SUNWsst/Documentation/INSTALL
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Documentation/INSTALL
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Documentation/QUESTIONNAIRE:
+	/usr/bin/cp -f QUESTIONNAIRE ../../proto/SUNWsst/Documentation/QUESTIONNAIRE
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Documentation/QUESTIONNAIRE
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Documentation/README:
+	/usr/bin/cp -f README ../../proto/SUNWsst/Documentation/README
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Documentation/README
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/README:
+	( cd ../../proto/SUNWsst ; \
+	/usr/bin/rm -f README ; \
+	/usr/bin/ln -s Documentation/README README )

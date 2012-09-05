@@ -1,0 +1,85 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-sar.fin	1.1	07/01/24 SMI"
+#
+# This script will enable sar, the system activity reporting facility,
+# if it is installed on the system.
+#
+
+CRONTAB_DIR=${JASS_ROOT_DIR}var/spool/cron/crontabs
+SYS_CRONTAB=${CRONTAB_DIR}/sys
+
+if check_os_min_revision 5.10; then
+
+   logMessage 'Enabling the function: System Activity Reporting'
+   echo ""
+
+   pkginfo -q -R ${JASS_ROOT_DIR} SUNWaccr
+   accr=$?
+   pkginfo -q -R ${JASS_ROOT_DIR} SUNWaccu
+   accu=$?
+
+   if [ "${accr}" = "1" -o "${accu}" = "1" ]; then
+
+      logNotice 'System Activity Reporting is not installed.  The packages SUNWaccr
+and SUNWaccu must be installed to use System Activity Reporting.'
+
+   else
+
+      enable_service "svc:/system/sar:default"
+
+      #
+      # Add sys crontab entry if not there
+      #
+
+      # Create sys crontab file if it's not there:
+      if [ -f "${SYS_CRONTAB}" ] ; then
+	 sys_crontab_backup_performed=0
+      else
+	 create_a_file -m 0600 -o root:sys ${SYS_CRONTAB}
+	 echo ""
+	 # Don't backup files we created:
+	 sys_crontab_backup_performed=1
+      fi
+
+      # Create sys crontab entry, if it's not there:
+      add_crontab_entry_if_missing 'sys' \
+       '/usr/lib/sa/sa1' '0,20,40 * * * * /usr/lib/sa/sa1' \
+       "$sys_crontab_backup_performed"
+      sys_crontab_backup_performed=$?
+
+      add_crontab_entry_if_missing 'sys' \
+       '/usr/lib/sa/sa2' \
+       '45 23 * * * /usr/lib/sa/sa2 -s 0:00 -e 23:59 -i 1200 -A' \
+       "$sys_crontab_backup_performed"
+      sys_crontab_backup_performed=$?
+
+      # crontab -e used in add_crontab mucks with the ownership.
+      change_owner root:sys ${SYS_CRONTAB}
+   fi
+else
+   logInvalidOSRevision "5.10+"
+fi

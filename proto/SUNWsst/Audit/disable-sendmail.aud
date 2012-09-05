@@ -1,0 +1,183 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-sendmail.aud 1.18     05/07/12 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Sendmail Service"
+servfil="disable-sendmail.aud"
+
+CSENDMAIL="${JASS_ROOT_DIR}etc/mail/sendmail.cf"
+DSENDMAIL="${JASS_ROOT_DIR}etc/default/sendmail"
+CRONTAB="${JASS_ROOT_DIR}var/spool/cron/crontabs/root"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   sendmail(1M) sends a message to one or more people, routing the message
+   over whatever networks are necessary. sendmail does internetwork forwarding
+   as necessary to deliver the message to the correct place.
+
+Rationale for Verification Check:
+
+   By default, the sendmail service is configured to both forward local mail
+   as well as to receive incoming mail from remote sources.  If a system is
+   not intended to be a mail server, then the sendmail service can be
+   configured to not accept incoming messages.  This script will check that
+   the sendmail service is configured in such a manner.
+
+   This check is performed in a variety of ways depending on the version of
+   the Solaris OE used.  For the Solaris OE version 9 and higher, this
+   script will check for the existence of the following in the ${CSENDMAIL}
+   file:
+
+      Name=NoMTA4, Family=inet, Addr=127.0.0.1
+
+   For the Solaris OE version 8, this script will check the ${DSENDMAIL} file
+   to determine if the MODE parameter is set to \"\" (nothing).  For older
+   versions of the Solaris OE, this script will look to see if the
+   sendmail run-control scripts have been disabled and an entry added to
+   the root user's crontab file to automate the processing of queued mail.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the sendmail service is not disabled
+   in accordance with the description above.  Note that for the Solaris OE
+   version 8 and higher, this script will check all conditions available to
+   the respective version of the OE as noted above as any of them could be
+   used to achieve similar functionality.
+"
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWsndmr
+   SUNWsndmu
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S88sendmail
+"
+
+#-----------------------------------------------------------------------------
+
+servkrc="
+   ${JASS_ROOT_DIR}etc/rcS.d/K36sendmail
+   ${JASS_ROOT_DIR}etc/rc0.d/K36sendmail
+   ${JASS_ROOT_DIR}etc/rc0.d/K57sendmail
+   ${JASS_ROOT_DIR}etc/rc1.d/K36sendmail
+   ${JASS_ROOT_DIR}etc/rc1.d/K57sendmail
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /usr/lib/sendmail
+"
+svc="
+   svc:/network/smtp:sendmail
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+sendmailDisabled=0
+if check_os_min_revision 5.7 ; then
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   if check_minimized "$servpkg" 1 LOG ; then
+      sendmailDisabled=0
+   fi
+fi
+
+if [ $sendmailDisabled -eq 0 ]; then
+   if check_os_min_revision 5.9; then
+      logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+      if check_fileExists ${CSENDMAIL} 0 ; then
+         if check_fileContentsExist ${CSENDMAIL} \
+            "NoMTA4, Family=inet, Addr=127.0.0.1" 1 ; then
+            logSuccess 'DaemonPortOptions is set to \\\"Addr=127.0.0.1\\\" in ${CSENDMAIL}.'
+            sendmailDisabled=1
+         else
+            logFailure 'DaemonPortOptions is not set to \\\"Addr=127.0.0.1\\\" in ${CSENDMAIL}.'
+         fi
+      else
+         logFileNotFound ${CSENDMAIL}
+      fi
+   fi
+fi
+
+if [ $sendmailDisabled -eq 0 ]; then
+   if check_os_min_revision 5.8; then
+      if check_fileExists ${DSENDMAIL} 0 ; then
+         if check_fileContentsExist ${DSENDMAIL} \
+            "^MODE=${JASS_SENDMAIL_MODE}" 1 ; then
+            logSuccess 'MODE is set to \\\"${JASS_SENDMAIL_MODE}\\\" in ${DSENDMAIL}.'
+            sendmailDisabled=1
+         else
+            logFailure 'MODE is not set to \\\"${JASS_SENDMAIL_MODE}\\\" in ${DSENDMAIL}.'
+         fi
+      else
+         logFileNotFound ${DSENDMAIL}
+      fi
+   fi
+fi
+
+if [ $sendmailDisabled -eq 0 ]; then
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+
+
+   if check_os_min_revision 5.10; then
+	check_serviceDisabled "${svc}" 1 LOG
+   else
+	# Startup scripts for sendmail are in Solaris 9 and earlier.
+	check_startScriptNotExists "$servsrc" 1 LOG
+	check_stopScriptNotExists  "$servkrc" 1 LOG
+   fi
+
+   check_processNotExists     "$servcmd" 1 LOG
+
+   if check_fileExists ${CRONTAB} 1 ; then
+      if check_fileContentsExist ${CRONTAB} "/usr/lib/sendmail -q" 1; then
+         logSuccess "root crontab is configured to process mail queue."
+      else
+         logFailure "root crontab is not configured to process mail queue."
+      fi
+   else
+      logFileNotFound ${CRONTAB} 1
+   fi
+fi
+
+finish_audit

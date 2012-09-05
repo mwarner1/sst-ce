@@ -1,0 +1,84 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)install-connlog.aud	1.1	06/12/21 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="connlog"
+servfil="install-connlog.aud"
+
+CONNLOG="${JASS_ROOT_DIR}var/log/connlog"
+SYSLOG=${JASS_ROOT_DIR}etc/syslog.conf
+LOGADM=${JASS_ROOT_DIR}etc/logadm.conf
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The connlog file is a record of all attempts by users to connect to the
+   system via inetd services.  Each time a connection is established, a
+   record will be generated via syslog and captured to this file.
+
+Rationale for Verification Check:
+
+   By default, in the Solaris OS, this file does not exist.  It must be 
+   created manually and the syslog entries added.  This script is used to 
+   verify that the ${CONNLOG} file has been created and the necessary
+   syslog instructions are present.
+
+Determination of Compliance:
+
+   This script will check for the existence and proper ownership and 
+   permissions for the ${CONNLOG} file.  This script will return failure if 
+   the file does not exist, has invalid permissions or is not owned by the 
+   root account.  It will also indicate a failure if an appropriate connlog
+   entry is not found in ${LOGADM}, or if ${SYSLOG} is not configured to
+   log entries to the file.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_fileExists     ${CONNLOG}      1 LOG; then
+   check_fileOwnerMatch ${CONNLOG} root 1 LOG
+   check_fileGroupMatch ${CONNLOG} root 1 LOG
+   check_fileModeMatch  ${CONNLOG} 0600 1 LOG
+
+   check_fileContentsExist "${SYSLOG}" "^[^#]*/var/log/connlog" 1 LOG
+   check_fileContentsExist "${LOGADM}" "^[ 	]*connlog" 1 LOG 
+
+fi
+
+
+
+
+finish_audit

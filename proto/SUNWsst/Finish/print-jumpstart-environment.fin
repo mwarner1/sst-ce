@@ -1,0 +1,69 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)print-jumpstart-environment.fin	3.5	05/04/12 SMI"
+#
+# This script displays variables specifically used during JumpStart.  This is
+# used to capture state information and for debugging purposes.
+#
+
+logMessage "SI_ARCH                 $SI_ARCH"
+logMessage "SI_DISKLIST             $SI_DISKLIST"
+logMessage "SI_DISKSIZES            $SI_DISKSIZES"
+logMessage "SI_DOMAINNAME           $SI_DOMAINNAME"
+logMessage "SI_HOSTADDRESS          $SI_HOSTADDRESS"
+logMessage "SI_HOSTID               $SI_HOSTID"
+logMessage "SI_HOSTNAME             $SI_HOSTNAME"
+logMessage "SI_INSTALLED            $SI_INSTALLED"
+logMessage "SI_INST_OS              $SI_INST_OS"
+logMessage "SI_INST_VER             $SI_INST_VER"
+logMessage "SI_NETWORK              $SI_NETWORK"
+logMessage "SI_OSNAME               $SI_OSNAME"
+logMessage "SI_TYPE                 $SI_TYPE"
+logMessage "SI_BEGIN                $SI_BEGIN"
+logMessage "SI_CLASS                $SI_CLASS"
+logMessage "SI_CONFIG_DIR           $SI_CONFIG_DIR"
+logMessage "SI_CONFIG_PROG          $SI_CONFIG_PROG"
+logMessage "SI_CUSTOM_PROBES_FILE   $SI_CUSTOM_PROBES_FILE"
+logMessage "SI_FINISH               $SI_FINISH"
+logMessage "SI_KARCH                $SI_KARCH"
+logMessage "SI_MEMSIZE              $SI_MEMSIZE"
+logMessage "SI_MODEL                $SI_MODEL"
+logMessage "SI_NUMDISKS             $SI_NUMDISKS"
+logMessage "SI_PROFILE              $SI_PROFILE"
+logMessage "SI_ROOTDISK             $SI_ROOTDISK"
+logMessage "SI_ROOTDISKSIZE         $SI_ROOTDISKSIZE"
+logMessage "SI_SYS_STATE            $SI_SYS_STATE"
+logMessage "SI_TOTALDISK            $SI_TOTALDISK"
+
+logMessage "
+===========================================================================
+System's Model Name: `prtconf -p | grep '^Node' | sed 's/^Node //g'`
+---
+Profile Server: `mount -p | grep ${SI_CONFIG_DIR} | nawk '{ print $1 }'`
+---
+Install Server: `mount -p | grep /cdrom | nawk '{ print $1 }'`
+===========================================================================
+"

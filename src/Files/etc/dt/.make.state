@@ -1,0 +1,6 @@
+.MAKE_VERSION:	VERSION-1.0
+../../../../proto/SUNWsst/Files/etc/dt:
+	[ -d ../../../../proto/SUNWsst/Files/etc/dt ] || /bin/mkdir -p ../../../../proto/SUNWsst/Files/etc/dt
+.BUILT_LAST_MAKE_RUN:
+config:
+	cd config; pwd; make install

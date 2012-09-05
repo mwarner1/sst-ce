@@ -1,0 +1,151 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)enable-inetd-syslog.aud 1.9     05/03/30 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="inetd Connection Logging"
+servfil="enable-inetd-syslog.aud"
+
+INETD="${JASS_ROOT_DIR}etc/default/inetd"
+INETSVC="${JASS_ROOT_DIR}etc/init.d/inetsvc"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Internet Services daemon, inetd(1M), listens for service requests on 
+   those TCP or UDP ports associated with each of the services listed in its
+   configuration file, /etc/inet/inetd.conf.  When a request arrives, inetd
+   spawns the server program associated with the service to process the 
+   request.
+
+Rationale for Verification Check:
+
+   This script will check the inetd service, if it exists, to verify that it
+   has been configured to log session/connection information to the SYSLOG 
+   facility.  The inetd service can be configured to log this data in one of 
+   two ways depending on the Solaris OE version used.  
+ 
+   For the Solaris OE version 9 and later, connection logging can be enabled
+   by setting the 'ENABLE_CONNECTION_LOGGING' parameter to 'YES' in the
+   ${INETD} file.  For older releases, the '-l' parameter can be added to the
+   inetd invokation line in the ${INETSVC} file.
+ 
+Determination of Compliance:
+
+   This check will indicate a failure if the inetd service is not configured
+   to log session/connection information.  Note that for the Solaris OE 
+   version 9 and higher, this script will check both conditions noted 
+   above as both could be used to enable this functionality.  This script
+   will also indicate a failure if the inetd process is not running with
+   the '-t' flag and the 'ENABLE_CONNECTION_LOGGING' parameter is not set
+   to 'YES' (for the Solaris OE version 9 and higher).
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="/usr/sbin/inetd"
+
+svcName="svc:/network/inetd"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+actuallyLogging=0
+eclSet=0
+
+if check_os_min_revision 5.10 ; then
+   check_servicePropEnabled "${svcName}" "defaults/tcp_trace" "true" 1 LOG 
+else
+   if check_os_min_revision 5.9 ; then
+      if check_fileExists ${INETD} 0; then
+         if check_fileContentsExist ${INETD} \
+            "^ENABLE_CONNECTION_LOGGING=YES" 0 ; then
+            actuallyLogging=1
+            eclSet=1
+            logNotice 'ENABLE_CONNECTION_LOGGING is set to \\\"YES\\\" in ${INETD}.'
+         else
+            if check_fileContentsExist ${INETD} \
+               "^ENABLE_CONNECTION_LOGGING=" 0 ; then
+               logNotice 'ENABLE_CONNECTION_LOGGING is not set to \\\"YES\\\" in ${INETD}.'
+            else
+               logNotice 'ENABLE_CONNECTION_LOGGING is not defined in ${INETD}.'
+            fi
+         fi
+      else
+         logFileNotFound "${INETD}"
+      fi
+   fi
+   if check_fileExists ${INETSVC} 0 ; then
+      if check_fileContentsExist ${INETSVC} \
+         "${servcmd}[ 	]*.*[ 	]*-t" 0 ; then
+         actuallyLogging=1
+         logNotice 'inetd is configured to use the \\\"-t\\\" option in ${INETSVC}.'
+      else
+         if [ $eclSet -eq 0 ]; then
+            if check_fileContentsExist ${INETSVC} \
+               "${servcmd}[ 	]*.*[ 	]*-s" 0 ; then
+               logNotice 'inetd is not configured to use the \\\"-t\\\" option in ${INETSVC}.'
+            else
+               logNotice 'inetd is not defined in ${INETSVC}.'
+            fi
+         fi
+      fi
+   else
+      logFileNotFound "${INETSVC}"
+   fi
+
+   if [ $actuallyLogging -eq 1 ]; then
+      logSuccess "inetd is configured to log incoming connections."
+   else
+      logFailure "inetd is not configured to log incoming connections."
+      adjustScore 1
+   fi
+
+fi
+if check_processExists "${servcmd}" 0 ; then 
+  if check_processArgsMatch "${servcmd}" "-t" 0 ; then
+     logSuccess 'inetd is running with the \\\"-t\\\" option.'
+  else
+     if [ ${eclSet} -eq 0 ]; then
+        adjustScore 1
+        logFailure 'inetd is not running with the \\\"-t\\\" option.'
+     else
+        logSuccess "inetd is running with ENABLE_CONNECTION_LOGGING=YES."
+     fi
+   fi
+else
+   logNotice "inetd is not running on the system."
+fi
+finish_audit

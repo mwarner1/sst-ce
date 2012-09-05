@@ -1,0 +1,180 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)QUESTIONNAIRE 1.10     05/04/06     SMI"
+#
+
+To better understand the needs and requirements of Sun (tm)
+Security Toolkit users, the Toolkit development team requests
+that users complete the following survey.  The purpose of this
+survey is to determine some user statistics to better focus
+future development efforts.
+
+Please submit completed surveys to sst-questionnaire@sun.com.
+
+---------------------------------------------------------------------
+
+Sun Microsystems, Inc. respects your desire for privacy. Personal
+information collected from this form will not be shared with
+organizations external to Sun without your consent, except to process
+data on Sun's behalf in connection with this transaction.
+
+Sun, as a global company, may transfer your personal information to
+countries which may not provide an adequate level of protection. Sun,
+however, is committed to providing a suitable and consistent level of
+protection for your personal information regardless of the country in
+which it resides.
+
+*  May Sun contact you regarding the Sun Security Toolkit: Community Edition?
+
+        YES          ____
+        NO (default) ____
+
+If you agree with the above processing of your personal information,
+please complete and submit the form below.
+
+If you have any questions please refer to the Sun Privacy Policy at
+http://www.sun.com/privacy/ or contact us at privacy@sun.com.
+
+---------------------------------------------------------------------
+
+Questions:
+
+
+1. Which versions of the Sun Security Toolkit: Community Edition (formerly the JASS
+Toolkit) have you deployed?
+
+        <none> ___
+        0.1.x  ___
+	0.2.x  ___
+	0.3.x  ___
+	4.0.x  ___
+	4.1.x  ___
+	4.2.x  ___
+	5.0.x  ___
+
+
+2. On how many systems have you deployed the Sun Security Toolkit: Community Edition?
+
+        < 5     ___
+        5-10    ___
+        10-25   ___
+        25-50   ___
+	51-500  ___
+	101-250 ___
+	251-500 ___
+	> 500   ___
+
+3. On which hardware architectures have you deployed the Solaris
+Security Toolkit?
+
+        SPARC         ___
+        x86 (32-bit)  ___
+        AMD Opteron   ___
+
+4. On which version(s) of the Solaris Operating System, have you
+applied the Sun Security Toolkit: Community Edition?
+
+        Solaris 2.5.1         ___
+        Trusted Solaris 2.5.1 ___
+        Solaris 2.6           ___
+        Solaris 7             ___
+        Trusted Solaris 7     ___
+        Solaris 8             ___
+        Trusted Solaris 8     ___
+        Solaris 9             ___
+        Solaris 10            ___
+
+5. How would you rate the Sun Security Toolkit: Community Edition's ease of use from 1
+to 10 (1 very hard, 10 very easy)?
+
+        1-10 ___
+
+
+6. How would you rate the Sun Security Toolkit: Community Edition's quality of system
+hardening from 1 to 10 (1 very bad, 10 very good)?
+
+        1-10 ___
+
+
+7. How would you rate the overall quality of the Solaris Security
+Toolkit including the source code and documentation from 1 to 10 (1
+very bad, 10 very good)?
+
+        1-10 ___
+
+
+8. What elements of the Sun Security Toolkit: Community Edition are of most help or
+interest to you?
+
+Examples: integration with JumpStart, command-line mode, undo
+capabilities, multi-level undo capabilities, or modularity.
+
+
+
+
+
+
+
+9. What elements of the Sun Security Toolkit: Community Edition are of the least help
+or interest to you?
+
+Examples: integration with JumpStart, command-line mode, undo
+capabilities, multi-level undo capabilities, or modularity.
+
+
+
+
+
+
+
+10. In your opinion, what features should be added to the Sun
+Security Toolkit: Community Edition?
+
+Examples: enhanced auditing checks, configuration verifications,
+or enhanced reporting capabilities.
+
+
+
+
+
+
+
+11. Would you consider being used as a reference site for the Sun
+Security Toolkit: Community Edition or be willing to participate in a case study?
+
+        Yes ___
+        No  ___
+
+If you care to leave us the following information, it could greatly
+help to support the continued development and enhancement of the
+Sun Security Toolkit: Community Edition.  The submission of this information is
+optional.
+
+        Name:    ________________________
+        Company: ________________________
+        E-mail:  ________________________
+
+
+

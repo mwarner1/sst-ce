@@ -1,0 +1,76 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles:
+	[ -d ../../proto/SUNWsst/Profiles ] || /bin/mkdir -p ../../proto/SUNWsst/Profiles
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/core.profile:
+	/usr/bin/cp -f core.profile ../../proto/SUNWsst/Profiles/core.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/core.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/developer.profile:
+	/usr/bin/cp -f developer.profile ../../proto/SUNWsst/Profiles/developer.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/developer.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/end-user.profile:
+	/usr/bin/cp -f end-user.profile ../../proto/SUNWsst/Profiles/end-user.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/end-user.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/entire-distribution.profile:
+	/usr/bin/cp -f entire-distribution.profile ../../proto/SUNWsst/Profiles/entire-distribution.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/entire-distribution.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-Apps-Solaris8.profile:
+	/usr/bin/cp -f minimal-SunFire_Domain-Apps-Solaris8.profile ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-Apps-Solaris8.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-Apps-Solaris8.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-Apps-Solaris9.profile:
+	/usr/bin/cp -f minimal-SunFire_Domain-Apps-Solaris9.profile ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-Apps-Solaris9.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-Apps-Solaris9.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-NoX-Solaris8.profile:
+	/usr/bin/cp -f minimal-SunFire_Domain-NoX-Solaris8.profile ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-NoX-Solaris8.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-NoX-Solaris8.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-NoX-Solaris9.profile:
+	/usr/bin/cp -f minimal-SunFire_Domain-NoX-Solaris9.profile ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-NoX-Solaris9.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-NoX-Solaris9.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-X-Solaris8.profile:
+	/usr/bin/cp -f minimal-SunFire_Domain-X-Solaris8.profile ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-X-Solaris8.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-X-Solaris8.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-X-Solaris9.profile:
+	/usr/bin/cp -f minimal-SunFire_Domain-X-Solaris9.profile ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-X-Solaris9.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-SunFire_Domain-X-Solaris9.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris26.profile:
+	/usr/bin/cp -f minimal-Sun_ONE-WS-Solaris26.profile ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris26.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris26.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris7-64bit.profile:
+	/usr/bin/cp -f minimal-Sun_ONE-WS-Solaris7-64bit.profile ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris7-64bit.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris7-64bit.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris8-64bit.profile:
+	/usr/bin/cp -f minimal-Sun_ONE-WS-Solaris8-64bit.profile ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris8-64bit.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris8-64bit.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris9-64bit.profile:
+	/usr/bin/cp -f minimal-Sun_ONE-WS-Solaris9-64bit.profile ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris9-64bit.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris9-64bit.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris9.profile:
+	/usr/bin/cp -f minimal-Sun_ONE-WS-Solaris9.profile ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris9.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-Sun_ONE-WS-Solaris9.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/minimal-ldm_control.profile:
+	/usr/bin/cp -f minimal-ldm_control.profile ../../proto/SUNWsst/Profiles/minimal-ldm_control.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/minimal-ldm_control.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/oem.profile:
+	/usr/bin/cp -f oem.profile ../../proto/SUNWsst/Profiles/oem.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/oem.profile
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Profiles/reduced-networking.profile:
+	/usr/bin/cp -f reduced-networking.profile ../../proto/SUNWsst/Profiles/reduced-networking.profile
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Profiles/reduced-networking.profile

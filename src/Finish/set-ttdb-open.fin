@@ -1,0 +1,50 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#  ident	"@(#)set-ttdb-open.fin		1.2	06/10/23 SMI"
+# 
+# This script allows the ToolTalk Database Manager to listen
+# for remote connections.  . This script requires the Secure by 
+# Default functionality present in the Solaris 
+# OS. When SBD is not available, this script does nothing.
+#
+# Note: Because the default JASS_SVCS_DISABLE includes the ToolTalk Database
+# server, users should use a custom version of this variable, or override this
+# setting by using JASS_SVCS_ENABLE.  Otherwise, the update-inetd.fin script
+# will disable the ToolTalk Database Server.
+
+logMessage "Enabling Remote access to the service: ToolTalk Database Manager"
+echo ""
+
+svc="svc:/network/rpc/cde-ttdbserver:tcp"
+
+if check_sbd_available ; then
+   set_service_property_value "${svc}" "inetd/proto" "tcp" \
+    "framework" "astring"
+
+   enable_service "${svc}"
+else
+   logNoSBD
+fi

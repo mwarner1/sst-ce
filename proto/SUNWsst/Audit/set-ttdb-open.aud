@@ -1,0 +1,95 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)set-ttdb-open.aud		1.2	06/10/23 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="ToolTalk Database Manager Service"
+servfil="set-ttdb-open.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+   The ToolTalk Dtatbase Manager manages ToolTalk objects created
+   by tt_spec_create(3),  and  handles  certain queries related to
+   the netfiles returned by tt_file_netfile(3).  
+
+Rationale for Verification Check:
+
+   Remote access to the  ToolTalk Database Manager service may be needed.
+
+Determination of Compliance:
+
+   This script determines if the ToolTalk Database Mananger service is 
+   configured to allow remote connections.  This script will indicate a 
+   failure if the software is not configured to allow remote connections.
+
+   If SBD is not available, this script does nothing.
+"
+#-----------------------------------------------------------------------------
+
+servpkg="
+    SUNWdtdmr
+    SUNWtltk
+    SUNWtltkn
+"
+
+#-----------------------------------------------------------------------------
+
+
+svc="svc:/network/rpc/cde-ttdbserver:tcp"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_sbd_available; then
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized_service "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   if check_serviceInstalled "${svc}" 0; then
+      check_servicePropEnabled "${svc}" "inetd/proto" \
+       "tcp" 1 LOG
+   fi
+
+   logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceEnabled "${svc}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceRunning "${svc}"  1 LOG
+
+else
+   logNoSBD
+fi
+
+finish_audit

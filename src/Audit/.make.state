@@ -1,0 +1,664 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit:
+	[ -d ../../proto/SUNWsst/Audit ] || /bin/mkdir -p ../../proto/SUNWsst/Audit
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-extended-file-attributes.aud:
+	/usr/bin/cp -f check-extended-file-attributes.aud ../../proto/SUNWsst/Audit/check-extended-file-attributes.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-extended-file-attributes.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-gids-unique.aud:
+	/usr/bin/cp -f check-gids-unique.aud ../../proto/SUNWsst/Audit/check-gids-unique.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-gids-unique.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-hidden-files.aud:
+	/usr/bin/cp -f check-hidden-files.aud ../../proto/SUNWsst/Audit/check-hidden-files.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-hidden-files.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-home-permissions.aud:
+	/usr/bin/cp -f check-home-permissions.aud ../../proto/SUNWsst/Audit/check-home-permissions.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-home-permissions.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-include-nis-map.aud:
+	/usr/bin/cp -f check-include-nis-map.aud ../../proto/SUNWsst/Audit/check-include-nis-map.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-include-nis-map.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-netrc-files.aud:
+	/usr/bin/cp -f check-netrc-files.aud ../../proto/SUNWsst/Audit/check-netrc-files.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-netrc-files.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-null-passwords.aud:
+	/usr/bin/cp -f check-null-passwords.aud ../../proto/SUNWsst/Audit/check-null-passwords.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-null-passwords.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-password-file-permissions.aud:
+	/usr/bin/cp -f check-password-file-permissions.aud ../../proto/SUNWsst/Audit/check-password-file-permissions.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-password-file-permissions.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-root-path.aud:
+	/usr/bin/cp -f check-root-path.aud ../../proto/SUNWsst/Audit/check-root-path.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-root-path.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-uids-unique.aud:
+	/usr/bin/cp -f check-uids-unique.aud ../../proto/SUNWsst/Audit/check-uids-unique.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-uids-unique.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/check-world-writable-files.aud:
+	/usr/bin/cp -f check-world-writable-files.aud ../../proto/SUNWsst/Audit/check-world-writable-files.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/check-world-writable-files.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-IIim.aud:
+	/usr/bin/cp -f disable-IIim.aud ../../proto/SUNWsst/Audit/disable-IIim.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-IIim.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-ab2.aud:
+	/usr/bin/cp -f disable-ab2.aud ../../proto/SUNWsst/Audit/disable-ab2.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-ab2.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-apache.aud:
+	/usr/bin/cp -f disable-apache.aud ../../proto/SUNWsst/Audit/disable-apache.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-apache.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-apache2.aud:
+	/usr/bin/cp -f disable-apache2.aud ../../proto/SUNWsst/Audit/disable-apache2.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-apache2.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-appserv.aud:
+	/usr/bin/cp -f disable-appserv.aud ../../proto/SUNWsst/Audit/disable-appserv.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-appserv.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-asppp.aud:
+	/usr/bin/cp -f disable-asppp.aud ../../proto/SUNWsst/Audit/disable-asppp.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-asppp.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-autoinst.aud:
+	/usr/bin/cp -f disable-autoinst.aud ../../proto/SUNWsst/Audit/disable-autoinst.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-autoinst.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-automount.aud:
+	/usr/bin/cp -f disable-automount.aud ../../proto/SUNWsst/Audit/disable-automount.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-automount.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-dhcpd.aud:
+	/usr/bin/cp -f disable-dhcpd.aud ../../proto/SUNWsst/Audit/disable-dhcpd.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-dhcpd.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-directory.aud:
+	/usr/bin/cp -f disable-directory.aud ../../proto/SUNWsst/Audit/disable-directory.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-directory.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-dmi.aud:
+	/usr/bin/cp -f disable-dmi.aud ../../proto/SUNWsst/Audit/disable-dmi.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-dmi.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-dtlogin.aud:
+	/usr/bin/cp -f disable-dtlogin.aud ../../proto/SUNWsst/Audit/disable-dtlogin.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-dtlogin.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-face-log.aud:
+	/usr/bin/cp -f disable-face-log.aud ../../proto/SUNWsst/Audit/disable-face-log.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-face-log.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-ipv6.aud:
+	/usr/bin/cp -f disable-ipv6.aud ../../proto/SUNWsst/Audit/disable-ipv6.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-ipv6.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-kdc.aud:
+	/usr/bin/cp -f disable-kdc.aud ../../proto/SUNWsst/Audit/disable-kdc.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-kdc.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-keyboard-abort.aud:
+	/usr/bin/cp -f disable-keyboard-abort.aud ../../proto/SUNWsst/Audit/disable-keyboard-abort.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-keyboard-abort.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-keyserv-uid-nobody.aud:
+	/usr/bin/cp -f disable-keyserv-uid-nobody.aud ../../proto/SUNWsst/Audit/disable-keyserv-uid-nobody.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-keyserv-uid-nobody.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-ldap-client.aud:
+	/usr/bin/cp -f disable-ldap-client.aud ../../proto/SUNWsst/Audit/disable-ldap-client.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-ldap-client.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-lp.aud:
+	/usr/bin/cp -f disable-lp.aud ../../proto/SUNWsst/Audit/disable-lp.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-lp.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-mesg.aud:
+	/usr/bin/cp -f disable-mesg.aud ../../proto/SUNWsst/Audit/disable-mesg.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-mesg.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-mipagent.aud:
+	/usr/bin/cp -f disable-mipagent.aud ../../proto/SUNWsst/Audit/disable-mipagent.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-mipagent.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-named.aud:
+	/usr/bin/cp -f disable-named.aud ../../proto/SUNWsst/Audit/disable-named.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-named.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-nfs-client.aud:
+	/usr/bin/cp -f disable-nfs-client.aud ../../proto/SUNWsst/Audit/disable-nfs-client.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-nfs-client.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-nfs-server.aud:
+	/usr/bin/cp -f disable-nfs-server.aud ../../proto/SUNWsst/Audit/disable-nfs-server.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-nfs-server.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-nis-client.aud:
+	/usr/bin/cp -f disable-nis-client.aud ../../proto/SUNWsst/Audit/disable-nis-client.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-nis-client.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-nscd-caching.aud:
+	/usr/bin/cp -f disable-nscd-caching.aud ../../proto/SUNWsst/Audit/disable-nscd-caching.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-nscd-caching.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-picld.aud:
+	/usr/bin/cp -f disable-picld.aud ../../proto/SUNWsst/Audit/disable-picld.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-picld.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-power-mgmt.aud:
+	/usr/bin/cp -f disable-power-mgmt.aud ../../proto/SUNWsst/Audit/disable-power-mgmt.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-power-mgmt.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-ppp.aud:
+	/usr/bin/cp -f disable-ppp.aud ../../proto/SUNWsst/Audit/disable-ppp.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-ppp.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-preserve.aud:
+	/usr/bin/cp -f disable-preserve.aud ../../proto/SUNWsst/Audit/disable-preserve.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-preserve.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-remote-root-login.aud:
+	/usr/bin/cp -f disable-remote-root-login.aud ../../proto/SUNWsst/Audit/disable-remote-root-login.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-remote-root-login.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-rhosts.aud:
+	/usr/bin/cp -f disable-rhosts.aud ../../proto/SUNWsst/Audit/disable-rhosts.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-rhosts.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-routing.aud:
+	/usr/bin/cp -f disable-routing.aud ../../proto/SUNWsst/Audit/disable-routing.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-routing.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-rpc.aud:
+	/usr/bin/cp -f disable-rpc.aud ../../proto/SUNWsst/Audit/disable-rpc.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-rpc.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-samba.aud:
+	/usr/bin/cp -f disable-samba.aud ../../proto/SUNWsst/Audit/disable-samba.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-samba.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-sendmail.aud:
+	/usr/bin/cp -f disable-sendmail.aud ../../proto/SUNWsst/Audit/disable-sendmail.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-sendmail.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-serial-login.aud:
+	/usr/bin/cp -f disable-serial-login.aud ../../proto/SUNWsst/Audit/disable-serial-login.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-serial-login.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-slp.aud:
+	/usr/bin/cp -f disable-slp.aud ../../proto/SUNWsst/Audit/disable-slp.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-slp.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-sma.aud:
+	/usr/bin/cp -f disable-sma.aud ../../proto/SUNWsst/Audit/disable-sma.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-sma.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-smcwebserver.aud:
+	/usr/bin/cp -f disable-smcwebserver.aud ../../proto/SUNWsst/Audit/disable-smcwebserver.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-smcwebserver.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-snmp.aud:
+	/usr/bin/cp -f disable-snmp.aud ../../proto/SUNWsst/Audit/disable-snmp.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-snmp.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-spc.aud:
+	/usr/bin/cp -f disable-spc.aud ../../proto/SUNWsst/Audit/disable-spc.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-spc.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-ssh-root-login.aud:
+	/usr/bin/cp -f disable-ssh-root-login.aud ../../proto/SUNWsst/Audit/disable-ssh-root-login.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-ssh-root-login.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-syslogd-listen.aud:
+	/usr/bin/cp -f disable-syslogd-listen.aud ../../proto/SUNWsst/Audit/disable-syslogd-listen.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-syslogd-listen.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-system-accounts.aud:
+	/usr/bin/cp -f disable-system-accounts.aud ../../proto/SUNWsst/Audit/disable-system-accounts.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-system-accounts.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-uucp.aud:
+	/usr/bin/cp -f disable-uucp.aud ../../proto/SUNWsst/Audit/disable-uucp.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-uucp.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-vold.aud:
+	/usr/bin/cp -f disable-vold.aud ../../proto/SUNWsst/Audit/disable-vold.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-vold.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-wbem.aud:
+	/usr/bin/cp -f disable-wbem.aud ../../proto/SUNWsst/Audit/disable-wbem.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-wbem.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-xdmcp.aud:
+	/usr/bin/cp -f disable-xdmcp.aud ../../proto/SUNWsst/Audit/disable-xdmcp.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-xdmcp.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-xfs.aud:
+	/usr/bin/cp -f disable-xfs.aud ../../proto/SUNWsst/Audit/disable-xfs.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-xfs.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/disable-xserver-listen.aud:
+	/usr/bin/cp -f disable-xserver-listen.aud ../../proto/SUNWsst/Audit/disable-xserver-listen.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/disable-xserver-listen.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-32bit-kernel.aud:
+	/usr/bin/cp -f enable-32bit-kernel.aud ../../proto/SUNWsst/Audit/enable-32bit-kernel.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-32bit-kernel.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-account-lockout.aud:
+	/usr/bin/cp -f enable-account-lockout.aud ../../proto/SUNWsst/Audit/enable-account-lockout.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-account-lockout.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-bart.aud:
+	/usr/bin/cp -f enable-bart.aud ../../proto/SUNWsst/Audit/enable-bart.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-bart.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-bsm.aud:
+	/usr/bin/cp -f enable-bsm.aud ../../proto/SUNWsst/Audit/enable-bsm.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-bsm.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-coreadm.aud:
+	/usr/bin/cp -f enable-coreadm.aud ../../proto/SUNWsst/Audit/enable-coreadm.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-coreadm.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-cronlog.aud:
+	/usr/bin/cp -f enable-cronlog.aud ../../proto/SUNWsst/Audit/enable-cronlog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-cronlog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-ftp-debuglog.aud:
+	/usr/bin/cp -f enable-ftp-debuglog.aud ../../proto/SUNWsst/Audit/enable-ftp-debuglog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-ftp-debuglog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-ftp-syslog.aud:
+	/usr/bin/cp -f enable-ftp-syslog.aud ../../proto/SUNWsst/Audit/enable-ftp-syslog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-ftp-syslog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-ftpaccess.aud:
+	/usr/bin/cp -f enable-ftpaccess.aud ../../proto/SUNWsst/Audit/enable-ftpaccess.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-ftpaccess.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-inetd-syslog.aud:
+	/usr/bin/cp -f enable-inetd-syslog.aud ../../proto/SUNWsst/Audit/enable-inetd-syslog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-inetd-syslog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-ipfilter.aud:
+	/usr/bin/cp -f enable-ipfilter.aud ../../proto/SUNWsst/Audit/enable-ipfilter.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-ipfilter.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-ldmd.aud:
+	/usr/bin/cp -f enable-ldmd.aud ../../proto/SUNWsst/Audit/enable-ldmd.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-ldmd.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-password-changes.aud:
+	/usr/bin/cp -f enable-password-changes.aud ../../proto/SUNWsst/Audit/enable-password-changes.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-password-changes.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-password-history.aud:
+	/usr/bin/cp -f enable-password-history.aud ../../proto/SUNWsst/Audit/enable-password-history.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-password-history.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-priv-nfs-ports.aud:
+	/usr/bin/cp -f enable-priv-nfs-ports.aud ../../proto/SUNWsst/Audit/enable-priv-nfs-ports.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-priv-nfs-ports.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-process-accounting.aud:
+	/usr/bin/cp -f enable-process-accounting.aud ../../proto/SUNWsst/Audit/enable-process-accounting.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-process-accounting.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-rfc1948.aud:
+	/usr/bin/cp -f enable-rfc1948.aud ../../proto/SUNWsst/Audit/enable-rfc1948.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-rfc1948.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-sar.aud:
+	/usr/bin/cp -f enable-sar.aud ../../proto/SUNWsst/Audit/enable-sar.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-sar.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-ssh-root-login.aud:
+	/usr/bin/cp -f enable-ssh-root-login.aud ../../proto/SUNWsst/Audit/enable-ssh-root-login.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-ssh-root-login.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-stack-protection.aud:
+	/usr/bin/cp -f enable-stack-protection.aud ../../proto/SUNWsst/Audit/enable-stack-protection.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-stack-protection.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-tcpwrappers.aud:
+	/usr/bin/cp -f enable-tcpwrappers.aud ../../proto/SUNWsst/Audit/enable-tcpwrappers.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-tcpwrappers.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/enable-xscreensaver.aud:
+	/usr/bin/cp -f enable-xscreensaver.aud ../../proto/SUNWsst/Audit/enable-xscreensaver.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/enable-xscreensaver.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-Sun_ONE-WS.aud:
+	/usr/bin/cp -f install-Sun_ONE-WS.aud ../../proto/SUNWsst/Audit/install-Sun_ONE-WS.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-Sun_ONE-WS.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-at-allow.aud:
+	/usr/bin/cp -f install-at-allow.aud ../../proto/SUNWsst/Audit/install-at-allow.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-at-allow.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-authlog.aud:
+	/usr/bin/cp -f install-authlog.aud ../../proto/SUNWsst/Audit/install-authlog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-authlog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-connlog.aud:
+	/usr/bin/cp -f install-connlog.aud ../../proto/SUNWsst/Audit/install-connlog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-connlog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-fix-modes.aud:
+	/usr/bin/cp -f install-fix-modes.aud ../../proto/SUNWsst/Audit/install-fix-modes.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-fix-modes.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-ftpusers.aud:
+	/usr/bin/cp -f install-ftpusers.aud ../../proto/SUNWsst/Audit/install-ftpusers.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-ftpusers.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-jass.aud:
+	/usr/bin/cp -f install-jass.aud ../../proto/SUNWsst/Audit/install-jass.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-jass.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-ldm.aud:
+	/usr/bin/cp -f install-ldm.aud ../../proto/SUNWsst/Audit/install-ldm.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-ldm.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-local-syslog.aud:
+	/usr/bin/cp -f install-local-syslog.aud ../../proto/SUNWsst/Audit/install-local-syslog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-local-syslog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-loginlog.aud:
+	/usr/bin/cp -f install-loginlog.aud ../../proto/SUNWsst/Audit/install-loginlog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-loginlog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-md5.aud:
+	/usr/bin/cp -f install-md5.aud ../../proto/SUNWsst/Audit/install-md5.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-md5.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-nddconfig.aud:
+	/usr/bin/cp -f install-nddconfig.aud ../../proto/SUNWsst/Audit/install-nddconfig.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-nddconfig.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-newaliases.aud:
+	/usr/bin/cp -f install-newaliases.aud ../../proto/SUNWsst/Audit/install-newaliases.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-newaliases.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-openssh.aud:
+	/usr/bin/cp -f install-openssh.aud ../../proto/SUNWsst/Audit/install-openssh.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-openssh.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-recommended-patches.aud:
+	/usr/bin/cp -f install-recommended-patches.aud ../../proto/SUNWsst/Audit/install-recommended-patches.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-recommended-patches.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-sadmind-options.aud:
+	/usr/bin/cp -f install-sadmind-options.aud ../../proto/SUNWsst/Audit/install-sadmind-options.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-sadmind-options.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-security-mode.aud:
+	/usr/bin/cp -f install-security-mode.aud ../../proto/SUNWsst/Audit/install-security-mode.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-security-mode.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-shells.aud:
+	/usr/bin/cp -f install-shells.aud ../../proto/SUNWsst/Audit/install-shells.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-shells.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-strong-permissions.aud:
+	/usr/bin/cp -f install-strong-permissions.aud ../../proto/SUNWsst/Audit/install-strong-permissions.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-strong-permissions.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-sulog.aud:
+	/usr/bin/cp -f install-sulog.aud ../../proto/SUNWsst/Audit/install-sulog.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-sulog.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/install-templates.aud:
+	/usr/bin/cp -f install-templates.aud ../../proto/SUNWsst/Audit/install-templates.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/install-templates.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/minimize-Sun_ONE-WS.aud:
+	/usr/bin/cp -f minimize-Sun_ONE-WS.aud ../../proto/SUNWsst/Audit/minimize-Sun_ONE-WS.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/minimize-Sun_ONE-WS.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/print-jass-environment.aud:
+	/usr/bin/cp -f print-jass-environment.aud ../../proto/SUNWsst/Audit/print-jass-environment.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/print-jass-environment.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/print-jumpstart-environment.aud:
+	/usr/bin/cp -f print-jumpstart-environment.aud ../../proto/SUNWsst/Audit/print-jumpstart-environment.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/print-jumpstart-environment.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/print-package-files.aud:
+	/usr/bin/cp -f print-package-files.aud ../../proto/SUNWsst/Audit/print-package-files.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/print-package-files.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/print-rhosts.aud:
+	/usr/bin/cp -f print-rhosts.aud ../../proto/SUNWsst/Audit/print-rhosts.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/print-rhosts.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/print-sgid-files.aud:
+	/usr/bin/cp -f print-sgid-files.aud ../../proto/SUNWsst/Audit/print-sgid-files.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/print-sgid-files.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/print-suid-files.aud:
+	/usr/bin/cp -f print-suid-files.aud ../../proto/SUNWsst/Audit/print-suid-files.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/print-suid-files.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/print-unowned-objects.aud:
+	/usr/bin/cp -f print-unowned-objects.aud ../../proto/SUNWsst/Audit/print-unowned-objects.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/print-unowned-objects.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/print-world-writable-objects.aud:
+	/usr/bin/cp -f print-world-writable-objects.aud ../../proto/SUNWsst/Audit/print-world-writable-objects.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/print-world-writable-objects.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/remove-unneeded-accounts.aud:
+	/usr/bin/cp -f remove-unneeded-accounts.aud ../../proto/SUNWsst/Audit/remove-unneeded-accounts.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/remove-unneeded-accounts.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/s15k-exclude-domains.aud:
+	/usr/bin/cp -f s15k-exclude-domains.aud ../../proto/SUNWsst/Audit/s15k-exclude-domains.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/s15k-exclude-domains.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/s15k-sms-override.aud:
+	/usr/bin/cp -f s15k-sms-override.aud ../../proto/SUNWsst/Audit/s15k-sms-override.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/s15k-sms-override.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/s15k-sms-secure-failover.aud:
+	/usr/bin/cp -f s15k-sms-secure-failover.aud ../../proto/SUNWsst/Audit/s15k-sms-secure-failover.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/s15k-sms-secure-failover.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/s15k-static-arp.aud:
+	/usr/bin/cp -f s15k-static-arp.aud ../../proto/SUNWsst/Audit/s15k-static-arp.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/s15k-static-arp.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-banner-dtlogin.aud:
+	/usr/bin/cp -f set-banner-dtlogin.aud ../../proto/SUNWsst/Audit/set-banner-dtlogin.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-banner-dtlogin.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-banner-ftpd.aud:
+	/usr/bin/cp -f set-banner-ftpd.aud ../../proto/SUNWsst/Audit/set-banner-ftpd.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-banner-ftpd.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-banner-sendmail.aud:
+	/usr/bin/cp -f set-banner-sendmail.aud ../../proto/SUNWsst/Audit/set-banner-sendmail.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-banner-sendmail.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-banner-sshd.aud:
+	/usr/bin/cp -f set-banner-sshd.aud ../../proto/SUNWsst/Audit/set-banner-sshd.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-banner-sshd.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-banner-telnetd.aud:
+	/usr/bin/cp -f set-banner-telnetd.aud ../../proto/SUNWsst/Audit/set-banner-telnetd.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-banner-telnetd.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-calendar-localonly.aud:
+	/usr/bin/cp -f set-calendar-localonly.aud ../../proto/SUNWsst/Audit/set-calendar-localonly.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-calendar-localonly.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-calendar-open.aud:
+	/usr/bin/cp -f set-calendar-open.aud ../../proto/SUNWsst/Audit/set-calendar-open.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-calendar-open.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-dtlogin-localonly.aud:
+	/usr/bin/cp -f set-dtlogin-localonly.aud ../../proto/SUNWsst/Audit/set-dtlogin-localonly.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-dtlogin-localonly.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-dtlogin-open.aud:
+	/usr/bin/cp -f set-dtlogin-open.aud ../../proto/SUNWsst/Audit/set-dtlogin-open.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-dtlogin-open.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-failed-logins.aud:
+	/usr/bin/cp -f set-failed-logins.aud ../../proto/SUNWsst/Audit/set-failed-logins.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-failed-logins.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-flexible-crypt.aud:
+	/usr/bin/cp -f set-flexible-crypt.aud ../../proto/SUNWsst/Audit/set-flexible-crypt.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-flexible-crypt.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-ftpd-umask.aud:
+	/usr/bin/cp -f set-ftpd-umask.aud ../../proto/SUNWsst/Audit/set-ftpd-umask.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-ftpd-umask.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-greeter-warning.aud:
+	/usr/bin/cp -f set-greeter-warning.aud ../../proto/SUNWsst/Audit/set-greeter-warning.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-greeter-warning.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-grub-password.aud:
+	/usr/bin/cp -f set-grub-password.aud ../../proto/SUNWsst/Audit/set-grub-password.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-grub-password.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-log-file-permissions.aud:
+	/usr/bin/cp -f set-log-file-permissions.aud ../../proto/SUNWsst/Audit/set-log-file-permissions.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-log-file-permissions.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-login-retries.aud:
+	/usr/bin/cp -f set-login-retries.aud ../../proto/SUNWsst/Audit/set-login-retries.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-login-retries.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-lp-localonly.aud:
+	/usr/bin/cp -f set-lp-localonly.aud ../../proto/SUNWsst/Audit/set-lp-localonly.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-lp-localonly.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-lp-open.aud:
+	/usr/bin/cp -f set-lp-open.aud ../../proto/SUNWsst/Audit/set-lp-open.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-lp-open.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-oem-banner.aud:
+	/usr/bin/cp -f set-oem-banner.aud ../../proto/SUNWsst/Audit/set-oem-banner.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-oem-banner.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-power-restrictions.aud:
+	/usr/bin/cp -f set-power-restrictions.aud ../../proto/SUNWsst/Audit/set-power-restrictions.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-power-restrictions.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-rmmount-nosuid.aud:
+	/usr/bin/cp -f set-rmmount-nosuid.aud ../../proto/SUNWsst/Audit/set-rmmount-nosuid.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-rmmount-nosuid.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-root-group.aud:
+	/usr/bin/cp -f set-root-group.aud ../../proto/SUNWsst/Audit/set-root-group.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-root-group.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-root-home-dir.aud:
+	/usr/bin/cp -f set-root-home-dir.aud ../../proto/SUNWsst/Audit/set-root-home-dir.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-root-home-dir.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-root-password.aud:
+	/usr/bin/cp -f set-root-password.aud ../../proto/SUNWsst/Audit/set-root-password.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-root-password.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-rpc-localonly.aud:
+	/usr/bin/cp -f set-rpc-localonly.aud ../../proto/SUNWsst/Audit/set-rpc-localonly.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-rpc-localonly.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-rpc-open.aud:
+	/usr/bin/cp -f set-rpc-open.aud ../../proto/SUNWsst/Audit/set-rpc-open.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-rpc-open.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-smcwebserver-localonly.aud:
+	/usr/bin/cp -f set-smcwebserver-localonly.aud ../../proto/SUNWsst/Audit/set-smcwebserver-localonly.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-smcwebserver-localonly.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-smcwebserver-open.aud:
+	/usr/bin/cp -f set-smcwebserver-open.aud ../../proto/SUNWsst/Audit/set-smcwebserver-open.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-smcwebserver-open.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-ssh-config.aud:
+	/usr/bin/cp -f set-ssh-config.aud ../../proto/SUNWsst/Audit/set-ssh-config.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-ssh-config.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-strict-password-checks.aud:
+	/usr/bin/cp -f set-strict-password-checks.aud ../../proto/SUNWsst/Audit/set-strict-password-checks.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-strict-password-checks.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-sys-suspend-restrictions.aud:
+	/usr/bin/cp -f set-sys-suspend-restrictions.aud ../../proto/SUNWsst/Audit/set-sys-suspend-restrictions.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-sys-suspend-restrictions.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-system-umask.aud:
+	/usr/bin/cp -f set-system-umask.aud ../../proto/SUNWsst/Audit/set-system-umask.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-system-umask.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-term-type.aud:
+	/usr/bin/cp -f set-term-type.aud ../../proto/SUNWsst/Audit/set-term-type.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-term-type.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-tmpfs-limit.aud:
+	/usr/bin/cp -f set-tmpfs-limit.aud ../../proto/SUNWsst/Audit/set-tmpfs-limit.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-tmpfs-limit.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-ttdb-localonly.aud:
+	/usr/bin/cp -f set-ttdb-localonly.aud ../../proto/SUNWsst/Audit/set-ttdb-localonly.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-ttdb-localonly.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-ttdb-open.aud:
+	/usr/bin/cp -f set-ttdb-open.aud ../../proto/SUNWsst/Audit/set-ttdb-open.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-ttdb-open.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-user-password-reqs.aud:
+	/usr/bin/cp -f set-user-password-reqs.aud ../../proto/SUNWsst/Audit/set-user-password-reqs.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-user-password-reqs.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-user-umask.aud:
+	/usr/bin/cp -f set-user-umask.aud ../../proto/SUNWsst/Audit/set-user-umask.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-user-umask.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-wbem-localonly.aud:
+	/usr/bin/cp -f set-wbem-localonly.aud ../../proto/SUNWsst/Audit/set-wbem-localonly.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-wbem-localonly.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/set-wbem-open.aud:
+	/usr/bin/cp -f set-wbem-open.aud ../../proto/SUNWsst/Audit/set-wbem-open.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/set-wbem-open.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/suncluster3x-set-nsswitch-conf.aud:
+	/usr/bin/cp -f suncluster3x-set-nsswitch-conf.aud ../../proto/SUNWsst/Audit/suncluster3x-set-nsswitch-conf.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/suncluster3x-set-nsswitch-conf.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/update-at-deny.aud:
+	/usr/bin/cp -f update-at-deny.aud ../../proto/SUNWsst/Audit/update-at-deny.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/update-at-deny.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/update-cron-allow.aud:
+	/usr/bin/cp -f update-cron-allow.aud ../../proto/SUNWsst/Audit/update-cron-allow.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/update-cron-allow.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/update-cron-deny.aud:
+	/usr/bin/cp -f update-cron-deny.aud ../../proto/SUNWsst/Audit/update-cron-deny.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/update-cron-deny.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/update-cron-log-size.aud:
+	/usr/bin/cp -f update-cron-log-size.aud ../../proto/SUNWsst/Audit/update-cron-log-size.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/update-cron-log-size.aud
+.BUILT_LAST_MAKE_RUN:
+../../proto/SUNWsst/Audit/update-inetd-conf.aud:
+	/usr/bin/cp -f update-inetd-conf.aud ../../proto/SUNWsst/Audit/update-inetd-conf.aud
+	/usr/bin/chmod 444 ../../proto/SUNWsst/Audit/update-inetd-conf.aud

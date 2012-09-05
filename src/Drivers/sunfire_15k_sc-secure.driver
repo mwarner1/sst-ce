@@ -1,0 +1,89 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved
+# All rights reserved.
+#
+#ident	"@(#)sunfire_15k_sc-secure.driver	3.14	05/07/18	SMI"
+#
+# This driver is described in the July, 2002 BluePrint OnLine article called:
+#
+#      Securing the Sun Fire 15K System Controller:
+#      updated for SMS 1.2
+#
+# and should be used to harden the SC when building secured Sun Fire 
+# 15K systems.
+#
+# The article may be found online at:
+#
+#     http://www.sun.com/security/blueprints
+#        or
+#     http://www.sun.com/blueprints/browsesubject.html#security
+#
+# The purpose of this driver is to act as a wrapper calling the 
+# "configuration" and "hardening" drivers.
+
+DIR="`/bin/dirname $0`"
+export DIR
+# These values can be overridden through user.init
+
+if [ -z "${JASS_FILE_COPY_KEYWORD}" \
+   -o "${_JASS_FILE_COPY_KEYWORD_DEF}" = "1" ]; then
+   JASS_FILE_COPY_KEYWORD="15k_sc"
+fi
+
+# set-password-history uses this
+if [ -z "${JASS_PASS_HISTORY}" -o "${_JASS_PASS_HISTORY_DEF}" = "1" ]; then
+   JASS_PASS_HISTORY="4"
+fi
+
+# set-strict-password-checks.fin uses these variables
+if [ -z "${JASS_PASS_MAXREPEATS}" \
+   -o "${_JASS_PASS_MAXREPEATS_DEF}" = "1" ]; then
+   JASS_PASS_MAXREPEATS="2"
+fi
+
+if [ -z "${JASS_PASS_MINDIFF}" -o "${_JASS_PASS_MINDIFF_DEF}" = "1" ]; then
+   JASS_PASS_MINDIFF="5"
+fi
+
+if [ -z "${JASS_PASS_MINALPHA}" -o "${_JASS_PASS_MINALPHA_DEF}" = "1" ]; then
+   JASS_PASS_MINALPHA="3"
+fi
+
+if [ -z "${JASS_PASS_MINNONALPHA}" \
+   -o "${_JASS_PASS_MINNONALPHA_DEF}" = "1" ]; then
+   JASS_PASS_MINNONALPHA="1"
+fi
+
+# set-flexible-crypt uses
+if [ -z "${JASS_CRYPT_FORCE_EXPIRE}" \
+   -o "${_JASS_CRYPT_FORCE_EXPIRE_DEF}" = "1" ]; then
+   JASS_CRYPT_FORCE_EXPIRE="0"
+fi
+
+. ${DIR}/driver.init
+
+. ${DIR}/sunfire_15k_sc-config.driver
+
+. ${DIR}/sunfire_15k_sc-hardening.driver
+

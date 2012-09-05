@@ -1,0 +1,61 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-preserve.fin	3.11	05/05/19 SMI"
+#
+# This script prevents the moving of saved files (that were being edited) to
+# /usr/preserve when the system is rebooted.  These files are normally located
+# in /var/tmp with names beginning with "Ex".
+
+PKGCHK="/usr/sbin/pkgchk"
+
+logMessage "Disabling the function: Preserve Edited Files (PRESERVE)"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   disable_service_immediate lrc:/etc/rc2_d/S89PRESERVE
+
+elif check_os_revision 5.9 ; then
+   disable_rc_file "${JASS_ROOT_DIR}etc/rc2.d" S89PRESERVE
+
+elif check_os_revision 5.8 ; then
+   # Newer, patched versions of Solaris 8 use S89PRESERVE,
+   # and original fcs versions use S80PRESERVE
+
+   ( LANG=C; LC_ALL=C; export LANG LC_ALL;
+      # Warning: pkgchk returns status 0, whether or not the file was found
+      $PKGCHK -R {JASS_ROOT_DIR} -l -p "/etc/rc2.d/S89PRESERVE" 2>/dev/null \
+         | grep installed >/dev/null
+   )
+   if [ $? -eq 0 ] ; then # check for newer S89PRESERVE
+      disable_rc_file "${JASS_ROOT_DIR}etc/rc2.d" S89PRESERVE
+   else # check for older S80PRESERVE or error out
+      disable_rc_file "${JASS_ROOT_DIR}etc/rc2.d" S80PRESERVE
+   fi
+
+
+else # Solaris 7 and earlier
+   disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S80PRESERVE
+fi

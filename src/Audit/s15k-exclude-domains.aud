@@ -1,0 +1,141 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)s15k-exclude-domains.aud	1.10	05/04/13 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="S15K domain exclusion"
+servfil="s15k-exclude-domains.aud"
+
+MANCF="${JASS_ROOT_DIR}etc/opt/SUNWSMS/SMS/config/MAN.cf"
+SMS_V="${JASS_ROOT_DIR}opt/SUNWSMS/bin/smsversion"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Sun Fire 15K domains may be excluded from the I1 Management (MAN)
+   network to prevent internal network attacks against the SC.
+
+Rationale for Verification Check:
+
+   By default, all Sun Fire 15K domains are nodes on the internal I1
+   Management (MAN) network.  Untrusted domains can attempt unauthorized
+   access to the SC using the TCP/IP network protocol on the I1 MAN.
+
+   To protect the SC from hostile environments on the domains, one or
+   more of the domains can be excluded from the I1 MAN from the SC side.
+   This action eliminates the possibility of TCP/IP borne attacks on
+   the SC from any or all domains.  This feature is available beginning
+   with SMS 1.2.
+
+Determination of Compliance:
+
+   For SMS 1.2 and later, this script will determine if the file
+   ${MANCF} exists.  If it exists,
+   this script will check that all the domains listed are excluded
+   from the I1 MAN.
+
+   The domain exclusion script excludes all domains from the I1 MAN.
+   If the site has altered the script to exclude only a subset of the
+   domains, this script issues a warning about each domain that is
+   still part of the I1 MAN.
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="mand"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if [ "$JASS_SMS_OVERRIDE" = "1" ]; then
+  logNotice "This script performs no auditing operation."
+else
+
+if check_fileExists ${MANCF} 1 ; then
+   if check_fileExists ${SMS_V} 1 ; then
+#      if check_fileModeMatch ${SMS_V} "+0111" 1 ; then
+
+	 # Excluding domains is only supported on SMS 1.2 and later
+	 sms_version=`${SMS_V} -t`
+	 case "${sms_version}" in
+	 1.2|1.3|1.4|1.4.1)
+
+	    # If you want exclude only a subset of domains in the range
+	    # A to R, change ${domain_RE} to the appropriate regular
+	    # expression.  For example, setting the regular expression
+	    # to 'D[A-CE-R]-I1' disables all domains except D.  The
+	    # regular expression is case sensitive; the domains must be
+	    # in the range uppercase A through R only.  The regular
+	    # expression may be a full regular expression as described
+	    # on the regexp(5) manual page.
+
+	    domain_RE='D.-I1'
+
+	    domains=`nawk '$1 ~ /^I1$/ && $2 ~ /'"${domain_RE}"'/ && ($3 !~ /^NONE$/ || $4 !~ /^NONE$/) { print $2 }' ${MANCF}`
+
+	    if [ -z "${domains}" ] ; then
+	       logSuccess "All domains are excluded from I1 MAN."
+	    else
+	       for dom_id in `echo "${domains}" | cut -c2` ; do
+		  logFailure "Domain ${dom_id} is not excluded from I1 MAN."
+                  adjustScore 1
+	       done
+	    fi
+
+	    if check_processExists "${servcmd}" 1 ; then
+	       logSuccess "Process ${servcmd} is running on the system."
+	    else
+	       logNotice "Process ${servcmd} is not running on the system."
+	    fi
+	    ;;
+	 *)
+	    logNotice "Domain exclusion not supported for SMS ${sms_version}."
+	    ;;
+	 esac
+
+#      else
+#	 logFileModeMatch "${SMS_V}" "+0111" 1
+#      fi
+   else
+      logFileNotFound "${SYS_V}" 1
+   fi
+else
+   logFileNotFound "${MANCF}" 1
+fi
+
+# fi for "$JASS_SMS_OVERRIDE" = "1" else statement
+fi
+
+finish_audit

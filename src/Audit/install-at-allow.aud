@@ -1,0 +1,111 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-at-allow.aud 1.11     05/06/08     SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="AT/BATCH Facility Access Control (at.allow)"
+servfil="install-at-allow.aud"
+
+AT_DENY="${JASS_ROOT_DIR}etc/cron.d/at.deny"
+AT_ALLOW="${JASS_ROOT_DIR}etc/cron.d/at.allow"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The at(1) and batch(1) facilities provides scheduled, one-time command
+   execution.
+
+Rationale for Verification Check:
+
+   Only authorized users should be able to submit jobs that will be run using
+   the at or batch facilities.  Therefore, users who are permitted to use
+   these services should be listed in the file, ${AT_ALLOW}.  This script will
+   check to see if any of the users defined by the JASS_AT_ALLOW parameter are
+   listed in the ${AT_ALLOW} file.
+
+Determination of Compliance:
+
+   This script will indicate a failure if a user is listed in the JASS_AT_ALLOW
+   parameter but does not exist in the ${AT_ALLOW} file.  The list of users
+   defined by the JASS_AT_ALLOW parameter is:
+
+`printPretty \"${JASS_AT_ALLOW}\"`
+
+   Note that to pass this check, each user must exist in both the
+   ${JASS_PASSWD} file as well as the ${AT_ALLOW} file.  Furthermore, the user
+   should not already exist in the ${AT_DENY} file as it would create confusion.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+logMessage "# Checking users denied access to the at or batch facilities.\n "
+
+# Determine if the ${AT_DENY} file should be checked as well.
+
+checkDeny=0
+if check_fileExists "${AT_DENY}" 0 ; then
+   checkDeny=1
+fi
+
+acctListed=0
+for acct in `echo ${JASS_AT_ALLOW} | xargs -n 1 echo | sort -u`; do
+   acctListed=1
+   if check_fileContentsExist "${JASS_PASSWD}" "^${acct}:" 0 ; then
+      if check_fileContentsExist "${AT_ALLOW}" "^${acct}$" 1 ; then
+
+         logSuccess 'User ${acct} is listed in ${AT_ALLOW}.'
+
+         # Collect response from ${AT_DENY} file if it exists.
+
+         if [ ${checkDeny} -eq 1 ]; then
+            if check_fileContentsExist "${AT_DENY}" "^${acct}$" 0 ; then
+               adjustScore 1
+               logFailure 'User ${acct} is also listed in ${AT_DENY}.'
+            fi
+         fi
+      else
+         logFailure 'User ${acct} is not listed in ${AT_ALLOW}.'
+      fi
+   else
+      logWarning 'User ${acct} is not listed in ${JASS_PASSWD}.'
+   fi
+done
+
+if [ $acctListed = 0 ]; then
+   logNotice "There are no users defined by the JASS_AT_ALLOW parameter."
+fi
+
+finish_audit

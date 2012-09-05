@@ -1,0 +1,106 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<?Fm: Validation Off>
+
+<!ENTITY interface-name CDATA "security_drivers">
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY man7 CDATA "Device and Network Interfaces">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.2">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY SST-REFMAN CDATA "Solaris Security Toolkit 4.2 Reference Manual">
+<!ENTITY exam-tt CDATA "EXAMPLES">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry lang = "en" os = "solaris"><refmeta><refentrytitle lang = "en">&interface-name;</refentrytitle>
+<manvolnum>7</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man7;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>alias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>unalias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>pseudonym, create
+or remove</primary></indexterm></refmeta>
+<refnamediv>
+<refname>&interface-name;</refname><refpurpose>list the standard Solaris
+Security Toolkit drivers found in the security.drivers file</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<synopsis os = "solaris"><filename>config.driver</filename> </synopsis>
+<synopsis os = "solaris"><filename>hardening.driver</filename></synopsis>
+<synopsis os = "solaris"><filename>secure.driver</filename></synopsis>
+<synopsis os = "solaris"><filename>server-secure.driver</filename></synopsis>
+<synopsis os = "solaris"><filename>suncluster3x-secure.driver</filename></synopsis>
+<synopsis os = "solaris"><filename>sunfire_15k_sc-secure.driver</filename></synopsis></refsynopsisdiv>
+<refsect1 lang = "en"><title>&desc-tt;</title>
+<para><filename>security_drivers</filename> lists the collection of drivers used by the Solaris Security Toolkit found in the security.drivers file.</para></refsect1>
+<refsect1 lang = "en"><title>EXTENDED &desc-tt;</title>
+<para>The following list describes briefly the standard drivers:<itemizedlist
+    mark = "bullet" spacing = "normal"><listitem><para><filename>config.driver</filename> implements tasks associated with the driver set.</para></listitem>
+<listitem><para><filename>hardening.driver</filename> contains most of the security specific scripts.</para></listitem>
+<listitem><para><filename>secure.driver</filename> is the default driver used in the rules for client installation. Implements all the hardening functionality. </para></listitem>
+<listitem><para><filename>server-secure.driver</filename> is based on the secure.driver, and highlights what might be necessary to secure server systems. </para></listitem>
+<listitem><para><filename>suncluster3x-secure.driver</filename> provides a baseline configuration for hardening Sun&trade; Cluster 3.x software releases. </para></listitem>
+<listitem><para><filename>sunfire_15k_sc-secure.driver</filename> is the only supported mechanism by which the Sun Fire high-end system controller can be secured. </para></listitem></itemizedlist></para>
+<para>For detailed information and instructions on the use of each of these drivers please refer to the Chapter 4, &ldquo;Drivers&rdquo;, in the <citetitle pubwork = "book">&SST-REFMAN;</citetitle>.</para></refsect1>
+<refsect1 lang = "en"><title>&exam-tt;</title>
+<example width = "100" os = "solaris"><title>Contents of the <filename>secure.driver File</filename></title><screen width = "100" format = "linespecific">
+DIR="`/bin/dirname $0`"
+export DIR
+
+. ${DIR}/driver.init
+
+. ${DIR}/config.driver
+
+. ${DIR}/hardening.driver
+</screen></example></refsect1>
+<refsect1 lang = "en"><title>&attr-tt;</title>
+<para>See <citerefentry><refentrytitle lang = "en">attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" os = "solaris">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" valign = "top" os = "solaris"><para>ATTRIBUTE TYPE</para></entry>
+<entry colname = "2" align = "center" valign = "top" os = "solaris"><para>ATTRIBUTE VALUE</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Availability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>SUNWsst</para></entry>
+</row>
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Stability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>Unstable</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 lang = "en"><title>&also-tt;</title>
+<para><citerefentry><refentrytitle lang = "en">add-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">audit_public_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">common_log_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">common_misc_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">driver_public_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-check-sum</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-execute</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">make-jass-pkg</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">rm-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para></refsect1></refentry>

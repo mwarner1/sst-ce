@@ -1,0 +1,108 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-openssh.aud 1.10     05/01/19     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="OpenSSH"
+servfil="install-openssh.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   This script will attempt to determine if the OpenSSH software is 
+   installed, configured and running on the system.  Note that this script
+   expects the OpenSSH software to be installed in package form in 
+   accordance with the install-openssh.fin Finish script.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the OpenSSH package is not 
+   installed, configured or running on the system.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   OBSDssh
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}/etc/rc3.d/S25openssh.server
+"
+
+#-----------------------------------------------------------------------------
+
+servcfg="
+   ${JASS_ROOT_DIR}/etc/openssh/sshd_config
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   /opt/OBSDssh/sbin/sshd
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_revision 5.5.1 5.8 ; then
+
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+   if check_packageExists "${servpkg}" 1 LOG ; then
+      pkgName="`pkgparam -R ${JASS_ROOT_DIR} ${servpkg} NAME`"
+      pkgVersion="`pkgparam -R ${JASS_ROOT_DIR} ${servpkg} VERSION`"
+      pkgBaseDir="`pkgparam -R ${JASS_ROOT_DIR} ${servpkg} BASEDIR`"
+      pkgContact="`pkgparam -R ${JASS_ROOT_DIR} ${servpkg} HOTLINE`"
+
+      logNotice 'Package has description \\\"${pkgName}\\\"'
+      logNotice 'Package has version \\\"${pkgVersion}\\\"'
+      logNotice 'Package has base directory \\\"${pkgBaseDir}\\\"'
+      logNotice 'Package has hotline contact \\\"${pkgContact}\\\"'
+
+      logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+      check_startScriptExists "${servsrc}" 1 LOG
+      check_serviceConfigExists "${servcfg}" 1 LOG
+
+      logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+      check_processExists "${servcmd}" 1 LOG
+   fi
+else
+   logInvalidOSRevision "5.5.1-5.8"
+fi
+
+finish_audit

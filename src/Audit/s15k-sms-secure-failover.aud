@@ -1,0 +1,174 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved
+# All rights reserved.
+#
+#ident	"@(#)s15k-sms-secure-failover.aud	1.16	05/01/05	SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="S15K secure failover"
+servfil="s15k-sms-secure-failover.aud"
+
+INET=${JASS_ROOT_DIR}etc/inet/inetd.conf
+
+SMS_V=${JASS_ROOT_DIR}opt/SUNWSMS/bin/smsversion
+SMS_FO_ID="112481-09"
+SMS_RND_ID="112438-01"
+SMS_SVCS_DISABLE="shell login exec"
+SMS_RHOSTS=${JASS_ROOT_DIR}.rhosts
+SMS_SHOSTS=${JASS_ROOT_DIR}.shosts
+SMS_REMOTESC=${JASS_ROOT_DIR}var/opt/SUNWSMS/data/.remotesc
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Sun Fire 15K SC can operate in a secure manner through the use of
+   Secure Shell for SC failover.  Once this feature is enabled, the
+   R* services in ${INET} on the SC may be safely disabled.
+   The ${SMS_RHOSTS} file is copied to ${SMS_SHOSTS} for Secure Shell.
+   
+   This security feature is available with SMS 1.3 or later.  SMS 1.2
+   requires patch ${SMS_FO_ID} or later to enable this feature.  SCs
+   running Solaris 8 should also install patch ${SMS_RND_ID} for better
+   random number generation for Secure Shell.
+
+Rationale for Verification Check:
+
+   By default, Sun Fire 15K SCs use R* services to implement the SC
+   failover function, granting access to the redundant SC with the
+   ${SMS_RHOSTS} file.  Since the SC controls critical functions for
+   the Sun Fire 15K, failover should instead use Secure Shell and the
+   R* services should be disabled.
+
+Determination of Compliance:
+
+   For SMS 1.2 and later, this script will determine if the R*
+   services are disabled.  This script will indicate a failure if any
+   of the services listed in the SMS_SVCS_DISABLE parameter is enabled
+   in ${INET}.
+   
+   The SMS_SVCS_DISABLE parameter is populated as follows:
+
+`printPretty \"${SMS_SVCS_DISABLE}\"`
+
+   For SMS 1.2, this script will verify that the secure failover patch
+   ${SMS_FO_ID} is installed, and for Solaris 8 it will verify that
+   the random number generation patch ${SMS_RND_ID} is installed.
+"
+
+#-----------------------------------------------------------------------------
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if [ "$JASS_SMS_OVERRIDE" = "1" ]; then
+  logNotice "This script performs no auditing operation."
+elif [ "${jassSMSSecureFailover}" = "0" ]; then
+  logMessage "jassSMSSecureFailover is 0"
+  logMessage "Adding shell login exec to JASS_SVCS_ENABLE"
+  JASS_SVCS_ENABLE="${JASS_SVCS_ENABLE} shell login exec"
+  export JASS_SVCS_ENABLE
+else
+
+if check_fileExists ${SMS_V} 1 ; then
+   if check_fileModeMatch ${SMS_V} "-0111" 1 ; then
+
+      # Disabling R* services is only supported on SMS 1.2 and later
+      sms_version=`${SMS_V} -t`
+      case "${sms_version}" in
+      1.2|1.3|1.4|1.4.1)
+
+	 # Advise about fomd patch
+	 if [ ${sms_version} = "1.2" ]; then
+            if check_patchExists ${SMS_FO_ID} 1 LOG ; then
+               : # Do nothing since the patch is already installed.
+            else
+	       logFailure "Patch ${SMS_FO_ID} or later needs to be installed."
+            fi
+	 fi
+
+	 # If Solaris 8, also advise about the /kernel/drv/random patch
+	 if check_os_revision 5.8 ; then
+            if check_patchExists ${SMS_RND_ID} 1 LOG ; then
+               : # Do nothing since the patch is already installed.
+            else
+	       logFailure "Patch ${SMS_RND_ID} or later needs to be installed."
+            fi
+	 fi
+
+	 # Verify the R* services are disabled
+	 if check_fileExists ${INET} 0; then
+	    logMessage "\nChecking that the following services are disabled.\n"
+
+	    for svc in ${SMS_SVCS_DISABLE}; do
+	       check_fileContentsNotExist ${INET} "^${svc}[ 	]*.*wait[ 	]*" 0
+	       if [ $? = 0 ]; then
+		  # This is a check to ensure that the service simply does not exist.
+		  result=`grep "^#" ${INET} | grep "[# 	]${svc}[ 	]*.*wait[ 	]*"`
+		  if [ -z "${result}" ]; then
+		     logNotice "Service ${svc} does not exist in ${INET}."
+		  else
+		     logSuccess "Service ${svc} is disabled in ${INET}."
+		  fi
+	       else
+		  adjustScore 1
+		  logFailure "Service ${svc} is enabled in ${INET}."
+	       fi
+	    done
+	 else
+	    logFileNotFound "${INET}"
+	 fi
+
+         check_fileNotExists ${SMS_RHOSTS} 1 LOG 
+
+         check_fileExists ${SMS_REMOTESC} 1 LOG 
+
+         if check_fileExists ${SMS_SHOSTS} 0 ; then
+           logNotice "${SMS_SHOSTS} still exists."
+         fi     
+	 ;;
+      *)
+	 logNotice "Disabling 'R*' services not supported for SMS ${sms_version}."
+	 ;;
+      esac
+
+   else
+      logFileModeMatch "${SMS_V}" "-0111" 1
+   fi
+else
+   logFileNotFound "${SYS_V}" 1
+fi
+
+# fi for "$JASS_SMS_OVERRIDE" = "1" else statement
+fi
+
+finish_audit

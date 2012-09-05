@@ -1,0 +1,136 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-ssh-config.aud 1.6     07/02/14 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Set SSH Configuration Files"
+servfil="set-ssh-config.aud"
+SSH_CONFIG="${JASS_ROOT_DIR}etc/ssh/ssh_config"
+SSHD_CONFIG="${JASS_ROOT_DIR}etc/ssh/sshd_config"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   SSH is a secure, encrypted replacement for common login services such as
+   telnet, FTP, rlogin, rsh, and rcp.  It is strongly recommended that sites
+   abandon these older cleartext login protocols and use SSH to prevent
+   session hijacking and sniffing of sensitive data off the network.
+
+   The sshd service is an implementation of the secure shell server.
+   sshd is a root process which listens for ssh requests on the SSH
+   port as indicated by the /etc/services files (see services(4)).
+
+
+Rationale for Verification Check:
+
+   Improper settings of configuration values in ${SSH_CONFIG} and
+   ${SSHD_CONFIG} can weaken or bypass SSH protocols to make it ineffective.
+
+Determination of Compliance:
+
+   This script checks values in ${SSH_CONFIG} and ${SSHD_CONFIG} are set to
+   proper values.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.9 ; then
+   # Check SSH client configuration if installed
+   if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsshr ; then
+      if check_fileExists ${SSH_CONFIG} 1; then
+         if check_fileContentsExist ${SSH_CONFIG} \
+               "^[ 	]*Host[ 	]*\*" 1 ; then
+            if check_fileContentsNotExist ${SSH_CONFIG} \
+                  "^[ 	]*Protocol[ 	]*2" 0 ; then
+	       adjustScore 1
+               logFailure 'Host * stanza is not present in ${SSH_CONFIG}.'
+            fi
+         else
+            if check_fileContentsExist \
+                  ${SSH_CONFIG} "^[ 	]*Protocol[ 	]*2" 0
+            then
+               logFailure 'SSH protocol not set to 2 in ${SSH_CONFIG}.'
+            else
+               logFailure 'SSH protocol is not defined in ${SSH_CONFIG}.'
+            fi
+         fi
+      else
+         logFileNotFound "${SSH_CONFIG}" 1
+      fi
+
+   else
+      logNotice 'SSH (package SUNWsshr) does not appear to be installed.'
+      logNotice 'Skipping the setting of /etc/ssh/ssh_config.'
+   fi
+
+
+   # Check SSH server configuration if installed
+   if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsshdr ; then
+      if check_fileExists ${SSHD_CONFIG} 1; then
+         for i in Protocol/2 X11Forwarding/yes MaxAuthTries/5 \
+                  MaxAuthTriesLog/0 IgnoreRhosts/yes \
+                  RhostsAuthentication/no RhostsRSAAuthentication/no \
+                  PermitRootLogin/no PermitEmptyPasswords/no ; do
+            name=`dirname $i`
+            value=`basename $i`
+
+            if check_fileContentsExist ${SSHD_CONFIG} \
+                  "^[ 	]*${name}[ 	]*${value}" 1 ; then
+               logSuccess 'SSHD ${name} set to ${value}.'
+            else
+               if check_fileContentsExist \
+                  ${SSHD_CONFIG} "^[ 	]${name}[ 	]*${value}" 0
+               then
+                  logFailure 'SSH ${name} not set to ${value} in ${SSHD_CONFIG}.'
+               else
+                  logFailure 'SSH ${name} is not defined in ${SSHD_CONFIG}.'
+               fi
+            fi
+         done
+      else
+         logFileNotFound "${SSHD_CONFIG}" 1
+      fi
+
+   else
+      logNotice 'SSH (package SUNWsshdr) does not appear to be installed.'
+      logNotice 'Skipping the setting of /etc/ssh/sshd_config.'
+   fi
+
+else
+   logInvalidOSRevision "5.9+"
+fi
+
+finish_audit

@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved
+# All rights reserved.
+#
+#ident	"@(#)suncluster3x-set-nsswitch-conf.aud	1.6	04/06/02	SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="SunCluster 3.x Name Service Setting"
+servfil="suncluster3x-set-nsswitch-conf.aud"
+
+NSSWITCH="${JASS_ROOT_DIR}etc/nsswitch.conf"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   The Sun Cluster software version 3.x and above requires that the name 
+   service switch configuration file, ${NSSWITCH}, be configured to list 
+   the 'cluster' keyword as its first source.  The entry in the ${NSSWITCH}
+   file should be similar to:
+
+      hosts: cluster ...
+
+Determination of Compliance:
+
+   This script will indicate a failure if the ${NSSWITCH} file does not list 
+   the 'cluster' keyword as its first source.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_fileExists ${NSSWITCH} 1 ; then
+   if check_fileContentsExist ${NSSWITCH} \
+      "^hosts:[ 	]*cluster[ 	]*" 1 ; then
+      logSuccess "'hosts' database has 'cluster' source listed first."
+   else
+      if check_fileContentsExist ${NSSWITCH} "^hosts:" 0 ; then
+         logFailure "'hosts' database does not list 'cluster' as its first source."
+      else
+         logFailure "'hosts' database is not defined in ${NSSWITCH}."
+      fi
+   fi
+else
+   logFileNotFound "${NSSWITCH}" 1
+fi
+
+finish_audit

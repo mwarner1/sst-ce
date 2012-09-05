@@ -1,0 +1,171 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-banner-ftpd.fin	3.11	05/04/12 SMI"
+#
+# This program adds a service banner for the FTP service.
+#
+# For the Solaris 9 and later, this script ensures that
+# /etc/ftpd/ftpaccess is configured with a 'greeting' of 'brief'
+# and a 'banner' of '/etc/ftpd/banner.msg'.  In addition, the
+# file template /etc/ftpd/banner.msg copied.  Note that
+# JASS_BANNER_FTPD is not # used on Solaris 9 and later.  For
+# more information on these parameters see ftpaccess(4).
+#
+# For the Solaris 2.6 through 8, this script installs the
+# contents of the JASS_BANNER_FTPD parameter into the 'BANNER'
+# variable in /etc/default/ftpd.  For more information on this
+# parameter, see in.ftpd(1M).
+#
+
+logMessage "Setting the connection banner for the FTP service."
+echo ""
+
+if check_os_min_revision 5.6 ; then
+   if check_os_min_revision 5.9 ; then
+    if check_os_min_revision 5.11 ; then
+     if ! is_service_installed svc:/network/ftp:default ; then
+      logMessage "FTP server not installed. Skipping."
+      pkgExists=0
+     else
+      pkgExists=1
+     fi
+    else
+      pkgExists=0
+      if pkginfo -q -R ${JASS_ROOT_DIR} SUNWftpr ; then
+         pkgExists=1
+      else
+         logNotice "FTP (package SUNWftpr) does not appear to be installed."
+      fi
+    fi   
+     if [ $pkgExists -eq 1 ] ; then
+
+         FTPACCESS="${JASS_ROOT_DIR}etc/ftpd/ftpaccess"
+
+         if [ ! -f ${FTPACCESS} ]; then
+            create_a_file -m 640 -o root:sys ${FTPACCESS}
+            echo ""
+         fi
+
+         if egrep -s "^greeting[ 	][ 	]*brief" ${FTPACCESS} 2>/dev/null ; then
+            : # The change has already been applied.
+            fixGreeting=0
+         else
+            fixGreeting=1
+         fi
+
+         if egrep -s "^banner[ 	][ 	]*/etc/ftpd/banner.msg" ${FTPACCESS} 2>/dev/null ; then
+            : # The change has already been applied.
+            fixBanner=0
+         else
+            fixBanner=1
+         fi
+
+         bannerFile="/etc/ftpd/banner.msg"
+
+         if [ $fixGreeting -eq 1 -o $fixBanner -eq 1 ]; then
+
+            backup_file ${FTPACCESS}
+            echo ""
+
+            if [ $fixGreeting -eq 1 ]; then
+
+               logMessage 'Setting \\\"greeting\\\" to \\\"brief\\\" in ${FTPACCESS}.'
+
+               ed -s ${FTPACCESS} << EOF_GREETING > /dev/null 2>&1
+g|^greeting[ 	]|s|^greeting[ 	].*|greeting	brief|g
+.
+w
+q
+EOF_GREETING
+
+               # The following case is needed if the 'greeting' line was not
+               # found in the file.
+
+               if [ `grep -c "^greeting[ 	][ 	]*brief" ${FTPACCESS}` = 0 ]; then
+                  echo "greeting	brief" >> ${FTPACCESS}
+               fi
+            fi
+
+            if [ $fixBanner -eq 1 ]; then
+               logMessage 'Setting \\\"banner\\\" to \\\"${bannerFile}\\\" in ${FTPACCESS}.'
+
+               ed -s ${FTPACCESS} << EOF_BANNER > /dev/null 2>&1
+g|^banner[ 	]|s|^banner[ 	].*|banner		${bannerFile}|g
+.
+w
+q
+EOF_BANNER
+
+               # The following case is needed if the 'banner' line was not
+               # found in the file.
+
+               if [ `grep -c "^banner[ 	][ 	]*${bannerFile}" ${FTPACCESS}` = 0 ]; then
+                  echo "banner		${bannerFile}" >> ${FTPACCESS}
+               fi
+            fi
+         fi
+
+         logMessage 'Installing the FTP service banner message on the system.'
+         copy_files "${bannerFile}"
+         chown root:root ${JASS_ROOT_DIR}${bannerFile}
+         chmod 644       ${JASS_ROOT_DIR}${bannerFile}
+
+      else
+         logNotice "Skipping the setting of the FTP service banner."
+      fi
+   else
+      FTPD="${JASS_ROOT_DIR}etc/default/ftpd"
+
+      # If the file was not found, then create it.
+      if [ ! -f ${FTPD} ]; then
+         create_a_file -m 640 -o root:sys ${FTPD}
+         echo ""
+      fi
+
+      oldValue=`grep '^BANNER=' ${FTPD} | nawk -F= '{ print $2 }' 2>/dev/null`
+
+      if [ "${oldValue}" != "${JASS_BANNER_FTPD}" ]; then
+
+         backup_file ${FTPD}
+         echo ""
+
+         logMessage 'Setting \\\"BANNER\\\" to \\\"${JASS_BANNER_FTPD}\\\" in ${FTPD}.'
+
+         cat ${FTPD}.${JASS_SUFFIX} |\
+            sed 's/#.*BANNER=/BANNER=/g' |\
+            sed "s/^BANNER=.*$/BANNER=${JASS_BANNER_FTPD}/g" > ${FTPD}
+
+         # The following case is needed if the BANNER line was not
+         # found in the file.
+
+         if [ `grep -c '^BANNER=' ${FTPD}` = 0 ]; then
+            echo "BANNER=${JASS_BANNER_FTPD}" >> ${FTPD}
+         fi
+      fi
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

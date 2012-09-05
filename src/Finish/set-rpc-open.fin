@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)set-rpc-open.fin		1.2	06/10/23 SMI"
+# 
+# This script sets the Remote Procedure Call (RPC) service to
+# respond to non-local requests.  This script is intended only for use
+# on machines where Solaris Secure By Default is available, and will
+# not work on other systems.
+# 
+
+logMessage "Allowing remote access to the service:\
+ Remote Procedure Call (RPC) Portmapper"
+echo ""
+
+svc="
+   svc:/network/rpc/bind:default
+   svc:/network/rpc/keyserv:default
+"
+
+if check_sbd_available ; then
+
+   enable_service "${svc}"
+
+   # bind needs to be set to non-local only mode
+   if  check_serviceInstalled "svc:/network/rpc/bind:default" 0 ; then 
+      set_service_property_value "svc:/network/rpc/bind:default" \
+       "config/local_only" "false" "application" "boolean"
+   fi
+else
+   logNoSBD
+fi

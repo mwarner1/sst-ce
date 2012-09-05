@@ -1,0 +1,138 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)enable-ipfilter.aud 1.3     05/05/19     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="IP Filtering"
+servfil="enable-ipfilter.aud"
+
+PFIL="${JASS_ROOT_DIR}etc/ipf/pfil.ap"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Solaris 10 provides an integrated firewall through the integration of the 
+   freeware IPFilter. For more information on this functionality, see 
+   ipf(1M) and ipfilter(5).
+
+Rationale for Verification Check:
+
+   This script will check to ensure that IP Filtering is installed, 
+   configured and enabled on the system.  This script will ensure that the 
+   file template ipf.conf has been copied to the system, and that all
+   plumbed network interfaces are listed in ${PFIL}.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the IP Filtering is not installed,
+   configured (using the above file templates) or enabled (using svcadm).
+"
+
+#-----------------------------------------------------------------------------
+
+servcfg="
+   /etc/opt/ipf/ipf.conf
+"
+
+ignore_interfaces="lo0"
+ignore_physical="lo ip.tun ip6.tun"
+svc="svc:/network/ipfilter:default"
+all_if=""
+families="inet inet6"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+if check_os_min_revision 5.10 ; then
+   if [ "${JASS_ZONE_NAME}" = "global" ]; then
+
+      for family in ${families}; do
+	 # To check modlist, we need the instances of the interfaces.
+	 interfaces=`ifconfig -a ${family} | egrep -e "^[a-zA-z0-9]" \
+	            | awk -F: '{print $1}' | sort | uniq`
+	 interfaces="`get_lists_disjunction \"${interfaces}\" \"lo0\"`"
+
+	 all_if="${interfaces} ${all_if}"
+	 # This will have stripped out virtual interfaces, but this is 
+	 # fine since virtual interfaces share the same stack.
+
+	 for interface in ${interfaces}; do
+	    # Due to leaving in the instance, we can't filter ip.tun like we
+	    # do in the finish script
+
+	    test=`echo ${interface} | egrep '^ip(6)?.tun' 2>&1 1>/dev/null`
+	    if [ $? -eq 0 ]; then  # it is not a tunnel
+	       found=`ifconfig ${interface} ${family} modlist | \
+	             egrep -c '^[0-9]+ pfil$'`
+	       if [ "${found}" != "1" ]; then
+		  logFailure 'Driver ${interface} of family ${family} did not have pfil pushed'
+		  adjustScore 1
+	       fi
+	    fi
+	 done
+      done
+
+      # Since we are checking the drivers now, we don't care about the 
+      # instance of the interface, only its driver class.
+
+      interfaces=`echo ${all_if} | sed -e 's/[0-9]//g' | sort | uniq`
+      # Now we can filter the tunnels the easy way
+      interfaces="`get_lists_disjunction \"${interfaces}\" \
+                 \"${ignore_physical}\"`"
+
+
+      # For each plumbed interface in the system, log a failure if it is not
+      # listed in pfil.ap.
+
+      for interface in ${interfaces}; do
+	 found=`egrep -c -e "^${interface}[^A-Za-z]" ${PFIL}`
+	 if [ "${found}" = "0" ]; then
+	    logFailure 'Driver ${interface} was not listed in ${PFIL}.'
+	    adjustScore 1
+	 fi
+      done
+
+      check_fileTemplate "${servcfg}" 1 LOG   
+
+      check_minimized_service "${svc}" 1 LOG
+      check_serviceEnabled "${svc}" 1 LOG
+      check_serviceRunning "${svc}" 1 LOG
+else
+      logNotGlobalZone
+fi
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+finish_audit

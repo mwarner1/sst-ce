@@ -1,0 +1,180 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-coreadm.aud	1.12	05/05/10 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="coreadm"
+servfil="enable-coreadm.aud"
+
+CONF="${JASS_ROOT_DIR}etc/coreadm.conf"
+COREADM="/usr/bin/coreadm"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The coreadm service provides an ability to store core dumps in a
+   central repository with a specified core name signature.  Fine grain
+   control is given over whether setuid processes should be able to
+   dump core.
+
+Rationale for Verification Check:
+
+   Changes to coreadm should always be done via the coreadm command.  The
+   updates are stored in the /etc/coreadm.conf file.  The verification
+   check examines this file directly.
+
+Determination of Compliance:
+
+   This script will indicate a failure if core dump pattern does not match
+   JASS_CORE_PATTERN.  Failure occurs if global core dump or process core
+   dump options are disabled; if any of the setuid settings are enabled;
+   or, if the logging via syslog option is disabled.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.7 ; then
+
+   tmpDir="`dirname ${JASS_ROOT_DIR}${JASS_CORE_PATTERN}`"
+   COREDIR="`clean_path ${tmpDir}`"
+   if check_fileExists ${COREDIR} 1 LOG ; then
+      if check_fileTypeMatch ${COREDIR} "d" 1 LOG ; then
+         check_fileOwnerMatch ${COREDIR} root 1 LOG
+         check_fileGroupMatch ${COREDIR} root 1 LOG
+         check_fileModeMatch ${COREDIR} 700 1 LOG
+      fi
+   fi
+ 
+   if check_fileExists ${CONF} 0 ; then
+ 
+      # COREADM_GLOB_LOG_ENABLED=yes
+  
+      if check_fileContentsExist ${CONF} "COREADM_GLOB_LOG_ENABLED" 0 ; then
+         if check_fileContentsExist $CONF "^COREADM_GLOB_LOG_ENABLED=yes" 1
+         then
+            logSuccess 'coreadm syslogging enabled in ${CONF}.'
+          else
+            logFailure 'coreadm syslogging disabled in ${CONF}.'
+         fi
+      else
+         logFailure 'coreadm syslogging option unconfigured in ${CONF}.'
+      fi
+  
+      # COREADM_PROC_SETID_ENABLED=no
+  
+      if check_fileContentsExist ${CONF} "COREADM_PROC_SETID_ENABLED" 0 ; then
+         if check_fileContentsExist $CONF "^COREADM_PROC_SETID_ENABLED=no" 1
+         then
+            logSuccess 'coreadm process setuid core dump is disabled in ${CONF}.'
+         else
+            logFailure 'coreadm process setuid core dump is enabled in ${CONF}.'
+         fi
+      else
+         logFailure 'coreadm process setuid core dump option unconfigured in ${CONF}.'
+      fi
+  
+      # COREADM_GLOB_SETID_ENABLED=yes
+  
+      if check_fileContentsExist ${CONF} "COREADM_GLOB_SETID_ENABLED" 0 ; then
+         if check_fileContentsExist $CONF "^COREADM_GLOB_SETID_ENABLED=yes" 1
+         then
+            logSuccess 'coreadm global setuid is enabled in ${CONF}.'
+         else
+            logFailure 'coreadm global setuid is disabled in ${CONF}.'
+         fi
+      else
+         logFailure 'coreadm global seruid unconfigured in ${CONF}.'
+      fi
+   
+      # COREADM_PROC_ENABLED=no
+  
+      if check_fileContentsExist ${CONF} "COREADM_PROC_ENABLED" 0 ; then
+         if check_fileContentsExist $CONF "^COREADM_PROC_ENABLED=no" 1 ; then
+            logSuccess 'coreadm process core dump disabled in ${CONF}.'
+         else
+            logFailure 'coreadm process core dump enabled in ${CONF}.'
+         fi
+      else
+         logFailure 'coreadm process core dump option unconfigured in ${CONF}.'
+      fi
+  
+      # COREADM_GLOB_ENABLED=yes
+  
+      if check_fileContentsExist ${CONF} "COREADM_GLOB_ENABLED" 0 ; then
+         if check_fileContentsExist $CONF "^COREADM_GLOB_ENABLED=yes" 1 ; then
+            logSuccess 'coreadm global core dump enabled in ${CONF}.'
+         else
+            logFailure 'coreadm global core dump disabled in ${CONF}.'
+         fi
+      else
+         logFailure 'coreadm global core dump unconfigured in ${CONF}.'
+      fi
+  
+      # COREADM_INIT_PATTERN=pattern
+  
+      if check_fileContentsExist ${CONF} "COREADM_INIT_PATTERN" 0 ; then
+         if check_fileContentsExist $CONF \
+            "^COREADM_INIT_PATTERN=${JASS_CORE_PATTERN}" 1 ; then
+            logSuccess 'coreadm init pattern matches JASS_CORE_PATTERN in ${CONF}.'
+         else
+            logFailure 'coreadm init pattern does not match JASS_CORE_PATTERN in ${CONF}.'
+         fi
+      else
+         logFailure 'coreadm init pattern option unconfigured in ${CONF}.'
+      fi
+  
+      # COREADM_GLOB_PATTERN=pattern
+  
+      if check_fileContentsExist ${CONF} "COREADM_GLOB_PATTERN" 0 ; then
+         if check_fileContentsExist $CONF \
+            "^COREADM_GLOB_PATTERN=${JASS_CORE_PATTERN}" 1 ; then
+            logSuccess 'coreadm global pattern matches JASS_CORE_PATTERN in ${CONF}.'
+         else
+            logFailure 'coreadm global pattern does not match JASS_CORE_PATTERN in ${CONF}.'
+         fi
+      else
+         logFailure 'coreadm syslogging option unconfigured in ${CONF}.'
+      fi
+
+   else
+      logFileNotFound "${CONF}"
+   fi
+
+else
+   logInvalidOSRevision "5.7+"
+fi
+
+finish_audit

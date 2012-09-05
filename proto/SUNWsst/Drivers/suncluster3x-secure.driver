@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)suncluster3x-secure.driver	1.13	05/07/18 SMI"
+#
+# This script is described in the February, 2003 BluePrint article called:
+#
+#      Securing the Sun Cluster 3.x Software
+#
+# and should be used to harden Sun Cluster 3.x nodes when deploying agents in
+# secured environments.
+#
+# The article may be found online at:
+#
+#     http://www.sun.com/security/blueprints
+#        or
+#     http://www.sun.com/blueprints/browsesubject.html#security
+#
+# The purpose of this driver is to act as a wrapper calling the
+# "configuration" and "hardening" drivers.
+
+DIR="`/bin/dirname $0`"
+export DIR
+
+# These values can be overridden through user.init
+
+if [ -z "${JASS_FILE_COPY_KEYWORD}" \
+   -o "${_JASS_FILE_COPY_KEYWORD_DEF}" = "1" ]; then
+   JASS_FILE_COPY_KEYWORD="suncluster"
+fi
+
+# set-password-history uses this
+if [ -z "${JASS_PASS_HISTORY}" -o "${_JASS_PASS_HISTORY_DEF}" = "1" ]; then
+   JASS_PASS_HISTORY="4"
+fi
+
+
+# set-strict-password-checks uses these variables
+if [ -z "${JASS_PASS_MAXREPEATS}" \
+   -o "${_JASS_PASS_MAXREPEATS_DEF}" = "1" ]; then
+   JASS_PASS_MAXREPEATS="2"
+fi
+
+if [ -z "${JASS_PASS_MINDIFF}" -o "${_JASS_PASS_MINDIFF_DEF}" = "1" ]; then
+   JASS_PASS_MINDIFF="5"
+fi
+
+if [ -z "${JASS_PASS_MINALPHA}" -o "${_JASS_PASS_MINALPHA_DEF}" = "1" ]; then
+   JASS_PASS_MINALPHA="3"
+fi
+
+if [ -z "${JASS_PASS_MINNONALPHA}" \
+   -o "${_JASS_PASS_MINNONALPHA_DEF}" = "1" ]; then
+   JASS_PASS_MINNONALPHA="1"
+fi
+
+# set-flexible-crypt uses
+if [ -z "${JASS_CRYPT_FORCE_EXPIRE}" \
+   -o "${_JASS_CRYPT_FORCE_EXPIRE_DEF}" = "1" ]; then
+   JASS_CRYPT_FORCE_EXPIRE="0"
+fi
+
+. ${DIR}/driver.init
+
+# The following services will remain enabled in this configuration
+# so that machine can still function as a SunCluster node.
+#
+# 100229 100230 100242
+
+JASS_SVCS_ENABLE="${JASS_SVCS_ENABLE} 100229 100230 100242
+svc:/network/rpc/meta:default 
+svc:/network/rpc/metamh:default 
+svc:/network/rpc/metamed
+"
+
+. ${DIR}/suncluster3x-config.driver
+
+. ${DIR}/suncluster3x-hardening.driver
+

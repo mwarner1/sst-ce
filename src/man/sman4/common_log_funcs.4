@@ -1,0 +1,137 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<?Fm: Validation Off>
+
+<!ENTITY file-name CDATA "common_log_funcs">
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY man4 CDATA "File Formats">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.2">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY SST-REFMAN CDATA "Solaris Security Toolkit 4.2 Reference Manual">
+<!ENTITY exam-tt CDATA "EXAMPLES">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry lang = "en" os = "solaris"><refmeta><refentrytitle lang = "en">&file-name;</refentrytitle>
+<manvolnum>4</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man4;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>alias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>unalias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>pseudonym, create
+or remove</primary></indexterm></refmeta>
+<refnamediv>
+<refname>&file-name;</refname><refpurpose>list all common log functions
+in the common_log.funcs file</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<synopsis os = "solaris"><filename>common_log_funcs</filename></synopsis></refsynopsisdiv>
+<refsect1 lang = "en"><title>&desc-tt;</title>
+<para>All logging and reporting functions are located in the <filename>Drivers</filename> directory in a file called <filename>common_log.funcs</filename>. The logging and reporting functions are used in all of the Solaris Security Toolkit software's operational modes; therefore, they are considered common functions. For example, functions such as <filename>logWarning</filename> and <filename>logError</filename> are in this file.</para>
+<para>Framework functions provide flexibility for you to change the behavior of the Solaris Security Toolkit software without modifying source code. </para></refsect1>
+<refsect1 lang = "en"><title>EXTENDED DESCRIPTION</title>
+<para>The following is a list of common log functions:<itemizedlist
+    mark = "bullet" spacing = "normal"><listitem><para><filename>logBanner</filename></para></listitem>
+<listitem><para><filename>logDebug</filename></para></listitem>
+<listitem><para><filename>logError</filename></para></listitem>
+<listitem><para><filename>logFailure</filename></para></listitem>
+<listitem><para><filename>logFileContentsExist</filename> and <filename>logFileContentsNotExist</filename></para></listitem>
+<listitem><para><filename>logFileExists </filename>and <filename>logFileNotExists</filename></para></listitem>
+<listitem><para><filename>logFileGroupMatch</filename> and <filename>logFileGroupNoMatch</filename></para></listitem>
+<listitem><para><filename>logFileModeMatch</filename> and <filename>logFileModeNoMatch</filename></para></listitem>
+<listitem><para><filename>logFileNotFound</filename> </para></listitem>
+<listitem><para><filename>logFileOwnerMatch</filename> and <filename>logFileOwnerNoMatch</filename></para></listitem>
+<listitem><para><filename>logFileTypeMatch</filename> and <filename>logFileTypeNoMatch</filename></para></listitem>
+<listitem><para><filename>logFinding</filename></para></listitem>
+<listitem><para><filename>logFormattedMessage</filename></para></listitem>
+<listitem><para><filename>logInvalidDisableMode</filename></para></listitem>
+<listitem><para><filename>logInvalidOSRevision</filename></para></listitem>
+<listitem><para><filename>logMessage</filename></para></listitem>
+<listitem><para><filename>logNotGlobalZone</filename></para></listitem>
+<listitem><para><filename>logNotice</filename></para></listitem>
+<listitem><para><filename>logPackageExists</filename> and <filename>logPackageNotExists</filename></para></listitem>
+<listitem><para><filename>logPatchExists</filename> and <filename>logPatchNotExists</filename></para></listitem>
+<listitem><para><filename>logProcessArgsMatch</filename> and <filename>logProcessArgsNoMatch</filename></para></listitem>
+<listitem><para><filename>logProcessExists</filename> and <filename>logProcessNotExists</filename></para></listitem>
+<listitem><para><filename>logProcessNotFound</filename></para></listitem>
+<listitem><para><filename>logScore</filename></para></listitem>
+<listitem><para><filename>logScriptFailure</filename></para></listitem>
+<listitem><para><filename>logServiceConfigExists </filename>and <filename>logServiceConfigNotExists</filename></para></listitem>
+<listitem><para><filename>logServiceDisabled</filename> and <filename>logServiceEnabled</filename></para></listitem>
+<listitem><para><filename>logServiceInstalled</filename> and <filename>logServiceNotInstalled</filename></para></listitem>
+<listitem><para><filename>logServiceOptionDisabled</filename> and <filename>logServiceOptionEnabled</filename></para></listitem>
+<listitem><para><filename>logServiceProcessList</filename></para></listitem>
+<listitem><para><filename>logServicePropDisabled</filename> and <filename>logServicePropEnabled</filename></para></listitem>
+<listitem><para><filename>logServiceRunning</filename> and <filename>logServiceNotRunning</filename></para></listitem>
+<listitem><para><filename>logStartScriptExists</filename> and <filename>logStartScriptNotExists</filename></para></listitem>
+<listitem><para><filename>logStopScriptExists</filename> and <filename>logStopScriptNotExists</filename></para></listitem>
+<listitem><para><filename>logSuccess</filename></para></listitem>
+<listitem><para><filename>logSummary</filename></para></listitem>
+<listitem><para><filename>logUndoBackupWarning</filename></para></listitem>
+<listitem><para><filename>logUserLocked</filename> and <filename>logUserNotLocked</filename></para></listitem>
+<listitem><para><filename>logWarning</filename></para></listitem></itemizedlist></para>
+<para>For detailed information and instructions on the use of each of these functions please refer to the &ldquo;Framework Functions&rdquo; chapter of the <citetitle pubwork = "book">&SST-REFMAN;</citetitle>.</para></refsect1>
+<refsect1 lang = "en"><title>&exam-tt;</title>
+<example width = "100" os = "solaris"><title>Logging a Log Failure</title><screen width = "100" format = "linespecific">
+Usage:
+logFailure "Package SUNWatfsr is installed."
+Output:
+&lsqb;FAIL] Package SUNWatfsr is installed.
+</screen></example>
+<example width = "70" arch = "sparc" os = "solaris"><title>Logging a Log File Existence</title><screen width = "70" format = "linespecific">
+Usage:
+logFileExists /etc/issue
+Output:
+&lsqb;NOTE] File /etc/issue was found.
+</screen></example></refsect1>
+<refsect1 lang = "en"><title>&attr-tt;</title>
+<para>See <citerefentry><refentrytitle lang = "en">attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" os = "solaris">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" valign = "top" os = "solaris"><para>ATTRIBUTE TYPE</para></entry>
+<entry colname = "2" align = "center" valign = "top" os = "solaris"><para>ATTRIBUTE VALUES</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Availability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>SUNWsst</para></entry>
+</row>
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Stability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>Unstable</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 lang = "en"><title>&also-tt;</title>
+<para><citerefentry><refentrytitle lang = "en">add-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">audit_public_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">common_misc_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">driver_public_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-check-sum</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-execute</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">make-jass-pkg</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">rm-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">security_drivers</refentrytitle>
+<manvolnum>7</manvolnum></citerefentry></para></refsect1></refentry>

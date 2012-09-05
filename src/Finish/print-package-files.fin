@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)print-package-files.fin	1.5	07/05/25 SMI"
+#
+# This script checks package file permissions and ownership, but does not
+# check the file contents.  Files missing or not in compliance are listed
+# with the expected and actual ownership or permission.  Not all of the
+# errors generated reflect actual problems.  You may want to save the output
+# to a file for later review.
+#
+
+
+
+logMessage "Checking package file permissions and ownership"
+echo ""
+
+pkgchk -R ${JASS_ROOT_DIR} -na 2>&1
+if [ $? -ne 0 ] ; then
+   logNotice 'Not all of the errors generated reflect actual problems.
+You may want to save the output to a file for later review.'
+fi
+

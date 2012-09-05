@@ -1,0 +1,140 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-xserver-listen.aud	1.9	05/05/10 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="X11 Server Listen"
+servfil="disable-xserver-listen.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The X11 server, starting the the Solaris OE version 9, has the ability
+   to disable listening for client connections on specific named transports.
+   By default, the X11 server is configured to listen on each of the
+   following:
+
+             tcp     TCP over IPv4 or IPv6
+
+             unix    UNIX Domain Sockets (/tmp/.x11-unix)
+
+             pipe    Named pipes (/tmp/.x11-pipe/) and shared memory
+
+Rationale for Verification Check:
+
+   The purpose of this script is to check the X11 server configuration to
+   determine if the X11 service has been configured to not listen for TCP
+   connections.  Configuring the server in this way will prevent remote
+   access to the X11 server will still permitting its use locally.
+
+   To enable this functionality, the '-nolisten tcp' parameter should be
+   added to either the /etc/dt/config/Xservers or /usr/dt/config/Xservers
+   file.  This script will attempt to verify that this parameter exists
+   in at least one of those files.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the X11 server is configured to
+   accept client connections using the TCP transport.  In addition, this
+   script will also indicate a failure if the X11 server is actually
+   running in a configuration that permits use of the TCP transport.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.9; then
+
+   logMessage "# Checking that the X11 server will not listen on TCP port 6000.\n "
+
+   XSERVERS="
+      ${JASS_ROOT_DIR}etc/dt/config/Xservers
+      ${JASS_ROOT_DIR}usr/dt/config/Xservers
+   "
+
+   noListen=0
+   fileFound=0
+   for file in ${XSERVERS}; do
+      if check_fileExists ${file} 0 ; then
+         fileFound=1
+         if check_fileContentsExist ${file} \
+            "^[^#]*:0.*local_uid@console.*-nolisten tcp" 0 ; then
+            logNotice 'File ${file} is configured to use \\\"-nolisten tcp\\\".'
+            noListen=1
+            break
+         else
+            logNotice 'File ${file} is not configured to use \\\"-nolisten tcp\\\".'
+         fi
+      else
+         logFileNotFound "${file}"
+      fi
+   done
+
+   if [ $fileFound -eq 1 ]; then
+         if [ $noListen -eq 1 ]; then
+         logSuccess "X11 server is not configured to listen on TCP port 6000."
+      else
+         logFailure "X11 server is configured to listen on TCP port 6000."
+         adjustScore 1
+      fi
+   else
+      logNotice "X11 server configuration files were not found."
+   fi
+
+   logMessage "\n# Checking if the running X11 server permits TCP connections.\n "
+
+   xSunPID=""
+   psOpt=" -ef ";
+   if check_os_min_revision 5.10; then
+      psOpt=" -z ${JASS_ZONE_NAME} -f ";
+   fi
+   xSunPID="`ps ${psOpt} | grep Xsun | grep -v grep | nawk '{ print $2 }'`"
+   if [ "${xSunPID}" != "" ]; then
+      if /usr/proc/bin/pfiles "${xSunPID}" 2>&1 | \
+         grep "sockname: AF_INET.*port: 6000" > /dev/null 2>&1 ; then
+         logSuccess "Xsun is not configured to listen on TCP port 6000."
+      else
+         logFailure "Xsun is configured to listen on TCP port 6000."
+         adjustScore 1
+      fi
+   else
+      logNotice "Xsun is not running on the system."
+   fi
+
+else
+   logInvalidOSRevision "5.9+"
+fi
+
+finish_audit

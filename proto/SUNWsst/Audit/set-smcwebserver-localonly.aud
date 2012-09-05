@@ -1,0 +1,98 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-smcwebserver-localonly.aud		1.3	06/08/17 SMI"
+# 
+
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="SMC Webserver"
+servfil="set-smcwebserver-localonly.aud"
+
+#-----------------------------------------------------------------------------
+servhdr_txt="
+Description of Service or Function:
+
+   The SMC webserver is the Sun  Web  Console, a browser-based interface that
+   performs systems management. System administrators  can  manage  systems, 
+   devices and services from the console.
+
+Rationale for Verification Check:
+
+   While the SMC webserver can be a useful function, it may not need to
+   allow non-local connections for normal system operation.  If this 
+   functionality is not needed, then it should be disabled. 
+
+Determination of Compliance:
+
+   This script determines if the SMC webserver is installed, configured or
+   running on the system while configured to allow non-local connections
+   This script will indicate a failure if the software is installed,
+   configured to run or actually running on the system while accepting remote
+   connections.
+
+"
+#-----------------------------------------------------------------------------
+
+svc="
+   svc:/system/webconsole:console
+"
+
+lrc="lrc:/etc/rc2_d/S90webconsole"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_sbd_available ; then
+      check_minimized_service "${svc}" 1 LOG
+
+      logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+      if check_serviceInstalled "${svc}" 0; then
+	 check_servicePropEnabled "${svc}" "options/tcp_listen" "false" 1 LOG
+      fi
+elif check_os_min_revision 5.10; then
+   check_serviceNotInstalled "${lrc}" 1 LOG
+
+   # If the package is installed unbundled, it may be upgraded to SMF
+   if check_serviceInstalled "${svc}" 0 ; then
+      check_minimized_service "${svc}" 1 LOG
+
+      logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+      check_serviceDisabled "${svc}" 1 LOG
+
+      logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+      check_serviceNotRunning "${svc}"  1 LOG
+   fi
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+finish_audit

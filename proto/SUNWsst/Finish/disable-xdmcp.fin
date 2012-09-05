@@ -1,0 +1,151 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-xdmcp.fin 1.7     07/03/13 SMI"
+#
+# This script prevents the GUI logins on the local systems from listening
+# for XDMCP connections.  The restricts these GUIs to local users only.
+
+logMessage "Disabling XDMCP connections for GUI logins"
+echo ""
+
+# You can't check a service for existence on a running system, since a 
+# dependency might have created it.  Instead, check the instance. 
+svcinst="
+   svc:/application/graphical-login/cde-login:default
+"
+
+svc="svc:/application/graphical-login/cde-login"
+lrc="lrc:/etc/rc2_d/S99dtlogin"
+
+if check_os_min_revision 5.10 ; then
+   if check_sbd_available; then
+      if  check_serviceInstalled "${svcinst}" 0 ; then 
+	 if check_serviceOptionEnabled "${svc}" "dtlogin/args" "" '-udpPort\\ 0' 0; then
+	    : # udpPort is 0, nothing needs to be done
+	 else
+	    value=""
+	    get_service_property_value 0 "${svc}" "dtlogin/args"
+	    # That functions returns its result in 'value'
+
+	    # Clear any old udpPort value
+	    newval=`echo ${value} | sed -e 's/-udpPort[ 	\\]*[0-9]*//'`
+	    # clear any empty strings as well
+	    newval=`echo ${newval} | sed -e 's/"//g'`
+	    # And add -updPort 0 back in
+	    newval="${newval} -udpPort\ 0"
+	    set_service_property_value "${svc}" "dtlogin/args" "${newval}" \
+	     "application" "astring"
+	 fi
+      fi
+   else
+      # Since SBD is not available, we will disable using the config
+      # file.
+
+      XCONFIG="${JASS_ROOT_DIR}etc/dt/config/Xconfig"
+      dir=`dirname ${XCONFIG}`
+      mkdir_dashp "${dir}"
+      
+      if [ ! -f ${XCONFIG} ]; then
+	 logMessage "Creating the file, ${XCONFIG}."
+	 echo ""
+	 create_a_file -m 0444 -o root:root ${XCONFIG}
+	 
+	 # Seed it with the default /usr/dt/config/Xconfig if it exists
+	 if [ -f "${JASS_ROOT_DIR}usr/dt/config/Xconfig" ]; then
+	    cp -f "${JASS_ROOT_DIR}usr/dt/config/Xconfig" ${XCONFIG}
+	 fi
+      fi
+
+      if [ `grep -c "^[ 	]*Dtlogin.requestPort: 0" ${XCONFIG}` = 0 ]; then
+	 backup_file ${XCONFIG}
+	 logMessage "Adding requestPort entry to ${XCONFIG}"
+	 if [ `grep -c "Dtlogin.requestPort:" ${XCONFIG}` = 0 ]; then
+	    echo "Dtlogin.requestPort: 0" >> ${XCONFIG}
+	    echo "# The Dtlogin.requestPort parameter determines what port to" \
+	     >> ${XCONFIG}
+	    echo "# listen for XDMCP coonections on.  If 0, XDMCP is not used." \
+	     >> ${XCONFIG}
+	 else
+	    # There was a requestPort line, but it had the wrong contents
+	    nawk \
+	     '
+	    $0 ~ /Dtlogin.requestPort:/ \
+	    { if (printedFlag == 0) \
+                  {print "Dtlogin.requestPort: 0"; printedFlag=1 } \
+              else { print "#%s", $0} }
+	    $0 !~ /Dtlogin.requestPort:/ { print $0 }
+	       ' ${XCONFIG}.${JASS_SUFFIX} > ${XCONFIG}
+	 fi
+      fi
+      change_owner root:root ${XCONFIG}
+      change_mode 0444 ${XCONFIG}
+   fi
+
+   # GDM's xdmcp does not use the use the nolisten tcp in 
+   # certain circumstances, so it needs to be disabled in the
+   # config file.  Otherwise, on SBD systems, you could use
+   # the options/tcp_listen parameter in SMF's x11-server
+   GDM="${JASS_ROOT_DIR}etc/X11/gdm/gdm.conf"
+   dir=`dirname ${GDM}`
+   mkdir_dashp ${dir}
+   
+   if [ ! -f ${GDM} ]; then
+      logMessage 'Creating the file, ${GDM}.'
+      echo ""
+      create_a_file -m 0644 -o root:root ${GDM}
+      echo "[xdmcp]" >> ${GDM}
+      echo "Enable=false" >> ${GDM}
+   else
+      # Rather than doing a complicated nawk expression several times,
+      # We will create the new file, and then cmp to see if we need
+      # to make changes.
+      GDM_TMP="${JASS_REPOSITORY}/gdm.conf.$$"
+      rm -f ${GDM_TMP}
+      nawk \
+      '
+      /^\[xdmcp\]/, /^\[/ && !/^\[xdmcp\]/ { xdm=1; \
+          if ($1 ~ /^Enable=/) { $1 = "Enable=false"; en=1} }
+      /^\[/ && !/^\[xdmcp\]/ && xdm==1 && en!=1 { en=1; \
+          print "Enable=false" }
+      {print }
+      END { if ( xdm ==1 && en != 1 ) {print "Enable=false"} else \
+         {if (xdm == 0) print "[xdmcp]\nEnable=false" }}
+      ' ${GDM} > ${GDM_TMP}
+      cmp -s ${GDM_TMP} ${GDM}
+      if [ $? -ne 0 ]; then
+	 backup_file ${GDM}
+	 logMessage "Disabling XDMCP in ${GDM}"
+	 echo ""
+	 cp -f ${GDM_TMP} ${GDM}
+      fi
+      rm -f ${GDM_TMP}
+   fi
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+
+

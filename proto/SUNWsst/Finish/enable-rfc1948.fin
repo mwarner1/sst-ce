@@ -1,0 +1,71 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)enable-rfc1948.fin 3.7     05/03/17     SMI"
+#
+# This script will create/modify the /etc/default/inetinit file to enable 
+# support of RFC 1948.  This RFC defines unique-per-connection ID 
+# sequence number generation.  For more information, refer to
+# http://RF.Cx/rfc1948.html.
+#
+
+INETINIT=${JASS_ROOT_DIR}etc/default/inetinit
+
+logMessage "Enabling the function: RFC 1948 Sequence Number Generation."
+echo ""
+if [ "${JASS_ZONE_NAME}" = "global" ]; then
+   if check_os_revision 5.5.1 ; then
+      logInvalidOSRevision "5.6+"
+   else
+
+      # If for some reason the file does not exist, then create it.
+      # If it was pre-existing, the be sure to save the original copy.
+
+      if [ ! -f ${INETINIT} ]; then
+	 create_a_file -m 644 -o root:sys ${INETINIT}
+	 echo ""
+      fi  
+
+      if [ `grep -c "TCP_STRONG_ISS=2" ${INETINIT}` = 0 ]; then
+
+	 # The following command will remove any exiting TCP_STRONG_ISS value
+	 # and then insert a new one where TCP_STRONG_ISS is set to 2.  This
+	 # value corresponds to enabling RFC 1948 unique-per-connection ID
+	 # sequence number generation.
+	 
+	 backup_file ${INETINIT}
+	 echo ""
+
+	 logMessage 'Setting the \\\"TCP_STRONG_ISS\\\" parameter to \\\"2\\\" in ${INETINIT}.'
+	 
+	 cat ${INETINIT}.${JASS_SUFFIX} |\
+         sed '/TCP_STRONG_ISS=/d'   > ${INETINIT}
+	 
+	 echo "TCP_STRONG_ISS=2" >> ${INETINIT}
+      fi
+   fi
+else
+   logNotGlobalZone
+fi

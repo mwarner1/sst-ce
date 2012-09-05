@@ -1,0 +1,75 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)set-system-umask.fin 3.5     04/06/02     SMI"
+#
+# This script is used to ensure that all of the run control scripts execute 
+# with a safe file creation mask setting of JASS_UMASK.  This is very 
+# important as using a poorly chosen file creation mask could leave critical 
+# files writable to any user.
+#
+
+logMessage "Setting system-wide default file creation mask."
+echo ""
+
+if check_os_min_revision 5.8 ; then
+   INIT=${JASS_ROOT_DIR}etc/default/init
+
+   if [ `grep -c "^CMASK=${JASS_UMASK}" ${INIT}` = 0 ]; then
+      backup_file ${INIT} 
+      echo ""
+
+      logMessage 'Setting the \\\"CMASK\\\" parameter to \\\"${JASS_UMASK}\\\" in ${INIT}.'
+
+      cat ${INIT}.${JASS_SUFFIX} | sed '/CMASK=/d' > ${INIT}
+      echo "CMASK=${JASS_UMASK}" >> ${INIT}
+   fi
+else
+   # This will be the default action if not otherwise
+   # specified.  This technique will work on later versions of Solaris,
+   # but it is preferable to use their conventions.
+
+   UMASK=${JASS_ROOT_DIR}etc/init.d/umask.sh
+
+   if [ -f ${UMASK} ]; then
+      logMessage '${UMASK} has already been installed; no further changes made.'
+   else
+      logMessage 'Installing the ${UMASK} file.'
+      echo ""
+
+      create_a_file -m 0744 -o root:sys ${UMASK}
+      backup_file    ${UMASK}
+      echo ""
+
+      echo "umask ${JASS_UMASK}" >> ${UMASK}
+
+      for dir in ${JASS_ROOT_DIR}etc/rc?.d; do
+         if [ ! -r ${dir}/S00umask.sh ]; then
+            logMessage 'Adding link from ${dir}/S00umask.sh to ${UMASK}'
+            make_link /etc/init.d/umask.sh ${dir}/S00umask.sh
+         fi
+      done 
+   fi
+fi

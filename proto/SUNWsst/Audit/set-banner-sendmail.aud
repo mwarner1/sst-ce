@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-banner-sendmail.aud	1.8	05/05/12 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="sendmail Service Banner"
+servfil="set-banner-sendmail.aud"
+
+SENDMAIL="${JASS_ROOT_DIR}etc/mail/sendmail.cf"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   sendmail displays a service banner when a host connects to port 25.
+   A generic string is returned to mask mail server version information.
+
+Rationale for Verification Check:
+
+   This script is designed to verify that the sendmail service has a
+   service banner installed that matches the value defined by the
+   JASS_BANNER_SENDMAIL parameter.
+
+Determination of Compliance:
+
+   This script checks that the sendmail service banner matches the value
+   defined by the JASS_BANNER_SENDMAIL parameter.  This script will indicate
+   a failure if the service banner does not match.  The value of the
+   JASS_BANNER_SENDMAIL parameter is:
+
+`printPretty \"${JASS_BANNER_SENDMAIL}\"`
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+PARAM="O SmtpGreetingMessage"
+
+if check_os_min_revision 5.9 ; then
+   if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsndmr ; then
+      if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsndmu ; then
+         if check_fileExists ${SENDMAIL} 1 ; then
+            if check_fileContentsExist ${SENDMAIL} \
+               "^${PARAM}=${JASS_BANNER_SENDMAIL}" 1 ; then
+               logSuccess "sendmail service banner matches value of JASS_BANNER_SENDMAIL."
+            else
+               if check_fileContentsExist ${SENDMAIL} "^${PARAM}=" 0 ; then
+                  logFailure "sendmail service banner does not match value of JASS_BANNER_SENDMAIL."
+               else
+                  logFailure \
+                     'sendmail service banner is not defined in ${SENDMAIL}.'
+               fi
+            fi
+
+         else
+            logFileNotFound "${SENDMAIL}" 1
+         fi
+      else
+         logNotice \
+            "Sendmail (package SUNWsndmr) does not appear to be installed."
+      fi
+   else
+      logNotice "Sendmail (package SUNWsndmu) does not appear to be installed."
+   fi
+
+else
+   logInvalidOSRevision "5.9+"
+fi
+
+finish_audit

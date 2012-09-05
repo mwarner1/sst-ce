@@ -1,0 +1,308 @@
+#!/bin/sh -x
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)driver.run	3.34	05/04/27 SMI"
+#
+
+# The following variable is a global variable defined for this script
+# that would allow files "saved" by the backup_file function to be
+# later removed if the JASS_SAVE_BACKUP variable is set to "0".
+
+JASS_SAVED_LIST=""
+export JASS_SAVED_LIST
+
+# The following variable is a global variable defined for this script
+# that will allow all functions to know the name of the currently
+# running Finish script.  Note that if copy_files is running (outside
+# of a Finish script), this variable will be set to "none".
+
+JASS_SCRIPT="none"
+export JASS_SCRIPT
+
+# The following is a global variable used to capture the total score
+# related to a driver's audit run (including file templates and
+# Finish scripts.
+
+JASS_AUDIT_SCORE="0"
+export JASS_AUDIT_SCORE
+
+# ============================================================================
+# Main Routine
+# ============================================================================
+
+# Determine the name of this driver.
+
+DRV_NAME="`basename $0`"
+export DRV_NAME
+
+# Determine the current working directory.
+
+INI_DIR="`pwd`"
+
+# Determine the current directory of the driver.
+# First, change directory to the target, then using the
+# "pwd" command, gain the fully qualified path to the
+# file.  This is used to prevent certain issues with
+# relative pathnames when Finish scripts fail.
+
+DRV_DIR="`dirname $0`"
+export DRV_DIR
+
+cd ${DRV_DIR}
+DRV_DIR="`pwd`"
+
+# Determine if the initialization scripts have been run.
+# This is necessary to make sure all critical variables
+# have been defined.
+
+if [ "${JASS_OS_REVISION}" = "" ]; then
+   echo "[ERR ] "`gettext "The initialization scripts have not been executed."`
+   exit 1
+fi
+
+# Import the functions we need after we verify that the
+# initialization scripts have been run.
+
+. ${JASS_HOME_DIR}/Drivers/common_misc.funcs
+. ${JASS_HOME_DIR}/Drivers/common_log.funcs
+. ${JASS_HOME_DIR}/Drivers/driver_private.funcs
+. ${JASS_HOME_DIR}/Drivers/driver_public.funcs
+. ${JASS_HOME_DIR}/Drivers/audit_private.funcs
+. ${JASS_HOME_DIR}/Drivers/audit_public.funcs
+
+if [ "${JASS_STANDALONE}" = "0" ]; then
+   if [ "${JASS_PACKAGE_MOUNT}" = "" ]; then
+      logError 'FATAL: JASS_PACKAGE_MOUNT has not been defined in user.init.'
+      exit 1
+   fi
+
+   if [ "${JASS_PATCH_MOUNT}" = "" ]; then
+      logError 'FATAL: JASS_PATCH_MOUNT has not been defined in user.init.'
+      exit 1
+   fi
+fi
+
+# Read in the user-specified functions file if it exists.
+
+if [ -f ${JASS_USER_DIR}/user.run ]; then
+   . ${JASS_USER_DIR}/user.run
+fi
+
+# If not already available, create the log/backout directory.
+
+if [ ! -d ${JASS_REPOSITORY} ]; then
+
+   mkdir -m 700 -p ${JASS_REPOSITORY}
+
+   if [ $? != 0 ]; then
+      logError 'FATAL: Could not create ${JASS_REPOSITORY}.'
+      exit 1
+   fi
+
+   echo "${JASS_VERSION}/JumpStart/${DRV_NAME}" > ${JASS_RUN_VERSION}
+
+   if [ "${JASS_STANDALONE}" = "0" ]; then
+      ln -s /var/sadm/system/logs/finish.log ${JASS_RUN_INSTALL_LOG}
+   else
+      touch ${JASS_RUN_INSTALL_LOG}
+   fi
+
+   touch ${JASS_RUN_MANIFEST}
+   touch ${JASS_RUN_CHECKSUM}
+   touch ${JASS_RUN_SCRIPT_LIST}
+   touch ${JASS_RUN_VALUES}
+   touch ${JASS_SCRIPT_ERROR_LOG}
+   touch ${JASS_SCRIPT_WARN_LOG}
+   touch ${JASS_SCRIPT_FAIL_LOG}
+   touch ${JASS_SCRIPT_NOTE_LOG}
+
+fi
+chown -Rh root:root ${JASS_REPOSITORY}
+
+JASS_SCRIPT_LIST="${JASS_SCRIPTS}"
+JASS_FILE_LIST="${JASS_FILES}"
+
+case "${JASS_OS_REVISION}" in
+
+   5.5.1)
+        JASS_SCRIPT_LIST="${JASS_SCRIPT_LIST} ${JASS_SCRIPTS_5_5_1}"
+        JASS_FILE_LIST="${JASS_FILE_LIST} ${JASS_FILES_5_5_1}"
+	;;
+   5.6)
+        JASS_SCRIPT_LIST="${JASS_SCRIPT_LIST} ${JASS_SCRIPTS_5_6}"
+        JASS_FILE_LIST="${JASS_FILE_LIST} ${JASS_FILES_5_6}"
+	;;
+   5.7)
+        JASS_SCRIPT_LIST="${JASS_SCRIPT_LIST} ${JASS_SCRIPTS_5_7}"
+        JASS_FILE_LIST="${JASS_FILE_LIST} ${JASS_FILES_5_7}"
+	;;
+   5.8)
+        JASS_SCRIPT_LIST="${JASS_SCRIPT_LIST} ${JASS_SCRIPTS_5_8}"
+        JASS_FILE_LIST="${JASS_FILE_LIST} ${JASS_FILES_5_8}"
+	;;
+   5.9)
+        JASS_SCRIPT_LIST="${JASS_SCRIPT_LIST} ${JASS_SCRIPTS_5_9}"
+        JASS_FILE_LIST="${JASS_FILE_LIST} ${JASS_FILES_5_9}"
+	;;
+   5.10)
+        JASS_SCRIPT_LIST="${JASS_SCRIPT_LIST} ${JASS_SCRIPTS_5_10}"
+        JASS_FILE_LIST="${JASS_FILE_LIST} ${JASS_FILES_5_10}"
+	;;
+   *)
+	logError 'Operating system version ${JASS_OS_REVISION} is not supported.'
+	exit 0
+	;;
+
+esac
+
+export JASS_SCRIPT_LIST
+export JASS_FILE_LIST
+
+logBanner '${DRV_NAME}: Driver started.'
+
+#
+# Print identification banner.
+#
+
+print_banner
+
+
+if [ "${JASS_MODE}" = "APPLY" ]; then
+   # Mount any necessary file systems.
+   mount_filesystems
+
+fi
+
+# The following line replaces the use of copy_files().  It is also used
+# by the audit functionality as well.
+
+if [ "`echo ${JASS_FILE_LIST}`" != "" ]; then
+   JASS_SCRIPT_LIST="install-templates.fin ${JASS_SCRIPT_LIST}"
+fi
+
+skipComment="0"
+
+for script in `extractComments "${JASS_SCRIPT_LIST}"`; do
+   mode="Finish"
+   dir=${JASS_FINISH_DIR}
+   mscript=${script}
+
+   if [ "${JASS_MODE}" = "APPLY" ]; then
+      if [ `echo "${script}" | grep -c "\.fin$"` != 1 ]; then
+         continue
+      fi
+   elif [ "${JASS_MODE}" = "AUDIT" ]; then
+      mscript="`echo ${script} | sed 's/\.fin/\.aud/g'`"
+      dir=${JASS_AUDIT_DIR}
+      mode="Audit"
+   fi
+
+   logBanner '${DRV_NAME}: ${mode} script: ${mscript}'
+
+   if [ -f "${dir}/${mscript}" ]; then
+
+      # Log the fact that this file was run.  The JASS_SCRIPT
+      # variable is used for any function which needs to know what
+      # script is currently running.
+
+      _error=0
+      _warn=0
+      _notice=0
+      _failure=0
+
+      SCRIPT_SCORE=0
+      JASS_SCRIPT="${mscript}"
+      echo "${JASS_SCRIPT}" >> ${JASS_RUN_SCRIPT_LIST}
+      . ${dir}/${mscript}
+      JASS_AUDIT_SCORE="`expr ${JASS_AUDIT_SCORE} + ${SCRIPT_SCORE}`"
+
+      logScriptFailure "error"   ${_error}
+      logScriptFailure "warning"    ${_warn}
+      logScriptFailure "note"    ${_notice}
+      logScriptFailure "failure" ${_failure}
+
+   else
+      SCRIPT_NAME="${DRV_NAME}"
+      logFileNotFound "${script}"
+   fi
+
+   if [ "${JASS_MODE}" = "APPLY" ]; then
+      cleanup_files
+   fi
+done
+
+if [ "${JASS_MODE}" = "APPLY" ]; then
+   #
+   # Unmount any file systems previously mounted.
+   #
+
+   unmount_filesystems
+elif [ "${JASS_MODE}" = "AUDIT" ]; then
+
+   logBanner ''
+
+   if [ ${JASS_VERBOSITY} -ge 1 ]; then
+      SCRIPT_NAME="${DRV_NAME}"
+      logMessage "${JASS_MSG_DRIVER_TOTAL}"
+      logScore 'Driver Total:' "${JASS_AUDIT_SCORE}"
+   fi
+
+   tmpScoreFile="${JASS_REPOSITORY}/.tmpScore"
+   if [ -s ${tmpScoreFile} ]; then
+      tmpScore="`cat ${tmpScoreFile}`"
+      echo "`expr ${tmpScore} + ${JASS_AUDIT_SCORE}`" > ${tmpScoreFile}
+   else
+      echo "${JASS_AUDIT_SCORE}" > ${tmpScoreFile}
+   fi
+fi
+
+
+#
+# Reset any variables that may have been set in the driver.
+#
+
+JASS_FILES=""
+JASS_FILES_5_5_1=""
+JASS_FILES_5_6=""
+JASS_FILES_5_7=""
+JASS_FILES_5_8=""
+JASS_FILES_5_9=""
+JASS_FILES_5_10=""
+
+JASS_SCRIPTS=""
+JASS_SCRIPTS_5_5_1=""
+JASS_SCRIPTS_5_6=""
+JASS_SCRIPTS_5_7=""
+JASS_SCRIPTS_5_8=""
+JASS_SCRIPTS_5_9=""
+JASS_SCRIPTS_5_10=""
+
+#
+# Return back to the original, working directory.
+#
+
+cd ${INI_DIR}
+
+logBanner '${DRV_NAME}: Driver finished.'

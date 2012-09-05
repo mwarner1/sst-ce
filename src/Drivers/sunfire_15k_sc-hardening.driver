@@ -1,0 +1,208 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)sunfire_15k_sc-hardening.driver	3.32	05/06/13 SMI"
+#
+# This script is described in the July, 2002 BluePrint OnLine article called:
+#
+#      Securing the Sun Fire 15K System Controller:
+#      updated for SMS 1.2
+#
+# and should be used to harden the SC when building secured Sun Fire
+# 15K systems.
+#
+# The article may be found online at:
+#
+#     http://www.sun.com/security/blueprints
+#        or
+#     http://www.sun.com/blueprints/browsesubject.html#security
+#
+# The purpose of this driver is to implement the Solaris Operating System
+# hardening recommendations that are documented in the Sun BluePrints OnLine
+# articles (Solaris Operating Environment Security and Solaris OE Network
+# Settings for Security).
+#
+
+DIR="`/bin/dirname $0`"
+export DIR
+
+. ${DIR}/driver.init
+
+JASS_FILES="
+		/etc/dt/config/Xsession.d/0050.warning
+		/etc/dt/config/Xaccess
+		/etc/init.d/set-tmp-permissions
+		/etc/issue
+		/etc/motd
+		/etc/rc2.d/S00set-tmp-permissions
+		/etc/rc2.d/S07set-tmp-permissions
+"
+# The /etc/syslog.conf included in JASS will overwrite the
+# SMS provided syslog.conf. Correspondingly the JASS /etc/syslog.conf
+# has been removed from the Starcat SC driver.
+
+# Note: install-strong-permissions.fin, install-fix-modes.fin, and
+# enable-bart.fin are generally always the last Finish scripts to run
+# as their effects could be undone by Finish scripts that would follow them.
+# The install-fix-modes.fin script is generally run first.  If additional
+# tightening is required, install-strong-permissions.fin can be used.  The
+# enable-bart.fin script captures the state of the filesystem in a manifest.
+#
+# Note: install-security-mode.fin is not included in the script list
+# since it requires manual intervention.  For more information, refer
+# to the script source code.
+#
+# Note: print-rhosts.fin is not included in the script list as it takes
+# several seconds to complete.  Enable to detect .rhosts or hosts.equiv
+# files.
+#
+
+#=============================================================================
+#=============================================================================
+# Note: The s15k-*.fin scripts may be optionally uncommented depending
+# on the security requirements for the Sun Fire 15K SC.  Refer to
+# the Sun BluePrints OnLine article "Securing the Sun Fire(TM) 15K
+# System Controller" for more information.
+#
+# Note: To configure the SMS software to use Secure Shell for failover,
+# the following parameter (jassSMSSecureFailover) should be set to 1.
+# Doing so, will automatically add the Finish script,
+# s15k-sms-secure-failover.fin to the JASS_SCRIPTS list.  By default,
+# its value of 0 indicates that the rlogin, rsh and rexec services
+# should remain enabled (by adding them automatically to JASS_SVCS_ENABLE).
+#=============================================================================
+#=============================================================================
+
+# Set this parameter to 1 if you want to configure SMS to use Secure Shell.
+jassSMSSecureFailover=0
+
+
+JASS_SCRIPTS="
+#		s15k-exclude-domains.fin
+#		s15k-static-arp.fin
+		disable-apache.fin
+		disable-asppp.fin
+#		disable-autoinst.fin
+		disable-automount.fin
+		disable-dhcpd.fin
+		disable-directory.fin
+		disable-dmi.fin
+		disable-dtlogin.fin
+		disable-face-log.fin
+		disable-ipv6.fin
+#		disable-keyboard-abort.fin
+		disable-kdc.fin
+                disable-keyserv-uid-nobody.fin
+		disable-ldap-client.fin
+		disable-lp.fin
+		disable-mipagent.fin
+		disable-nfs-client.fin
+		disable-nfs-server.fin
+                disable-nscd-caching.fin
+		disable-ppp.fin
+		disable-preserve.fin
+		disable-power-mgmt.fin
+#		disable-remote-root-login.fin
+#		disable-rhosts.fin
+                disable-routing.fin
+		disable-samba.fin
+		disable-sendmail.fin
+		disable-slp.fin
+		disable-snmp.fin
+		disable-spc.fin
+#		disable-syslogd-listen.fin
+                disable-system-accounts.fin
+		disable-uucp.fin
+		disable-vold.fin
+		disable-wbem.fin
+		disable-xfs.fin
+		disable-xserver-listen.fin
+		enable-account-lockout.fin
+		enable-coreadm.fin
+		enable-ftpaccess.fin
+		enable-ftp-syslog.fin
+		enable-inetd-syslog.fin
+		enable-ipfilter.fin
+		enable-password-history.fin
+                enable-priv-nfs-ports.fin
+		enable-process-accounting.fin
+		enable-rfc1948.fin
+		enable-stack-protection.fin
+                enable-tcpwrappers.fin
+		install-at-allow.fin
+		install-ftpusers.fin
+		install-loginlog.fin
+		install-md5.fin
+		install-nddconfig.fin
+		install-newaliases.fin
+		install-sadmind-options.fin
+		install-security-mode.fin
+		install-shells.fin
+		install-sulog.fin
+#		print-rhosts.fin
+		remove-unneeded-accounts.fin
+		set-banner-dtlogin.fin
+		set-banner-ftpd.fin
+		set-banner-sendmail.fin
+		set-banner-sshd.fin
+		set-banner-telnetd.fin
+		set-flexible-crypt.fin
+		set-ftpd-umask.fin
+		set-login-retries.fin
+		set-power-restrictions.fin
+		set-rmmount-nosuid.fin
+		set-root-home-dir.fin
+		set-root-group.fin
+		set-strict-password-checks.fin
+		set-sys-suspend-restrictions.fin
+		set-system-umask.fin
+		set-tmpfs-limit.fin
+                set-user-password-reqs.fin
+		set-user-umask.fin
+		update-at-deny.fin
+		update-cron-allow.fin
+		update-cron-deny.fin
+		update-cron-log-size.fin
+                update-inetd-conf.fin
+		install-fix-modes.fin
+		enable-bart.fin
+"
+
+
+# Ensure that the s15k-sms-secure-failover.fin script is used.
+# s15k-sms-override.fin must always come first.
+# s15k-sms-secure-failover.fin must always come second.
+JASS_SCRIPTS="s15k-sms-override.fin s15k-sms-secure-failover.fin ${JASS_SCRIPTS}"
+
+# Following entries have been removed from the
+# sunfire_15k_sc-hardening.driver:
+#		enable-bsm.fin
+#		disable-picld.fin
+#		disable-rpc.fin
+#		disable-ssh-root-login.fin
+#		install-strong-permissions.fin
+
+. ${DIR}/driver.run
+

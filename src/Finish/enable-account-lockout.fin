@@ -1,0 +1,110 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-account-lockout.fin	1.5	05/04/12 SMI"
+#
+# This script enables account lockout via the LOCK_AFTER_RETRIES variable
+# in /etc/security/policy/conf
+#
+
+logMessage "Enabling account lockout to lock user accounts with repeated failed entries."
+echo ""
+
+if check_os_min_revision 5.10 ; then
+
+   POLICY=${JASS_ROOT_DIR}etc/security/policy.conf
+   ATTR=${JASS_ROOT_DIR}etc/user_attr
+
+   if [ ! -f ${POLICY} ]; then
+      create_a_file -m 644 -o root:sys ${POLICY}
+      echo ""
+   fi
+
+
+   # We need to get the value of LOCK_AFTER_RETRIES from /etc/security/policy.conf
+   _currentValue=`grep "LOCK_AFTER_RETRIES=" ${POLICY} | grep -v "^#" | nawk -F\= '{ print $2 }'`
+
+   # For now, we are only excepting 'root'. If this is not deemed acceptable
+   # We will need to return to this code, and probably add an ENV variable.
+   WARN_LIST="`get_users_with_retries_set \"root\"`"
+   _unset_users=`echo $WARN_LIST | wc -w | nawk '{print $1}'`
+
+   if [ "${_unset_users}" != "0" ]; then
+      if [ "${_unset_users}" = "1" ]; then
+	 logWarning 'There is ${_unset_users} account without lock_after_retries set.'
+	 logWarning 'Account: ${WARN_LIST}.'
+      else
+	 logWarning 'There are ${_unset_users} accounts without lock_after_retries set.'
+	 logWarning 'Accounts: ${WARN_LIST}.'
+      fi
+
+      echo ""
+      backup_file ${ATTR}
+
+      for USER in ${WARN_LIST}; do
+	 logNotice 'Removing lock_after_retries user_attr(4) entry for user ${USER}.'
+	 `usermod -K lock_after_retries= ${USER}`
+      done
+   fi
+
+   echo ""
+
+   if [ "${_currentValue}" != "YES" ]; then
+      # We need to set the value in policy.conf
+      backup_file ${POLICY}
+      echo ""
+
+      logNotice 'Setting LOCK_AFTER_RETRIES to YES in ${POLICY}.'
+
+      if [ `grep -c "LOCK_AFTER_RETRIES=" ${POLICY}` = 0 ]; then
+	 cat>> ${POLICY} <<INFO
+# LOCK_AFTER_RETRIES specifies the default account locking policy for local
+# user accounts (passwd(4)/shadow(4)).  The default may be overridden by
+# a user's user_attr(4) "lock_after_retries" value.
+# YES enables local account locking, NO disables local account locking.
+# The default value is NO.
+#
+LOCK_AFTER_RETRIES=YES
+INFO
+
+      else
+	 nawk '$1 ~ /^#.*LOCK_AFTER_RETRIES=/ { printf("LOCK_AFTER_RETRIES=YES\n"); }
+	          $1 ~ /^" "*LOCK_AFTER_RETRIES=/ { printf("LOCK_AFTER_RETRIES=YES\n"); }
+		  $1 ~ /^LOCK_AFTER_RETRIES=/ { printf("LOCK_AFTER_RETRIES=YES\n");  }
+		  $1 !~ /LOCK_AFTER_RETRIES=/ { print $0 }' ${POLICY}.${JASS_SUFFIX} > ${POLICY}
+      fi
+   fi
+# 16 December 2011 Matt Warner
+# in Solaris 11, lock_after_retries=no by default, so there is no entry for root
+# However, after running this script, lock_after_retries will default to yes in /etc/security/policy.conf
+# and that will make it possible to lockout root. Fix that here
+if check_os_min_revision 5.11 ; then
+ rolemod -K lock_after_retries=no root
+fi
+
+else
+   logInvalidOSRevision "5.10+"
+fi
+

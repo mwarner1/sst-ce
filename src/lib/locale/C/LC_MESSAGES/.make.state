@@ -1,0 +1,64 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES:
+	[ -d ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES ] || /bin/mkdir -p ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/add-client.mo:
+	/usr/bin/cp -f add-client.mo ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/add-client.mo
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/add-client.mo
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/add-client.po:
+	/usr/bin/cp -f add-client.po ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/add-client.po
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/add-client.po
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass-check-sum.mo:
+	/usr/bin/cp -f jass-check-sum.mo ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass-check-sum.mo
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass-check-sum.mo
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass-check-sum.po:
+	/usr/bin/cp -f jass-check-sum.po ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass-check-sum.po
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass-check-sum.po
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass.mo:
+	/usr/bin/cp -f jass.mo ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass.mo
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass.mo
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass.po:
+	/usr/bin/cp -f jass.po ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass.po
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/jass.po
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/make-jass-pkg.mo:
+	/usr/bin/cp -f make-jass-pkg.mo ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/make-jass-pkg.mo
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/make-jass-pkg.mo
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/make-jass-pkg.po:
+	/usr/bin/cp -f make-jass-pkg.po ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/make-jass-pkg.po
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/make-jass-pkg.po
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/rm-client.mo:
+	/usr/bin/cp -f rm-client.mo ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/rm-client.mo
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/rm-client.mo
+.BUILT_LAST_MAKE_RUN:
+../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/rm-client.po:
+	/usr/bin/cp -f rm-client.po ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/rm-client.po
+	/usr/bin/chmod 444 ../../../../../proto/SUNWsst/lib/locale/C/LC_MESSAGES/rm-client.po
+.BUILT_LAST_MAKE_RUN:
+add-client.mo:
+	/bin/msgfmt -o add-client.mo add-client.po
+	/usr/bin/chmod 644 add-client.mo
+.BUILT_LAST_MAKE_RUN:
+jass-check-sum.mo:
+	/bin/msgfmt -o jass-check-sum.mo jass-check-sum.po
+	/usr/bin/chmod 644 jass-check-sum.mo
+.BUILT_LAST_MAKE_RUN:
+jass.mo:
+	/bin/msgfmt -o jass.mo jass.po
+	/usr/bin/chmod 644 jass.mo
+.BUILT_LAST_MAKE_RUN:
+make-jass-pkg.mo:
+	/bin/msgfmt -o make-jass-pkg.mo make-jass-pkg.po
+	/usr/bin/chmod 644 make-jass-pkg.mo
+.BUILT_LAST_MAKE_RUN:
+rm-client.mo:
+	/bin/msgfmt -o rm-client.mo rm-client.po
+	/usr/bin/chmod 644 rm-client.mo

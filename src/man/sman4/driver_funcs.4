@@ -1,0 +1,112 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<!ENTITY file-name CDATA "driver_funcs">
+<!ENTITY ModifiedDate CDATA "11 October 2004">
+<!ENTITY man4 CDATA "File Formats">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.1">
+<!ENTITY suncopy CDATA "Copyright (c) 2004, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY SST-REFMAN CDATA "Solaris Security Toolkit 4.1 Reference Manual">
+<!ENTITY exam-tt CDATA "EXAMPLES">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry os = "solaris"><refmeta><refentrytitle>driver_funcs</refentrytitle>
+<manvolnum>4</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man4;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>alias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>unalias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>pseudonym, create
+or remove</primary></indexterm></refmeta>
+<refnamediv>
+<refname>driver_funcs</refname><refpurpose>Solaris Security Toolkit
+(JASS) driver functions</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<synopsis os = "solaris"><filename>driver_funcs</filename></synopsis></refsynopsisdiv>
+<refsect1 os = "solaris"><title>&desc-tt;</title><indexterm CLASS
+= "singular" SIGNIFICANCE = "Normal"><primary sortas = "alias">alias
+ shell built-in functions to create your own pseudonym or shorthand
+for a command or series of commands</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary sortas = "unalias">unalias
+ shell built-in functions to create your own pseudonym or shorthand
+for a command or series of commands</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>shell command
+interpreter builtin-functions</primary>
+<secondary sortas = "alias"> alias</secondary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>shell command
+interpreter builtin-functions</primary>
+<secondary sortas = "unalias"> unalias</secondary></indexterm>
+<para os = "solaris">These functions are for Solaris Security Toolkit (also known as JASS) driver functionality. These functions are in the <filename>driver.funcs</filename> file, located in the Drivers directory. Functions such as <filename>add_pkg</filename> and <filename>copy_a_file</filename> are in this file.</para>
+<para os = "solaris">When customizing or creating scripts, use the following functions to perform standard operations:<itemizedlist
+    mark = "bullet" spacing = "normal"><listitem os = "solaris"><para os = "solaris"><filename>add_patch</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>add_pkg</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>add_to_manifest</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>backup_file</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>check_os_main_version</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>check_os_revision</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>copy_a_dir</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>copy_a_file</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>copy_a_symlink</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>copy_files</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>create_a_file</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>create_file_timestamp</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>disable_conf_file</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>disable_file</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>disable_rc_file</filename></para></listitem>
+<listitem os = "solaris"><para os = "solaris"><filename>is_patch_applied</filename></para></listitem></itemizedlist></para>
+<para os = "solaris">For detailed information and instructions on the use of each of these functions please refer to the "Framework Functions" chapter of the <citetitle pubwork = "book">&SST-REFMAN;</citetitle>.</para></refsect1>
+<refsect1 os = "solaris"><title>&exam-tt;</title>
+<example width = "100" os = "solaris"><title>Adding a Single Patch</title><screen width = "100" format = "linespecific">
+add_patch 123456-01
+</screen></example>
+<example width = "100" os = "solaris"><title>Adding a Patch List</title><screen width = "100" format = "linespecific">
+add_patch -M ${JASS_PATCH_DIR}/OtherPatches patch_list.txt
+</screen></example></refsect1>
+<refsect1 os = "solaris"><title>&attr-tt;</title>
+<para os = "solaris">See <citerefentry><refentrytitle>attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" orient = "port">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" rotate = "0" valign = "top"><para os = "solaris">ATTRIBUTE TYPE</para></entry>
+<entry colname = "2" align = "center" rotate = "0" valign = "top"><para os = "solaris">ATTRIBUTE VALUES</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" rotate = "0" valign = "top"><para os = "solaris">Availability</para></entry>
+<entry colname = "2" align = "left" rotate = "0" valign = "top"><para os = "solaris">SUNWsst</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 os = "solaris"><title>&also-tt;</title>
+<para os = "solaris"><citerefentry><refentrytitle>add-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para os = "solaris"><citerefentry><refentrytitle>audit_public_funcs</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para os = "solaris"><citerefentry><refentrytitle>common_log_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para os = "solaris"><citerefentry><refentrytitle>common_misc_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para os = "solaris"><citerefentry><refentrytitle>jass-check-sum</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para os = "solaris"><citerefentry><refentrytitle>jass-execute</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para os = "solaris"><citerefentry><refentrytitle>make-jass-pkg</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para os = "solaris"><citerefentry><refentrytitle>rm-client</refentrytitle>
+<manvolnum>7</manvolnum></citerefentry></para>
+<para os = "solaris"><citerefentry><refentrytitle>security_drivers</refentrytitle>
+<manvolnum>7</manvolnum></citerefentry></para></refsect1></refentry>

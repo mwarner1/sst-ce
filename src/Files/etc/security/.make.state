@@ -1,0 +1,48 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security:
+	[ -d ../../../../proto/SUNWsst/Files/etc/security ] || /bin/mkdir -p ../../../../proto/SUNWsst/Files/etc/security
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_class+5.10:
+	/usr/bin/cp -f audit_class+5.10 ../../../../proto/SUNWsst/Files/etc/security/audit_class+5.10
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_class+5.10
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_class+5.11:
+	/usr/bin/cp -f audit_class+5.11 ../../../../proto/SUNWsst/Files/etc/security/audit_class+5.11
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_class+5.11
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_class+5.8:
+	/usr/bin/cp -f audit_class+5.8 ../../../../proto/SUNWsst/Files/etc/security/audit_class+5.8
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_class+5.8
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_class+5.9:
+	/usr/bin/cp -f audit_class+5.9 ../../../../proto/SUNWsst/Files/etc/security/audit_class+5.9
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_class+5.9
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_control:
+	/usr/bin/cp -f audit_control ../../../../proto/SUNWsst/Files/etc/security/audit_control
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_control
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_control-cis:
+	/usr/bin/cp -f audit_control-cis ../../../../proto/SUNWsst/Files/etc/security/audit_control-cis
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_control-cis
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_event+5.10:
+	/usr/bin/cp -f audit_event+5.10 ../../../../proto/SUNWsst/Files/etc/security/audit_event+5.10
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_event+5.10
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_event+5.11:
+	/usr/bin/cp -f audit_event+5.11 ../../../../proto/SUNWsst/Files/etc/security/audit_event+5.11
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_event+5.11
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_event+5.8:
+	/usr/bin/cp -f audit_event+5.8 ../../../../proto/SUNWsst/Files/etc/security/audit_event+5.8
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_event+5.8
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_event+5.9:
+	/usr/bin/cp -f audit_event+5.9 ../../../../proto/SUNWsst/Files/etc/security/audit_event+5.9
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_event+5.9
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/security/audit_startup-cis:
+	/usr/bin/cp -f audit_startup-cis ../../../../proto/SUNWsst/Files/etc/security/audit_startup-cis
+	/usr/bin/chmod 444 ../../../../proto/SUNWsst/Files/etc/security/audit_startup-cis

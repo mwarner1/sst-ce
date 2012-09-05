@@ -1,0 +1,130 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident  "@(#)install-fix-modes.aud 1.12     04/06/02     SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Fix Modes"
+servfil="install-fix-modes.aud"
+
+FIXMODESTAR="`clean_path ${JASS_ROOT_DIR}${JASS_FIXMODES_DIR}/FixModes`"
+FIXMODESPKG="`clean_path ${JASS_ROOT_DIR}${JASS_FIXMODES_DIR}/SUNBEfixm`"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Rationale for Verification Check:
+
+   Ownership and permissions of filesystem objects can typically be tuned in
+   some versions of the Solaris OE to improve the system's overall security 
+   posture.  To automate this tuning, the Fix Modes tool, developed by Casper
+   Dik, can and should be used.  The tool is available from:
+   
+      http://www.sun.com/blueprints/tools/
+
+   This script expects the software to be installed into either the 
+   ${FIXMODESTAR} or ${FIXMODESPKG} directory in accordance with the 
+   Finish script, install-fix-modes.fin.
+
+Determination of Compliance:
+
+   This script determines if the Fix Modes program has been installed and
+   run on the system.  The script will indicate a failure if the software
+   is not installed or has not been run.  
+
+   Further, this script will attempt to use Fix Modes in debug mode to 
+   determine if any additional filesystem objects should be adjusted.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+CONTENTS="${JASS_ROOT_DIR}var/sadm/install/contents.mods"
+fixModesInstalled=0
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_revision 5.5.1 5.9 ; then
+
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+
+   if check_fileExists ${FIXMODESTAR}/fix-modes 0 ; then
+      logSuccess 'The Fix Modes software exists in ${FIXMODESTAR}.'
+      fixModesInstalled=1
+      FIXMODES=$FIXMODESTAR
+   else
+      logNotice 'The Fix Modes software does not exist in ${FIXMODESTAR}.'
+   fi
+
+   if check_fileExists ${FIXMODESPKG}/fix-modes 0 ; then
+      logSuccess 'The Fix Modes software exists in ${FIXMODESPKG}.'
+      fixModesInstalled=1
+      FIXMODES=$FIXMODESPKG
+   else
+      logNotice 'The Fix Modes software does not exist in ${FIXMODESPKG}.'
+   fi
+   
+   if [ $fixModesInstalled -lt 1 ]; then
+      adjustScore 1
+      logFailure "Fix Modes software is not installed on system."
+   fi
+   
+   # Note: This check is outside of the one above, since the software could 
+   # have been used and then removed.
+   
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   
+   if check_fileExists ${CONTENTS} 1 ; then
+      logSuccess "The Fix Modes has been used on this system."
+   else
+      logFailure "The Fix Modes has not been used on this system."
+   fi
+   
+   logMessage "\n# Checking for files that would be changed by Fix Modes.\n "
+   
+   if [ ${fixModesInstalled} -eq 1 ]; then
+      ${FIXMODES}/fix-modes -d 2>/dev/null |\
+         while read type mode arg1 arrow arg2 object other; do
+         if [ "${type}" = "xargs" ]; then
+            break
+         fi
+         if [ "${mode}" = "m" ]; then
+            logFailure 'Object ${object} should be mode ${arg2}.'
+         elif [ "${mode}" = "o" ]; then
+            logFailure 'Object ${object} should have owner ${arg2}.'
+         fi
+      done 
+   fi
+
+else   
+   logInvalidOSRevision "5.5.1-5.9"
+fi
+
+finish_audit

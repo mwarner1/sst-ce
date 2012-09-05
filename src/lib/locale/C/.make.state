@@ -1,0 +1,6 @@
+.MAKE_VERSION:	VERSION-1.0
+../../../../proto/SUNWsst/lib/locale/C:
+	[ -d ../../../../proto/SUNWsst/lib/locale/C ] || /bin/mkdir -p ../../../../proto/SUNWsst/lib/locale/C
+.BUILT_LAST_MAKE_RUN:
+LC_MESSAGES:
+	cd LC_MESSAGES; pwd; make install

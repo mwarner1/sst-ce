@@ -1,0 +1,11 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+/export/home/mwarner/sst-ce/Releases:
+	[ -d /export/home/mwarner/sst-ce/src/pkgdefs/../../Releases ] || mkdir -p /export/home/mwarner/sst-ce/src/pkgdefs/../../Releases
+.BUILT_LAST_MAKE_RUN:
+pkg:
+	/bin/pkgmk -f prototype_com -d /export/home/mwarner/sst-ce/src/pkgdefs/../../Releases -r /export/home/mwarner/sst-ce/src/pkgdefs/../../proto -o SUNWsst
+	/bin/pkgtrans -n -o -s /export/home/mwarner/sst-ce/src/pkgdefs/../../Releases /export/home/mwarner/sst-ce/src/pkgdefs/../../Releases/SUNWsst.pkg SUNWsst
+.BUILT_LAST_MAKE_RUN:
+pkginfo:
+	/usr/bin/rm -f pkginfo; /usr/bin/sed -e "s/__VERSION__/5.0.0/g" pkginfo.tmpl > pkginfo

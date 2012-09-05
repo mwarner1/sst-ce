@@ -1,0 +1,128 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)disable-xdmcp.aud		1.4	07/02/05 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="XDMCP gui logins"
+servfil="disable-xdmcp.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The XDMCP protocol is used to remotely connect to GUI window managers.  This
+   is used by dtlogin(1X), as well as other window managers such as GDM.
+
+Rationale for Verification Check:
+
+   Preventing remote logins to local window managers can help prevent
+   unathorized access to the system.  If needed, SSH tunneling would be
+   a more secure choice than XDMCP.
+
+Determination of Compliance:
+
+   This script determines if any of the window managers on the system are
+   configured to allow XDMCP requests.  It will indicate a failure if any
+   are.
+
+"
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWdtlog SUNWdtdte SUNWgnome-display-mgr-root
+"
+
+#-----------------------------------------------------------------------------
+
+servsrc="
+   ${JASS_ROOT_DIR}etc/rc2.d/S99dtlogin
+"
+
+#-----------------------------------------------------------------------------
+
+
+svc="
+   svc:/application/graphical-login/cde-login
+"
+
+# You can't check a service for existence on a running system, since a 
+# dependency might have created it.  Instead, check the instance. 
+svcinst="
+   svc:/application/graphical-login/cde-login:default
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10; then
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized_service "${svcinst}" 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   if check_sbd_available; then
+      if check_serviceInstalled "${svcinst}" 0; then
+	 check_serviceOptionEnabled "${svc}" "dtlogin/args" "" \
+	  '-udpPort\\ 0' 1 LOG
+      fi
+   else
+      XCONFIG="${JASS_ROOT_DIR}etc/dt/config/Xconfig"
+      if check_fileExists "${XCONFIG}" 1 LOG; then
+	 if check_fileContentsExist "${XCONFIG}" "^[ 	]*Dtlogin.requestPort: 0$" 1; then
+	    # - More Xemacs Formatting"
+	    logSuccess "Dtlogin.requestPort was set to 0 in ${XCONFIG}"
+	 else
+	    logFailure "There was not setting for Dtlogin.requestPort: 0 in ${XCONFIG}"
+	 fi
+      fi
+   fi
+
+   GDM="${JASS_ROOT_DIR}etc/X11/gdm/gdm.conf"
+   if check_fileExists "${GDM}" 1 LOG; then
+      pass=`nawk \
+           '
+            /^\[xdmcp\]/, /^\[/ && !/^\[xdmcp\]/ { \
+	     if ($1 ~ /^Enable=false/) {print "1"} }
+           ' ${GDM}`
+      if [ "${pass}" = "1" ]; then
+	 logSuccess "XDMCP was disabled in ${GDM}"
+      else
+	 adjustScore 1
+	 logFailure "XDMCP was not disabled in ${GDM}"
+      fi
+   fi
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+finish_audit

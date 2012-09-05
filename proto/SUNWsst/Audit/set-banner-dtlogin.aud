@@ -1,0 +1,123 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-banner-dtlogin.aud 1.10     05/03/30 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="dtlogin Service Banner"
+servfil="set-banner-dtlogin.aud"
+
+DTLOGIN="${JASS_ROOT_DIR}etc/dt/config/Xsession.d/0050.warning"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The dtlogin services displays the service banner on successful
+   authentication of a login to a graphical interface such as the Common
+   Desktop Environment.
+
+Rationale for Verification Check:
+
+   This script is designed to verify that the dtlogin service has a valid
+   banner file JASS_BANNER_DTLOGIN configured to display on successful
+   login.
+
+Determination of Compliance:
+
+   This script checks that the dtlogin service banner file matches the value 
+   defined by the JASS_BANNER_DTLOGIN parameter.  This script will indicate 
+   a failure if the service banner value does not match.  It checks the
+   banner file exists and checks that the dtstart_hello[0] parameter is
+   configured to refer to JASS_BANNER_DTLOGIN.
+
+   JASS_BANNER_DTLOGIN parameter is:
+
+`printPretty \"${JASS_BANNER_DTLOGIN}\"`
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+DTLOGIN="${JASS_ROOT_DIR}etc/dt/config/Xsession.d/0050.warning"
+PARAM="dtstart_hello"
+PREFIX="\"/usr/dt/bin/dthello -bground white -file"
+SUFFIX="&\""
+
+if check_os_min_revision 5.6 ; then
+
+   pkgExists=0
+   if check_os_min_revision 5.10 ; then
+      if is_service_installed lrc:/etc/rc2_d/S99dtlogin ; then
+         pkgExists=1
+      else
+         logNotice "CDE (lrc:/etc/rc2_d/S99dtlogin) does not appear to be installed."
+      fi
+   else
+      if check_packageExists SUNWdtdte 0 ; then
+         pkgExists=1
+      else
+         logNotice "CDE/dthello (SUNWdtdte) does not appear to be installed."
+      fi
+   fi
+   if [ $pkgExists -eq 1 ] ; then
+      if check_fileExists ${DTLOGIN} 1 ; then
+         if check_fileContentsExist ${DTLOGIN} \
+            "^${PARAM}\[0\]=${PREFIX} $JASS_BANNER_DTLOGIN ${SUFFIX}$" 1 ; then
+            logSuccess "dtlogin service banner matches value of JASS_BANNER_DTLOGIN."
+         else
+            if check_fileContentsExist ${DTLOGIN} "^${PARAM}\[0\]=" 0 ; then
+               logFailure "dtlogin service banner does not match value of JASS_BANNER_DTLOGIN."
+            else
+               logFailure 'dtlogin service banner is not defined in ${DTLOGIN}.'
+            fi
+         fi
+      else
+         logFileNotFound "${DTLOGIN}" 1
+      fi
+
+      # Check banner file exists
+   
+      if check_fileExists ${JASS_BANNER_DTLOGIN} 1 ; then
+         logSuccess 'dtlogin service banner file $JASS_BANNER_DTLOGIN exists'
+      else
+         logFileNotFound "$JASS_BANNER_DTLOGIN" 1
+      fi
+   else
+      logNotice "CDE/dthello (SUNWdtdte) does not appear to be installed."
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi
+
+finish_audit

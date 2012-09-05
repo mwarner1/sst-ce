@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)print-rhosts.fin	3.7	05/06/07 SMI"
+#
+# This script will attempt to capture all of the ".rhosts" and "hosts.equiv" 
+# files on a system starting from JASS_ROOT_DIR.  The results will be 
+# displayed on standard output unless the JASS_RHOSTS_FILE variable is 
+# defined.  If this variable is defined, then all of the results will be 
+# directed to that file.
+#
+
+FIND_COMMAND="
+   find ${JASS_ROOT_DIR} ! -local -prune -o ( -name .rhosts -o -name hosts.equiv ) -ls
+"
+
+logMessage 'Searching for all \\\".rhosts\\\" or \\\"hosts.equiv\\\" files.'
+echo ""
+
+if [ ! -z "${JASS_RHOSTS_FILE}" ]; then # output to a file
+   rm -fr ${JASS_RHOSTS_FILE}
+   touch ${JASS_RHOSTS_FILE}
+   if [ $? -ne 0 ]; then
+      logNotice 'The output file, ${JASS_RHOSTS_FILE}, could not be created.'
+   else
+      logMessage 'Recording output to ${JASS_RHOSTS_FILE}.'
+      ${FIND_COMMAND} > ${JASS_RHOSTS_FILE} 2>&1      
+   fi
+
+else # display output to stdout
+   ${FIND_COMMAND}
+fi

@@ -1,0 +1,211 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)s15k-static-arp.aud	1.17	05/07/12 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="S15K static ARP"
+servfil="s15k-static-arp.aud"
+
+SMS_V="${JASS_ROOT_DIR}opt/SUNWSMS/bin/smsversion"
+SMS_SYSID="${JASS_ROOT_DIR}opt/SUNWSMS/bin/sysid"
+SMS_SCMAN="${JASS_ROOT_DIR}etc/hostname.scman0"
+SMS_DMAN="${JASS_ROOT_DIR}etc/hostname.dman0"
+SMS_SCARP="${JASS_ROOT_DIR}etc/sms_sc_arp"
+SMS_DARP="${JASS_ROOT_DIR}etc/sms_domain_arp"
+SMS_C=${JASS_ROOT_DIR}opt/SUNWSMS/bin/smsconfig
+SMS_SCARP_FILES="
+		/etc/sms_sc_arp
+		/etc/sms_domain_arp
+		/etc/init.d/sms_arpconfig
+		/etc/rc2.d/S73sms_arpconfig
+"
+SMS_DARP_FILES="
+		/etc/sms_domain_arp
+		/etc/init.d/sms_arpconfig
+		/etc/rc2.d/S73sms_arpconfig
+"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Sun Fire 15K domains may configure static ARP on the I1 Management (MAN)
+   network (SC - Domains) to prevent internal network attacks against the SC.
+
+Rationale for Verification Check:
+
+   By default, all Sun Fire 15K domains are nodes on the internal I1
+   Management (MAN) network.  Untrusted domains can attempt unauthorized
+   access to the SC using the TCP/IP network protocol on the I1 MAN.
+
+   To protect the SC from hostile environments on the domains, static
+   ARP may be configured for the I1 MAN on the SC side to prevent guessing
+   of ARP addresses for other domains on I1 MAN.  This action prevents the
+   possibility of ARP spoofing attacks from all existing domains.  This
+   feature is available beginning with SMS 1.2.
+
+Determination of Compliance:
+
+   For SMS 1.2 and later, this script will determine if the static ARP
+   configuration files have been installed.  For SCs, the files are
+
+`printPretty \"${SMS_SCARP_FILES}\"`
+
+   while for Domains, the files are
+
+`printPretty \"${SMS_DARP_FILES}\"`
+
+   This script will check that all existing domains have ethernet addresses
+   as listed in the SC static ARP startup script and corresponding data file.
+"
+
+#-----------------------------------------------------------------------------
+
+servcmd="mand"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if [ "$JASS_SMS_OVERRIDE" = "1" ]; then
+  logNotice "This script performs no auditing operation."
+else
+
+if (check_fileExists ${SMS_SCMAN} 0 && check_fileNotExists ${SMS_DMAN} 0) ||
+(check_fileNotExists ${SMS_SCMAN} 0 && check_fileExists ${SMS_DMAN} 0); then
+
+      # Run these steps for SCs or domains first
+      if [ -f ${SMS_SCMAN} ]; then
+	 which_one="SC"
+	 arpfiles="${SMS_SCARP_FILES}"
+	 manf=${SMS_SCMAN}
+      else
+	 which_one="Domain"
+	 arpfiles="${SMS_DARP_FILES}"
+	 manf=${SMS_DMAN}
+      fi
+
+      # Check that the static ARP scripts are installed
+      check_fileTemplate "${arpfiles}" 1 LOG
+
+      # Check if /etc/hostname.{scman0|dman0} has "-arp"
+      check_fileContentsExist ${manf} "-arp" 1 LOG
+
+      # Run these steps for SCs only
+      if [ ${which_one} = "SC" ] && check_fileExists ${SMS_SCARP} 1 ; then
+	 if check_fileExists ${SMS_V} 1 && check_fileExists ${SMS_SYSID} 1 ; then
+	    # Static ARP support is only available on SMS 1.2 and later
+	    sms_version=`${SMS_V} -t`
+	    case "${sms_version}" in
+	    1.2|1.3|1.4|1.4.1)
+
+               # Add root to platform svc group if required.
+               sms_conf=0
+               plat_list=`${SMS_C} -l platform`
+               if [ -z "$plat_list" ]; then
+                  logNotice "Could not determine if root has platform priv."
+               else
+                  if echo $plat_list | egrep -v "root.*platsvc" >/dev/null ; then
+                     logMessage "Adding root to SMS platform svc group temporarily."
+                     ${SMS_C} -a -u root -G svc platform
+                     rc=$?
+                     if [ $rc != 0 ]; then
+                        logNotice "Could not add root to platform priv. group."
+                     else
+                        sms_conf=1
+                     fi
+                  fi
+               fi
+
+	       # Check ether addresses for each domain, if necessary
+	       for dom in A B C D E F G H I J K L M N O P Q R
+	       do
+		  image=${JASS_ROOT_DIR}var/opt/SUNWSMS/data/${dom}/idprom.image
+
+		  # If domain was not set up yet, skip it
+		  if [ ! -f ${image} ]; then
+		     continue
+		  fi
+
+		  old_mac=`${SMS_SYSID} -f ${image} | grep "Ethernet Address" | nawk '{print $4}'`
+		  old=`normalize_mac_address $old_mac`
+		  if [ -z "${old}" ]; then
+		     logNotice "Could not determine Domain ${dom} ethernet address."
+		     continue
+		  fi
+		  new_mac=`grep -i sun15-${dom} ${SMS_SCARP} | nawk '{print $2}'`
+		  new=`normalize_mac_address $new_mac`
+		  if [ -z "${new}" ]; then
+		     logNotice "Could not find Domain ${dom} in ${SMS_SCARP}."
+		     continue
+		  fi
+
+		  # Address must match what is in the static ARP file.
+		  if [ "${old}" = "${new}" ]; then
+		     logSuccess "Domain ${dom} ethernet address set for static ARP."
+		  else
+		     logFailure "Domain ${dom} ethernet address not set for static ARP."
+		  fi
+	       done	# with domain changes on SC
+
+               # Remove root setting that this script added.
+               if [ $sms_conf = 1 ]; then
+                  ${SMS_C} -r -u root -G svc platform
+                  rc=$?
+                  if [ $rc != 0 ]; then
+                     logNotice "Could not remove temporarily added root from platform priv. group."
+                  fi
+               fi
+
+	       ;;
+	    *)
+	       logNotice "Static ARP not supported for SMS ${sms_version}."
+	       ;;
+	    esac
+	 else
+	    logNotice "${SMS_V} or ${SMS_SYSID} does not exist; this script cannot be run."
+	 fi
+      fi  # end of SC checks
+
+   elif check_fileExists ${SMS_SCMAN} 1 && check_fileExists ${SMS_DMAN} 1 ; then
+      adjustScore 1
+      logNotice "Cannot determine if this is a Sun Fire 15K SC or Domain."
+else
+   logNotice "This script can only be run on a Sun Fire 15K SC or Domain."
+fi
+
+# fi for "$JASS_SMS_OVERRIDE" = "1" else statement
+fi
+
+
+finish_audit

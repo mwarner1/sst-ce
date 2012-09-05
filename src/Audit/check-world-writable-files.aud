@@ -1,0 +1,121 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)check-world-writable-files.aud 1.9     07/05/18 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Check for World-writable Files and Directories"
+servfil="check-world-writable-files.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   This purpose of this check is to detect any local filesystem objects that
+   are world writable.  This is to done to detect files that could be
+   modified by any user on the system.
+
+Rationale for Verification Check:
+
+   This check is necessary to identify and analyze filesystem objects
+   that are world writable.  Typically, very few files should exist on
+   a system with world writable permissions.  Given that world writable
+   files can be modified by any user, they represent a clear risk that
+   must be understood and managed.  This check serves to identify and
+   fingerprint these objects so more detailed analysis can be done.
+
+Determination of Compliance:
+
+   This script reports a failure for each filesystem object that is
+   found having world-writable permissions.   Note that for directories,
+   only those that are not 'sticky' and have world-writable permissions
+   will be marked as a failure.  This script only reports on local
+   filesystems.
+
+   See the following Sun Change Requests for these world-writable files
+   and directories: file /var/adm/spellhist (CR 1135865, 4337550),
+   file /var/dt/dtpower/_current_scheme (CR 4794715, 4460998) and directory
+   /var/webconsole/tmp (CR 6507912).
+
+"
+
+#-----------------------------------------------------------------------------
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+findString="/usr/bin/find ${JASS_ROOT_DIR} \
+  ( -fstype nfs -o -fstype cachefs -o -fstype proc -o -fstype ctfs -o \
+    -fstype mntfs -o -fstype objfs -o ! -local ) -prune -o \
+  ( -type f -a -perm -2 ) -print -o \
+  ( -type d -a -perm -2 -a ! -perm -1000 ) -print"
+
+wwDirs=""
+wwFiles=""
+
+logMessage '# Cataloging world-writable files and directories.\n'
+
+for file in `${findString}` ; do
+   if [ -d ${file} ] ; then
+      wwDirs="${wwDirs} ${file}"
+   else
+      wwFiles="${wwFiles} ${file}"
+   fi
+done
+
+logMessage '\n# Listing world-writable files:\n'
+
+if [ -n "${wwFiles}" ] ; then
+   for file in ${wwFiles} ; do
+      logFailure 'File ${file} has world-writable permissions.'
+      adjustScore 1
+   done
+
+else
+   logSuccess 'No world-writable files were found.'
+fi
+
+logMessage '\n# Non-sticky, world-writable directories:\n'
+
+if [ -n "${wwDirs}" ] ; then
+   for dir in ${wwDirs} ; do
+      logFailure \
+         'Directory ${dir} has non-sticky, world-writable permissions.'
+      adjustScore 1
+   done
+
+else
+   logSuccess 'No non-sticky, world-writable directories were found.'
+fi
+
+finish_audit

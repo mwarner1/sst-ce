@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)install-local-syslog.fin 1.3     07/01/25     SMI"
+#
+# This script is used to configure a minimal syslog facility for
+# local syslog operation.  Users may instead wish to use the file
+# template provisions of copy_files() and JASS_FILES to instead
+# install a more comprehensive syslog solution.
+#
+
+SYSLOG="${JASS_ROOT_DIR}etc/syslog.conf"
+SYSLOGPATH="/etc/syslog.conf"
+
+
+logMessage "Ensuring minimal local syslog operations are present"
+echo ""
+
+# At this point, the file either existed or was just created.
+# Either way, to be sure it has the correct permissions, they
+# will be reset here.
+
+if [ ! -f ${SYSLOG} ]; then
+   logMessage 'Creating file ${SYSLOG}.'
+   echo ""
+   create_a_file -m 0644 -o root:sys ${SYSLOG}
+fi
+
+logNotice 'File ${SYSLOG} already exists.'
+
+# Lets obtain the syslog.conf file from the Files directory, to use
+# as our base template.  This will allow the flexibility of file based
+# installs, while still allowing easy customization via script.  We will
+# get the Files/ version, and make sure every line is present in the syslog
+# file.  Not that this means that ifdef clauses and such will confuse
+# the script, so keep it simple.
+
+# If we find a missing line, we will backup then file, and then copy in the
+# template version.  This allows us to remove any existing cruft without 
+# just inserting the new lines.  If we want to put on our own version, we 
+# probably don't want the standard Solaris config as well.
+
+# In jumpstarts, SYSLOG will be prefixed (to /a/...).  We need to clean it
+# for get_expanded_file_name to work.
+MYSYSLOG=`get_expanded_file_name ${SYSLOGPATH}`
+
+# Safety measure in case MYSYSLOG was null
+if [ -f ${MYSYSLOG} ]; then
+   check_file_for_contents ${SYSLOG} < ${MYSYSLOG}
+   changed=$?
+else
+   changed=1
+fi
+
+if [ ${changed} -eq 1 ]; then
+   logMessage "Installing new ${SYSLOG} template because content was missing"
+   copy_files "${SYSLOGPATH}"
+else
+   logNotice "No changes needed to ${SYSLOG}"
+fi
+

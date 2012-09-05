@@ -1,0 +1,117 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-appserv.aud	1.8	05/04/19 SMI"
+#
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="System Application Server(appserv)"
+servfil="disable-appserv.aud"
+
+ASADMIN=/usr/sbin/asadmin
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The Sun Java[TM] System Application Server is used for development and
+   deployment of J2EE applications and Java Web Services.
+
+Rationale for Verification Check:
+
+   While the Sun Java[TM] System Application Server can be a useful function,
+   it may not be critical for system operation.
+   If this service is not needed, then it should be disabled.
+
+Determination of Compliance:
+
+   This script determines if the Sun Java[TM] System Application Server is
+   installed, configured, or running on the system.  This script will
+   indicate a failure if the software is installed, configured to run (via
+   a run-control script), or running on the system.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWasac
+   SUNWascmn
+   SUNWasdb
+   SUNWasdem
+   SUNWasdemdb
+   SUNWasjdoc
+   SUNWasr
+   SUNWasu
+   SUNWasut
+   SUNWasman
+"
+
+#-----------------------------------------------------------------------------
+
+servcfg="${JASS_ROOT_DIR}var/appserver/domain "
+
+#-----------------------------------------------------------------------------
+
+servcmd="
+   ${ASADMIN}
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10 ; then
+
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_minimized                 "$servpkg"   1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_CONFIGURED}"
+   check_serviceNotInstalled lrc:/etc/rc3_d/S84appserv 1 LOG
+
+   logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+   check_processNotExists          "$servcmd"   1 LOG
+
+   # Verify appserver processes are not running
+   ( LANG=C; LC_ALL=C; export LANG LC_ALL; \
+     ${ASADMIN} list-domains -t 2>/dev/null \
+        | grep ' running' | grep -v ' not running' )
+   if [ $? -eq 0 ] ; then # appserver processes still running
+      adjustScore 1
+      logFailure 'Appserver domains are still running.'
+      logMessage `${ASADMIN} list-domains`
+   fi
+
+else
+   logInvalidOSRevision "5.10"
+fi
+
+finish_audit

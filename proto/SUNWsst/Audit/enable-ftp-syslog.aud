@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)enable-ftp-syslog.aud 1.10     05/03/31 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="FTP Session/Connection Logging"
+servfil="enable-ftp-syslog.aud"
+
+INETD="${JASS_ROOT_DIR}etc/inet/inetd.conf"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The File Transfer Protocol (FTP) service provides the ability for users 
+   to transfer files between systems.  This service is typically started by
+   inetd(1M) each time a connection is initiated.  This service provides 
+   various levels of access control based on the installed version of the 
+   Solaris OE.
+
+Rationale for Verification Check:
+
+   This script will check the FTP service, if it exists, to verify that it 
+   has been configured to log session/connection information to the SYSLOG
+   facility.  The FTP service can be configured to log this data by adding
+   the '-l' parameter to the FTP service line in the ${INETD} file.
+
+Determination of Compliance:
+
+   This check will indicate a failure if the service is not configured
+   to log session/connection information.
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10 ; then
+  if  check_serviceInstalled svc:/network/ftp 1 LOG ; then 
+      check_serviceOptionEnabled "svc:/network/ftp" "inetd_start/exec" "in.ftpd" "-l"  1 LOG 
+  fi
+elif check_fileExists ${INETD} 0 ; then
+   if check_fileContentsExist ${INETD} "/usr/sbin/in\.ftpd" 0 ; then
+      if check_fileContentsExist ${INETD} \
+         "in\.ftpd[ 	]*.*[ 	]*-l" 1 ; then
+         logSuccess "Service FTP is configured to log session information."
+      else
+         logFailure "Service FTP is not configured to log session information."
+      fi
+   else
+      logNotice 'Service FTP is not configured in ${INETD}.'
+   fi
+else
+   logFileNotFound "${INETD}"
+fi
+
+finish_audit

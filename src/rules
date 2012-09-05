@@ -1,0 +1,52 @@
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+
+#----------------------  eelab-nts01.east -----------------
+
+# Solaris 2.5.1
+hostname	ikati \
+-		Profiles/oem.profile	Drivers/secure.driver
+
+# Solaris 2.6
+hostname	mcneill \
+-		Profiles/oem.profile	Drivers/secure.driver
+
+# Solaris 7
+hostname	imbulu \
+-		Profiles/oem.profile	Drivers/secure.driver
+
+# Solaris 8/9
+hostname	lennox \
+-		Profiles/oem.profile	Drivers/secure.driver
+
+# ---
+
+hostname	clarke \
+-		Profiles/oem.profile	Drivers/secure.driver
+ 
+hostname	inyoka \
+-		Profiles/reduced-networking.profile Drivers/secure.driver
+hostname	auld \
+-		Profiles/oem.profile -
+hostname	ufudu \
+-		Profiles/core.profile	Drivers/secure.driver
+hostname	imamba \
+-		Profiles/core.profile	Drivers/secure.driver

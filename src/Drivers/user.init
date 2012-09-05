@@ -1,0 +1,77 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)user.init	1.7	07/01/24 SMI"
+#
+# This file is to be used to override or specify user variables that will
+# be used by the scripts in this toolkit.  Note that this script is
+# called before both "driver.init" and "finish.init" so any changes made
+# in this file will not be overwritten.
+#
+# In general, this script should be modified as it should not be
+# replaced during upgrades.
+#
+# For more information on how to extend or enhance variables used by the
+# Finish scripts, refer to the "finish.init" script.
+#
+# *****************************************************************************
+#
+# NOTE: JASS_FILES and JASS_SCRIPTS cannot be set in this file(s).
+# To change those variables, copy the relevant .driver file(s) to a new name
+# and modify the new file(s).
+
+#
+# NOTE: When performing JumpStart-based installations with JASS, the following
+# two variables JASS_PACKAGE_MOUNT and JASS_PATCH_MOUNT should be set
+# appropriately.
+#
+# In addition, if the directory in which JASS is installed is not
+# ${SI_CONFIG_DIR} (or the same as the JumpStart root directory), then the
+# JASS_HOME_DIR variable should also be set in this file.
+#
+# For example, if ${SI_CONFIG_DIR} is /tmp/install_config (or remotely known
+# as server:/jumpstart), and JASS is installed in server:/jumpstart/jass, then
+# JASS_HOME_DIR should be set to ${SI_CONFIG_DIR}/jass.
+
+# The JASS Development Team would like to offer special thanks to Pierre
+# Zimmermann the JASS_SERVER concept.
+
+if [ "${JASS_STANDALONE}" != "1" ]; then
+   JASS_SERVER="`df -k /tmp/install_config | tail -1 | nawk -F: '{ print $1 }'`"
+   export JASS_SERVER
+
+   if [ "${JASS_PACKAGE_MOUNT}" = "" ]; then
+      JASS_PACKAGE_MOUNT="${JASS_SERVER}:/devl/Packages"
+      # echo "JASS_PACKAGE_MOUNT is set to ${JASS_PACKAGE_MOUNT}."
+   fi
+   export JASS_PACKAGE_MOUNT
+
+   if [ "${JASS_PATCH_MOUNT}" = "" ]; then
+      JASS_PATCH_MOUNT="${JASS_SERVER}:/devl/Patches"
+      # echo "JASS_PATCH_MOUNT is set to ${JASS_PATCH_MOUNT}."
+   fi
+   export JASS_PATCH_MOUNT
+fi
+

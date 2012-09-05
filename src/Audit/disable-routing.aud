@@ -1,0 +1,111 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)disable-routing.aud	1.8	05/06/09 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="IP routing"
+servfil="disable-routing.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+    IP routing (aka packet forwarding) describes an ability of a system to
+    accept a network packet on one network interface and forward it to
+    another system reachable only through a separate network interface based
+    on it's IP address.
+
+Rationale for Verification Check:
+
+   Routing forwards TCP/IP packets from one network to another.
+   While routing can be a useful function, this task is usually
+   handled by dedicated hardware routers.  Unless your system is dedicated
+   to routing, routing should not be performed.  Routing makes a system
+   more vulnerable to \"spoofed\" packets, diversion of network traffic,
+   and other mischief. If this service is not needed, then it should be
+   disabled.
+
+   This script expects IPv4 and IPv6 routing to be disabled.
+
+Determination of Compliance:
+
+   For Solaris 10 and later, use routeadm to verify routing is disabled.
+   By default routing is disabled in Solaris 10 and later unless
+   specifically enabled.
+
+   For Solaris 9 and earlier, routing is disabled if file
+   /etc/notrouter is present.
+"
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+NOTROUTER=${JASS_ROOT_DIR}etc/notrouter
+ROUTEADM=/usr/sbin/routeadm
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_revision 5.10+ ; then
+
+	# Verify IPv4/IPv6 routing is disabled with routeadm
+	for i in ipv4-forwarding ipv6-forwarding ; do
+		# Check persistent state
+		( LANG=C; LC_ALL=C; export LANG LC_ALL; \
+			${ROUTEADM} -R ${JASS_ROOT_DIR} -p | grep $i \
+			| grep "persistent=enabled" >/dev/null )
+		if [ $? -ne 0 ] ; then
+			logSuccess 'Option ${i} is persistently disabled.'
+                else
+			adjustScore 1
+			logFailure 'Option ${i} is persistently enabled.'
+		fi
+
+		# Check current state
+		( LANG=C; LC_ALL=C; export LANG LC_ALL; \
+			${ROUTEADM} -R ${JASS_ROOT_DIR} -p | grep $i \
+			| grep "current=enabled" >/dev/null )
+		if [ $? -ne 0 ] ; then
+			logSuccess 'Option ${i} is currently disabled.'
+                else
+			adjustScore 1
+			logFailure 'Option ${i} is currently enabled.'
+		fi
+	done
+
+elif check_os_revision 5.5.1 5.9 ; then
+	check_fileExists "${NOTROUTER}" 1 LOG
+
+else
+	logInvalidOSRevision "5.5.1+"
+fi
+
+finish_audit

@@ -1,0 +1,158 @@
+#!/sbin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright (c) 2004 by Sun Microsystems, Inc.
+# All rights reserved.
+# 
+#ident  "@(#)sms_arpconfig 1.8     04/12/02     SMI"
+#
+# /etc/init.d/sms_arpconfig
+# /etc/rc2.d/S73sms_arpconfig
+#
+# System startup script that sets up static ARP tables
+# for SMS 1.2 and later on Sun Fire 15K SC and Domains.
+# 
+#
+
+PATH=/usr/bin:/usr/sbin
+
+verbose=1
+
+# Other static ARP tables may be added here in the future
+arpTables="
+		/etc/sms_sc_arp
+		/etc/sms_domain_arp
+	"
+
+isSC()
+{
+   # Only run these steps for Sun Fire 15K SCs running SMS 1.2 and later
+   if [ ! -r /etc/sms_sc_arp \
+	-o ! -r /etc/sms_domain_arp \
+   	-o ! -r /etc/hostname.scman0 \
+   	-o ! -x /opt/SUNWSMS/bin/smsversion ]; then
+      return 1
+   fi
+   ver=`/opt/SUNWSMS/bin/smsversion -t`
+   case "${ver}" in
+   1.2|1.3|1.4|1.4.1)
+      return 0
+      ;;
+   1.5)
+      echo "This script is not required for SMS 1.5."
+      return 0
+      ;;
+   *)
+      return 1
+      ;;
+   esac
+}
+
+setSCether()
+{
+   isSC || return 1
+
+   # Compare the current scman0 ether address with the proposed one;
+   # if they're different, set it to the proposed one
+   old=`ifconfig scman0 2> /dev/null | grep ether | awk '{print $2}'`
+   new=`cat /etc/sms_domain_arp | awk '{print $2; exit;}'`
+   if [ -z "${old}" -o -z "${new}" ]; then
+      return 1
+   fi
+   # In a few cases, zero-padded hextets may cause a string mismatch,
+   # (i.e., 8:0:20:a:3e:1f is not 08:00:20:0a:3e:1f); set it anyway
+   if [ ${old} != ${new} ]; then
+      echo "setting SC ether address to ${new}"
+      ifconfig scman0 ether ${new}
+   fi
+   return 0
+}
+
+unsetSCether()
+{
+   isSC || return 1
+
+   # Compare the current scman0 ether address with the proposed one;
+   # if they're different, set it to the proposed one
+   old=`ifconfig hme0 2> /dev/null | grep ether | awk '{print $2}'`
+   new=`ifconfig scman0 2> /dev/null | grep ether | awk '{print $2}'`
+   if [ -z "${old}" -o -z "${new}" ]; then
+      return 1
+   fi
+   # In a few cases, zero-padded hextets may cause a string mismatch,
+   # (i.e., 8:0:20:a:3e:1f is not 08:00:20:0a:3e:1f); set it anyway
+   if [ ${old} != ${new} ]; then
+      echo "setting SC ether address to ${old}"
+      ifconfig scman0 ether ${old}
+   fi
+   return 0
+}
+
+loadARPinfo()
+{
+   setSCether
+   echo "loading static ARP entries"
+   for t in ${arpTables}
+   do
+      if [ -r $t ]; then
+	 [ "${verbose}" = "1" ] && echo $t
+	 arp -f $t
+      fi
+   done
+}
+
+unloadARPinfo()
+{
+   unsetSCether
+   echo "unloading static ARP entries"
+   for t in ${arpTables}
+   do
+      if [ -r $t ]; then
+	 [ "${verbose}" = "1" ] && echo $t
+	 for hostname in `egrep -v "^#" $t | awk '{print $1}'`
+	 do
+	    # [ "${verbose}" = "1" ] && echo $hostname
+	    arp -d $hostname
+	 done
+      fi
+   done
+}
+
+# Process the command argument
+case "$1" in
+   start | static )
+      [ "${verbose}" = "1" ] && echo "Disabling dynamic ARP"
+      loadARPinfo
+      ;;
+
+   stop )
+      # ignored
+      ;;
+
+   *)
+      echo "Usage: $0 { start | stop | static }"
+      exit 1
+      ;;
+esac
+
+exit 0
+

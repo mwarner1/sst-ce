@@ -1,0 +1,295 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)jass-check-sum	1.16	05/06/30 SMI"
+#
+# The purpose of this script is to identify those files (modified by the
+# Sun Security Toolkit: Community Edition) that have been altered since their checksums
+# were originally saved in the Sun Security Toolkit: Community Edition repository
+# (/var/opt/SUNWsst/run/*/jass-checksums.txt).
+#
+# Note that only the last (most recent) checksum of a file is compared
+# to the current file.  This will aid in determining if a file has been
+# changed after being configured by the Sun Security Toolkit: Community Edition.
+#
+# If a given run has already been undone, it will be skipped in terms
+# of processing for this script.
+#
+
+jass_usage_msg="
+Usage: jass-check-sum
+   or: jass-check-sum -v
+   or: jass-check-sum -? | -h
+
+Where the options are as follows:
+
+   [-h | -?]                 This help message.
+
+   [-v]                      The version information for this program.
+
+"
+
+
+# ****************************************************************************
+# Explicitly define a path.
+# ****************************************************************************
+
+PATH=/usr/bin:/usr/sbin
+export PATH
+
+# ****************************************************************************
+# Obtain a fully qualified path to this script.
+# ****************************************************************************
+
+oldDirectory="`pwd`"
+newDirectory="`dirname $0`"
+cd ${newDirectory}
+jass_base_dir="`pwd`"
+
+if [ "`basename ${jass_base_dir}`" = "bin" ]; then
+   cd ..
+   jass_base_dir="`pwd`"
+fi
+
+cd ${oldDirectory}
+
+# ****************************************************************************
+# Define localization settings.
+# ****************************************************************************
+
+TEXTDOMAIN="jass-check-sum"
+TEXTDOMAINDIR="${jass_base_dir}/lib/locale"
+export TEXTDOMAIN TEXTDOMAINDIR
+
+
+# ****************************************************************************
+# Function: printUsage
+#
+# The purpose of this function is to display the usage information for this
+# program.  No other processing is done.
+# ****************************************************************************
+
+printUsage()
+{
+   gettext "${jass_usage_msg}"
+}
+
+
+# ****************************************************************************
+# Function: printVersion
+#
+# The purpose of this function is to display any version information about
+# this program.  No other processing is done.
+# ****************************************************************************
+
+printVersion()
+{
+   toolkitVersion="`grep JASS_VERSION= ${jass_base_dir}/Drivers/driver.init |\
+   nawk -F= '{ print $2 }' | sed 's/\"//g'`"
+   echo `gettext 'Version: '`"${toolkitVersion}"
+}
+
+
+# ****************************************************************************
+# Function: print_header
+#
+# Print the header lines to stdout.
+# ****************************************************************************
+print_header()
+{
+   arg1=`gettext "File Name"`
+   arg2=`gettext "Saved CkSum"`
+   arg3=`gettext "Current CkSum"`
+
+   printf "%-30s %-32s %-32s\n" "${arg1}" "${arg2}" "${arg3}"
+   echo "------------------------------------------------------------------------------------------------"
+}
+
+
+# ****************************************************************************
+# Parse the command line arguments that were passed to this script.
+# ****************************************************************************
+
+while getopts h\?v v; do
+   case ${v} in
+      \?|h)
+         printUsage
+         exit 0
+         ;;
+
+      v)
+         printVersion
+         exit 0
+         ;;
+   esac
+done
+
+shift `expr $OPTIND - 1`
+
+if [ ! -z "${1}" ] ; then # no arguments allowed except for switches
+   printUsage
+   exit 1
+fi
+
+# ****************************************************************************
+
+processedList=""
+returnValue=0
+
+baseDir="/var/opt/SUNWsst/run/"
+
+if [ ! -d ${baseDir} ]; then
+   gettext "Error: /var/opt/SUNWsst/run does not exist.\n"
+   gettext "No change information can be determined for this system.\n"
+   exit 1
+fi
+
+for dir in `ls -1t ${baseDir}`; do
+
+   # If this run did not make any changes, then skip.
+
+   if [ ! -s ${baseDir}${dir}/jass-manifest.txt ]; then
+      continue
+   fi
+
+   # If this run has already been undone, then skip.
+
+   if [ -f ${baseDir}${dir}/jass-undo-log.txt ]; then
+      continue
+   fi
+
+   # If this run is an audit run (no hardening), then skip.
+
+   if [ -f ${baseDir}${dir}/jass-audit-log.txt ]; then
+      continue
+   fi
+
+   # Iterate through all of the Toolkit runs to collect all of the files
+   # that have ever been modified by the Toolkit.
+
+   currentFile="${baseDir}${dir}/jass-checksums.txt"
+
+   if [ -f "${currentFile}" ]; then
+
+      echo ""
+      eval echo `gettext 'Checking for file signature conflicts associated with Toolkit run: ${dir}'`
+      echo ""
+      printedHeader=0
+      foundConflict=0
+
+      fileContents="
+         `nawk '{ line[NR] = $0; }END{
+             for (i=NR; i>0; i=i-1) print line[i]; }' ${currentFile}`
+      "
+
+      oIFS="${IFS}"
+      IFS='
+'
+
+      for line in ${fileContents}; do
+
+         IFS="${oIFS}"
+
+         [ "${line}" = "" ] && continue
+
+         file="`echo ${line} | nawk '{ print $1 }'`"
+         sum="`echo ${line} | nawk '{ print $2 }'`"
+	 ofile="`echo ${line} | nawk '{ print $3 }'`"
+
+         [ "${file}" = "" ] && continue
+
+         # Process each file in the checksum file (in reverse order).
+
+         realFile="`echo ${file} | sed 's/\.JASS\..*//g'`"
+         if [ -n "${ofile}" ]; then
+	    realFile=${ofile}
+	 fi
+         processNewFile=1
+
+         # Determine if this file has already been processed.  If so,
+         # there is no need to process it again.
+
+         for processedFile in ${processedList}; do
+            if [ "${realFile}" = "${processedFile}" ]; then
+               processNewFile=0
+               break
+            fi
+         done
+
+         if [ "${processNewFile}" = "1" ]; then
+
+            # Special case.  If the Toolkit created the file using the
+            # create_a_file or similar function, the checksum will be
+            # 4294967295:0.  For Solaris 9 (using MD5 signatures) this
+            # value will be d41d8cd98f00b204e9800998ecf8427e.  This will
+            # always generate an error as the file has most certainly been
+            # modified by the Toolkit after this initial creation.
+
+            if [ "${sum}" != "4294967295:0" -a "${sum}" != "d41d8cd98f00b204e9800998ecf8427e" ]; then
+               if [ -f "${realFile}" ]; then
+                  newSum=""
+                  if [ "`echo "${sum}" | grep -c ':'`" = "0" ]; then
+                     if [ "`digest -l 2>/dev/null | grep -c 'md5'`" = "1" ]; then
+                        newSum=`digest -a md5 ${realFile}`
+                     fi
+                  fi
+                  if [ "${newSum}" = "" ]; then
+                     newSum="`cksum ${realFile} | nawk '{ print $1 ":" $2 }'`"
+                  fi
+               else
+                  newSum=`gettext "File Not Found"`
+               fi
+
+               if [ "${newSum}" != "${sum}" ]; then
+                  if [ ${printedHeader} = 0 ]; then
+                     print_header
+                     printedHeader=1
+                  fi
+                  foundConflict=1
+
+                  # At least one conflict was found.
+                  returnValue=1
+
+                  # The checksum does not match, so display it.
+
+                  printf "%-30s %-32s %-32s\n" ${realFile} "${sum}" "${newSum}"
+               fi
+               processedList="${processedList} ${realFile}"
+            fi
+         fi
+
+         IFS='
+'
+
+      done
+
+      if [ ${foundConflict} = 0 ]; then
+         gettext "No conflicts were found for this run of the Toolkit.\n"
+      fi
+      echo ""
+   fi
+done
+
+exit ${returnValue}

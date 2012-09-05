@@ -1,0 +1,94 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-sar.aud	1.1	07/01/24 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="System Activity Reporting"
+servfil="enable-sar.aud"
+
+CRONTAB_DIR=${JASS_ROOT_DIR}var/spool/cron/crontabs
+SYS_CRONTAB=${CRONTAB_DIR}/sys
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   System Activity Reporting (sar) samples and records many facets of
+   system operation, including io, cpu, caches, etc.  For more
+   information, see sar(1M).  sar must be carefully monitored, as it
+   can generate tremendous amounts of output.
+
+Rationale for Verification Check:
+
+   The purpose of this script is to check that the system activity reporting
+   software is installed, enabled, and running on the system.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the sar software
+   is not installed, enabled, or running on the system.
+"
+
+#-----------------------------------------------------------------------------
+
+servpkg="
+   SUNWaccr SUNWaccu
+"
+
+#-----------------------------------------------------------------------------
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+if check_os_min_revision 5.10; then
+
+   logMessage "${JASS_MSG_SOFTWARE_INSTALLED}"
+   check_packageExists     "$servpkg" 1 LOG
+
+   logMessage "${JASS_MSG_SOFTWARE_CONFIGURED}"
+   # Verify sys crontab entry exists
+   check_if_crontab_entry_present sys /usr/lib/sa/sa1
+   check_if_crontab_entry_present sys /usr/lib/sa/sa2
+
+   logMessage "${JASS_MSG_SOFTWARE_ENABLED}"
+   check_serviceEnabled "svc:/system/sar:default" 1 LOG
+
+   logMessage "${JASS_MSG_SOFTWARE_RUNNING}"
+   check_serviceRunning "svc:/system/sar:default" 1 LOG
+
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+finish_audit

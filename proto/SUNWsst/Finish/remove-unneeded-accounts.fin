@@ -1,0 +1,64 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)remove-unneeded-accounts.fin 3.9     05/04/01 SMI"
+#
+# This script removes system accounts that are not used (generally)
+# by the Solaris environment.
+#
+
+PASSMGMT=/usr/bin/passmgmt
+
+SHADOW=${JASS_ROOT_DIR}etc/shadow
+
+logMessage "Removing non-essential system accounts."
+echo ""
+
+backupPerformed="0"
+
+if check_os_min_revision 5.10 ;  then
+   logInvalidOSRevision "5.9-"
+else
+   for USER in `echo ${JASS_ACCT_REMOVE} | xargs -n 1 echo | sort -u`; do
+      if [ `grep -c "^${USER}:" ${JASS_PASSWD}` = 1 ]; then
+         if [ "${backupPerformed}" = "0" ]; then
+            backup_file ${JASS_PASSWD}
+            backup_file ${SHADOW}
+            backupPerformed="1"
+            echo ""
+         fi
+         logMessage 'Removing the account, $USER, from the system.'
+         chroot ${JASS_ROOT_DIR} ${PASSMGMT} -d ${USER}
+      fi
+   done
+fi
+
+if [ "${backupPerformed}" = "1" ]; then
+   chmod 0444 ${JASS_PASSWD}
+   chmod 0400 ${SHADOW}
+
+   chown root:sys ${JASS_PASSWD}
+   chown root:sys ${SHADOW}
+fi

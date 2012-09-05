@@ -1,0 +1,91 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-ldmd.aud	1.4	07/01/26 SMI"
+#
+
+# **************************************************************************** 
+# Service definition section.
+# **************************************************************************** 
+
+service="Logical Domains"
+servfil="enable-ldmd.aud"
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   Solaris 10 provides the Logical Domains Management Daemon, ldmd, for
+   the control of Logical Domains on systems which support them and the
+   Virtual Network Terminal Server, vntsd, for console access .  For
+   more information, see the ldm(1) and vntsd(1M) man pages.
+
+Rationale for Verification Check:
+
+   This script will check to ensure that the ldmd service is
+   installed, configured and enabled on the system.  It will also check
+   that the vntsd service is installed.
+
+Determination of Compliance:
+
+   This script will indicate a failure if the ldmd service is
+   not installed, enabled, or running on the system.  It will also indicate a
+   failure if the vntsd service is not running.
+"
+
+#-----------------------------------------------------------------------------
+
+svc="
+svc:/ldoms/ldmd:default
+"
+
+vsvc="
+svc:/ldoms/vntsd:default
+"
+
+# **************************************************************************** 
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+if check_os_min_revision 5.10 ; then
+   if [ "${JASS_ZONE_NAME}" = "global" ]; then
+      logMessage "\n${JASS_MSG_SOFTWARE_INSTALLED}"
+      check_serviceInstalled "${svc} ${vsvc}" 1 LOG
+
+      logMessage "\n${JASS_MSG_SOFTWARE_ENABLED}"
+      check_serviceEnabled "${svc}" 1 LOG
+
+      logMessage "\n${JASS_MSG_SOFTWARE_RUNNING}"
+      check_serviceRunning "${svc}" 1 LOG
+else
+      logNotGlobalZone
+fi
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+finish_audit

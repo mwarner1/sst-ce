@@ -1,0 +1,60 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-ftp-syslog.fin	3.14	05/04/18 SMI"
+#
+# This script adds the "-l" argument to "in.ftpd" so that connection
+# logging will be enabled.  Refer to in.ftpd(1M) for more information.
+#
+
+INETD=${JASS_ROOT_DIR}etc/inet/inetd.conf
+
+logMessage "Enabling connection logging for the FTP service."
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   # Enable logging of ftp sessions:
+   add_option_to_ftpd_property "l"
+
+else
+   if egrep -s "in.ftpd" ${INETD} 2>/dev/null ; then
+
+      # The FTP service exists, but may not be using the '-l' option.
+
+      if egrep -s "in.ftpd.*[ 	]*-l[ 	]*" ${INETD} 2>/dev/null ; then
+         : # The change has already been applied.
+      else
+         backup_file ${INETD}
+         echo ""
+         logMessage 'Adding the \\\"-l\\\" option to FTP service in ${INETD}.'
+
+         nawk '/in.ftpd/ { print $0" -l"; continue } { print }' \
+             ${INETD}.${JASS_SUFFIX} > ${INETD}
+      fi
+
+   else
+      logNotice 'The FTP service was not found in ${INETD}.'
+   fi
+fi

@@ -1,0 +1,46 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)disable-vold.fin 3.10     05/03/30 SMI"
+#
+# This script prevents the Volume Management (VOLD) service from starting.
+#
+
+logMessage "Disabling the service: Volume Management (VOLD)"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+   disable_service_immediate lrc:/etc/rc3_d/S81volmgt
+elif [ "${JASS_DISABLE_MODE}" = "conf" ]; then
+   disable_conf_file ${JASS_ROOT_DIR}etc vold.conf
+elif [ "${JASS_DISABLE_MODE}" = "script" ]; then
+   if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+      disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K35volmgt
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K35volmgt
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K35volmgt
+   fi
+   disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S92volmgt
+   disable_rc_file ${JASS_ROOT_DIR}etc/rc3.d S81volmgt
+fi

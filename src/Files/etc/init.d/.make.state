@@ -1,0 +1,24 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/init.d:
+	[ -d ../../../../proto/SUNWsst/Files/etc/init.d ] || /bin/mkdir -p ../../../../proto/SUNWsst/Files/etc/init.d
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/init.d/nddconfig:
+	/usr/bin/cp -f nddconfig ../../../../proto/SUNWsst/Files/etc/init.d/nddconfig
+	/usr/bin/chmod 555 ../../../../proto/SUNWsst/Files/etc/init.d/nddconfig
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/init.d/nddconfig-15k_sc:
+	/usr/bin/cp -f nddconfig-15k_sc ../../../../proto/SUNWsst/Files/etc/init.d/nddconfig-15k_sc
+	/usr/bin/chmod 555 ../../../../proto/SUNWsst/Files/etc/init.d/nddconfig-15k_sc
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/init.d/set-tmp-permissions:
+	/usr/bin/cp -f set-tmp-permissions ../../../../proto/SUNWsst/Files/etc/init.d/set-tmp-permissions
+	/usr/bin/chmod 555 ../../../../proto/SUNWsst/Files/etc/init.d/set-tmp-permissions
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/init.d/sms_arpconfig:
+	/usr/bin/cp -f sms_arpconfig ../../../../proto/SUNWsst/Files/etc/init.d/sms_arpconfig
+	/usr/bin/chmod 555 ../../../../proto/SUNWsst/Files/etc/init.d/sms_arpconfig
+.BUILT_LAST_MAKE_RUN:
+../../../../proto/SUNWsst/Files/etc/init.d/swapadd:
+	/usr/bin/cp -f swapadd ../../../../proto/SUNWsst/Files/etc/init.d/swapadd
+	/usr/bin/chmod 555 ../../../../proto/SUNWsst/Files/etc/init.d/swapadd

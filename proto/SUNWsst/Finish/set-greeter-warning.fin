@@ -1,0 +1,149 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-greeter-warning.fin 1.3     07/02/01 SMI"
+#
+# This script sets a message on GUI login screens, warning
+# that only authorized access is permitted.
+
+logMessage "Setting warnings on GUI logins"
+echo ""
+
+if check_os_min_revision 5.10 ; then
+
+   # We need to configure all the local resource files in 
+   # /etc/dt.  These values take precedence over any in /usr/dt,
+   # so we don't need to worry about those.  However, the files
+   # are not merged, so we must start with the /usr version.
+   for file in ${JASS_ROOT_DIR}usr/dt/config/*/Xresources; do
+      # if there were no such files, then file is now a literal
+      if [ "${file}" = "${JASS_ROOT_DIR}usr/dt/config/*/Xresources" ]; then
+	 break
+      fi
+
+      dir=`dirname ${file} | sed -e 's/usr/etc/'`
+      mkdir_dashp ${dir}
+      myfile="${dir}/Xresources"
+      if [ ! -f ${myfile} ]; then
+	 create_a_file -m 644 -o root:sys ${myfile}
+	 logMessage "Creating the file ${myfile}."
+	 cp -f ${file} ${myfile}
+      fi
+      if [ `egrep -c '^Dtlogin\*greeting.labelstring: Authorized uses only!$' \
+                ${myfile}` = 0 -o \
+           `egrep -c '^Dtlogin\*greeting.persLabelstring: All activity may be \
+monitored.$' ${myfile}` = 0 ]; then
+	 logMessage "Adding labelstring to ${dir}/Xresources"
+	 backup_file ${myfile}
+
+	 # Nawk doesn't support variable substitutions in RE's, so this
+	 # does not try and do anything crazy to fix the pattern matches.
+	 nawk \
+	     '
+	     BEGIN {
+		lab="Dtlogin*greeting.labelstring:"; \
+		plab="Dtlogin*greeting.persLabelstring:"; \
+		str="Authorized uses only!"; \
+		pstr="All activity may be monitored." }
+	    /Dtlogin\*greeting.labelstring:/ { if (prlab == 0) \
+	       { $0=sprintf("%s %s", lab, str); prlab=1 } \
+	       else { $1=sprintf("!%s",lab)} }
+	    /Dtlogin\*greeting.persLabelstring:/ { if (prplab == 0) \
+	       { $0=sprintf("%s %s", plab, pstr); prplab=1 } \
+	       else { $1=sprintf("!%s",plab)} }
+	    { print }
+	    END { if (prlab==0) print lab, str
+	          if (prplab==0) print plab, pstr }
+	    ' "${myfile}.${JASS_SUFFIX}" > ${myfile}
+
+	    change_mode 0644 ${myfile}
+	    change_owner root:sys ${myfile}
+         fi
+   done
+
+   GDM="${JASS_ROOT_DIR}etc/X11/gdm/gdm.conf"
+   dir=`dirname ${GDM}`
+   mkdir_dashp ${dir}
+   
+   if [ ! -f ${GDM} ]; then
+      logMessage "Creating the file, ${GDM}."
+      echo ""
+      create_a_file -m 0644 -o root:other ${GDM}
+   fi
+   # Rather than doing a complicated nawk expression several times,
+   # We will create the new file, and then cmp to see if we need
+   # to make changes.
+
+   # This nawk expression reads the gdm.conf file.  First, it looks for
+   # section headers ([greeter] and [daemon]).  When it finds these, it
+   # enables the corresponding section variable (wel and daemon).  It
+   # then searches for the appropriate key in that section.  When it
+   # finishes that section it prints the key if it hasn't been
+   # found yet.
+
+   # The END block is designed to prevent falling off the end of the
+   # file, as well as never entering the correct section.
+
+   GDM_TMP="${JASS_REPOSITORY}/gdm.conf.$$"
+   rm -f ${GDM_TMP}
+   nawk \
+      '
+      BEGIN { welstring="Welcome=Authorized Uses Only!\\n" \
+                        "All activity may be monitored and reported." }
+      /^\[greeter\]/, /^\[/ && !/^\[greeter\]/ { wel=1; \
+          if ($1 ~ /^Welcome=/) { $0 = welstring; pr_wel=1}; \
+          if ($1 ~ /^DefaultWelcome=/) { $1 = "DefaultWelcome=false"; pr_weld=1} }
+      /^\[/ && !/^\[greeter\]/ && wel==1 {
+	 if (pr_wel != 1) { print welstring }; \
+	 if (pr_weld != 1) { print "DefaultWelcome=false" }; \
+	 pr_wel = 1; pr_weld = 1 }
+      /^\[daemon\]/, /^\[/ && !/^\[daemon\]/ { daemon=1; \
+          if ($1 ~ /^Greeter=/) { $1 = "Greeter=/usr/bin/gdmlogin"; pr_gr=1} }
+      /^\[/ && !/^\[daemon\]/ && daemon==1 && pr_gr!=1 { pr_gr=1; \
+          print "Greeter=/usr/bin/gdmlogin" }
+      {print }
+      END { if ( wel == 1 && pr_wel != 1 ) {print welstring}
+            if ( wel == 1 && pr_weld != 1 ) {print "DefaultWelcome=false"}
+	    if ( daemon == 1 && pr_gr != 1 ) {print "Greeter=/usr/bin/gdmlogin"}
+	    if ( wel == 0) {print "[greeter]"; print welstring; \
+	     print "DefaultWelcome=false" }
+            if ( daemon == 0) {print "[daemon]\nGreeter=/usr/bin/gdmlogin" }}
+      ' ${GDM} > ${GDM_TMP}
+   cmp -s ${GDM_TMP} ${GDM}
+   if [ $? -ne 0 ]; then
+      backup_file ${GDM}
+      logMessage "Setting Greeter in ${GDM}"
+      echo ""
+      cp -f ${GDM_TMP} ${GDM}
+   fi
+   rm -f ${GDM_TMP}
+   change_mode 0644 ${GDM}
+   change_owner root:other ${GDM}
+else
+   logInvalidOSRevision "5.10+"
+fi
+
+
+

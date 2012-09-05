@@ -1,0 +1,489 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)make-jass-pkg	3.34	05/07/18 SMI"
+#
+# The purpose of this script is to create a Solaris package stream
+# file from the JASS distribution.  The resulting file can then be
+# installed using "pkgadd" and removed using "pkgrm".  Information
+# about the installed distribution can be obtained using "pkginfo".
+#
+# Return Values:
+#
+# 0   on success
+# 1   on error
+# 2   on detection of other running instance
+#
+
+jass_usage_msg="
+Usage: make-jass-pkg [-b new-base-dir] [-e excl-list] [-m new-email-address]
+                     [-p package-name] [-q] [-t new-title]
+   or: make-jass-pkg -v
+   or: make-jass-pkg -? | -h
+
+Where the options are as follows:
+
+   [-b new-base-dir]         Specify an alternate installation base directory
+
+   [-e excl-list]            Exclude top level file or directories from the
+                             package.  This is done by specifying a '|'
+                             separated list as in 'a|b/c|d'.
+
+   [-h | -?]                 Display this help message.
+
+   [-m new-email-address]    Specify an e-mail address for support.
+
+   [-p package-name]         Specify a custom package name (default is
+                             JASScustm).
+
+   [-q]                      Quiet mode.  No messages are displayed.
+
+   [-t new-title]            Specify an alternative package title (default
+                             is \"Sun Security Toolkit: Community Edition\").
+
+   [-v]                      The version information for this program.
+
+"
+
+# ****************************************************************************
+# Explicitly define a path.
+# ****************************************************************************
+
+PATH=/usr/bin:/usr/sbin
+export PATH
+
+# ****************************************************************************
+# Obtain a fully qualified path to this script.
+# ****************************************************************************
+
+oldDirectory="`pwd`"
+newDirectory="`dirname $0`"
+cd ${newDirectory}
+jass_base_dir="`pwd`"
+
+if [ "`basename ${jass_base_dir}`" = "bin" ]; then
+   cd ..
+   jass_base_dir="`pwd`"
+fi
+
+cd ${jass_base_dir}
+
+# ****************************************************************************
+# Define localization settings.
+# ****************************************************************************
+
+TEXTDOMAIN="make-jass-pkg"
+TEXTDOMAINDIR="${jass_base_dir}/lib/locale"
+export TEXTDOMAIN TEXTDOMAINDIR
+
+# ****************************************************************************
+# Function: printUsage
+#
+# The purpose of this function is to display the usage information for this
+# program.  No other processing is done.
+# ****************************************************************************
+
+printUsage()
+{
+   gettext "${jass_usage_msg}"
+}
+
+# ****************************************************************************
+# Function: printVersion
+#
+# The purpose of this function is to display any version information about
+# this program.  No other processing is done.
+# ****************************************************************************
+
+printVersion()
+{
+   toolkitVersion="`grep JASS_VERSION= ${jass_base_dir}/Drivers/driver.init |\
+   nawk -F= '{ print $2 }' | sed 's/\"//g'`"
+   echo `gettext 'Version: '`"${toolkitVersion}"
+}
+
+
+# ****************************************************************************
+# Function: cleanupFiles
+#
+# The purpose of this function is to clean up any files created for
+# packaging upon exit or termination.
+# ****************************************************************************
+
+cleanupFiles()
+{
+   if [ -f "${PKG_INCL}" ]; then
+      rm -f ${PKG_INCL}
+   fi
+
+   if [ -f info ]; then
+      rm -f info
+   fi
+
+   if [ -f prototype ]; then
+      rm -f prototype
+   fi
+
+   if [ -d "${PKG_NAME}" ]; then
+      rm -rf ${PKG_NAME}
+   fi
+
+   if [ -d "${jass_custm_dir}" ]; then
+      rm -rf ${jass_custm_dir}
+   fi
+}
+
+# ****************************************************************************
+# Function: logNotice
+#
+# The purpose of this function is to print a notice message to standard out.
+# ****************************************************************************
+
+logNotice()
+{
+   _logMessage="${*}"
+
+   if [ -z "${QUIET}" ] ; then
+      logString="[NOTE] `gettext "${_logMessage}"`"
+      eval printf "%s\\\n" "\"${logString}\""
+   fi
+}
+
+# ****************************************************************************
+# Function: logWarning
+#
+# The purpose of this function is to print a warning message to standard out.
+# ****************************************************************************
+
+logWarning()
+{
+   _logMessage="${*}"
+
+   if [ -z "${QUIET}" ] ; then
+      logString="[WARN] `gettext "${_logMessage}"`"
+      eval printf "%s\\\n" "\"${logString}\""
+   fi
+}
+
+# ****************************************************************************
+# Function: logError
+#
+# The purpose of this function is to print an error message to standard out.
+# ****************************************************************************
+
+logError()
+{
+   _logMessage="${*}"
+
+   if [ -z "${QUIET}" ] ; then
+      logString="[ERR ] `gettext "${_logMessage}"`"
+      eval printf "%s\\\n" "\"${logString}\""
+   fi
+}
+
+# ****************************************************************************
+# Determine if an entry is in the exclude listing
+# ****************************************************************************
+
+excludedEntry()
+{
+   echo "$1" | egrep "${PKG_EXCL}" > /dev/null 2>&1
+   errValue=$?
+   if [ "${errValue}" = 2 ]; then
+      logError "Possible syntax error in the exclude list."
+      exit 1
+   elif [ "${errValue}" = 0 ]; then
+      # This entry has been found in the exclude list.
+      return 0
+   fi
+
+   # The entry was not found in the exclude list.
+   return 1
+}
+
+# ****************************************************************************
+# Process individual files.
+# ****************************************************************************
+
+processFile()
+{
+   _tmpFile="${1}"
+
+   if excludedEntry "${_tmpFile}" ; then
+      :
+      [ -z "${QUIET}" ] && logNotice 'Excluded file: ${_tmpFile}'
+   else
+      echo "${1}" >> ${PKG_INCL}
+   fi
+}
+
+# ****************************************************************************
+# Process individual elements of a directory.
+# ****************************************************************************
+
+processDirectory()
+{
+   _tmpDirectory="${1}"
+
+   echo "${1}" >> ${PKG_INCL}
+   if excludedEntry "${_tmpDirectory}" ; then
+      :
+      [ -z "${QUIET}" ] && logNotice 'Excluded directory: ${_tmpDirectory}'
+   else
+      for tmpFile in `ls -d ${_tmpDirectory}/.* ${_tmpDirectory}/* 2>/dev/null`; do
+         shortname="`basename ${tmpFile}`"
+         if [ "${shortname}" = "." -o "${shortname}" = ".." ]; then
+            continue
+         elif [ -d "${tmpFile}" ]; then
+            processDirectory "$tmpFile"
+         elif [ -f "${tmpFile}" -o -h "${tmpFile}" ]; then
+            processFile "$tmpFile"
+         else
+            logError 'Unknown File Type: ${tmpFile}'
+         fi
+      done
+   fi
+}
+
+
+# ****************************************************************************
+# Make the new package's deliverables relocatable by relocating them.
+# ****************************************************************************
+relocateDirectory()
+{
+	mkdir -p ${jass_custm_dir}
+
+        if [ -z "${PKG_BASE}" ] ; then # -b custom-base-dir option used
+           sed -e "s|^\./||" ${jass_base_dir}/${PKG_INCL} > \
+               ${jass_base_dir}/${PKG_INCL}.tmp
+
+        else
+	   sed -e "s|^\.|${PKG_BASE}|" ${jass_base_dir}/${PKG_INCL} > \
+		${jass_base_dir}/${PKG_INCL}.tmp
+        fi
+
+	rm -f ${jass_base_dir}/${PKG_INCL}
+	mv ${jass_base_dir}/${PKG_INCL}.tmp ${jass_base_dir}/${PKG_INCL}
+	reloc_tmp=${PKG_BASE}
+	# Must add the PKGBASE path to the delivery.
+	while [ "${reloc_tmp}" != "" ] && [ "${reloc_tmp}" != "." ]; do
+		echo "${reloc_tmp}" >> ${jass_base_dir}/${PKG_INCL}
+		reloc_tmp=`dirname ${reloc_tmp}`
+		cd ../
+	done
+	
+	cat ${jass_base_dir}/${PKG_INCL} | sort -u | \
+		cpio -pdum ${jass_custm_dir} > /dev/null 2>&1
+	cd ${jass_base_dir}
+}
+
+# ****************************************************************************
+#
+# Execution begins here
+#
+# Define global variables that will describe how this package is to
+# be constructed.  Note that the user can add additional information to
+# some of these variables using command line options.
+# ****************************************************************************
+
+QUIET=""
+export QUIET
+
+PKG_NAME="JASScustm"
+jass_custm_dir="/tmp/JASScustm.$$"
+
+PKG_VERS="`grep JASS_VERSION= ${jass_base_dir}/Drivers/driver.init |\
+   nawk -F= '{ print $2 }' | sed 's/\"//g'`"
+
+PKG_INCL="jass-include-list.tmp"
+
+PKG_TITL="Customized Sun Security Toolkit: Community Edition"
+PKG_ROOT="/opt"
+PKG_BASE="SUNWsst"
+PKG_ARCH="Solaris"
+PKG_CATG="application"
+PKG_MAIL=""
+PKG_DESC="The Sun Security Toolkit: Community Edition is collection of tools and scripts used to automate the security hardening and verification of a system running the Solaris OE.  This package is a customized version of the SUNWsst package."
+
+# ****************************************************************************
+# Parse the command line arguments that were passed to this script.
+# ****************************************************************************
+
+while getopts b:e:m:p:t:qh\?v v; do
+   case ${v} in
+
+      b)
+         PKG_BASE=""
+         PKG_ROOT="${OPTARG}"
+         ;;
+
+      m)
+         PKG_MAIL="${OPTARG}"
+         ;;
+
+      t)
+         PKG_TITL="${OPTARG}"
+         ;;
+
+      e)
+         PKG_EXCL="${OPTARG}"
+         ;;
+
+      p)
+         PKG_NAME="${OPTARG}"
+         ;;
+
+      q)
+         QUIET="1"
+         ;;
+
+      \?|h)
+         printUsage
+         exit 0
+         ;;
+
+      v)
+         printVersion
+         exit 0
+         ;;
+   esac
+done
+
+shift `expr $OPTIND - 1`
+
+
+PKG_EXCL="${PKG_EXCL}|prototype|${PKG_NAME}.pkg|${PKG_INCL}"
+
+# To exclude other directories, the following syntax should be
+# used.  This can be supplied on the command line using the
+# "-e" option.
+#
+# PKG_EXCL="OS|Packages|Patches|${PKG_INCL}|prototype|Releases|${PKG_NAME}.pkg"
+
+export PKG_NAME PKG_TITL PKG_BASE PKG_VERS PKG_ARCH
+export PKG_CATG PKG_MAIL PKG_EXCL PKG_DESC
+
+# ****************************************************************************
+# Check to make sure that only one instance of this program is running.
+# ****************************************************************************
+
+# count=0
+# count=`ps -aeo fname,pid,ppid,comm,args | grep "^make-jas" |\
+#    nawk '{ if ( $2 != cpid && $3 != cpid ) print $0; }' cpid=$$ |\
+#    grep "make-jass-pkg" | grep -v grep | wc -l`
+#
+# if [ ${count} -ge 1 ]; then
+#    logWarning "Only one instance of this program can be run at a time."
+#    exit 2
+# fi
+
+# ****************************************************************************
+# Create the prototype definition for the package.
+# ****************************************************************************
+
+logNotice "Creating the package's prototype file.  This may take a few minutes."
+
+cleanupFiles
+
+touch ${PKG_INCL}
+chmod 600 ${PKG_INCL}
+
+processDirectory .
+
+relocateDirectory
+rm ${PKG_INCL}
+cd ${jass_custm_dir}
+touch ${PKG_INCL}
+chmod 600 ${PKG_INCL}
+TMPQUIET=${QUIET}
+QUIET="1"
+processDirectory .
+QUIET=${TMPQUIET}
+
+sed -e "s/^\.\///" ${PKG_INCL} > ${jass_base_dir}/${PKG_INCL}
+
+cat ${jass_base_dir}/${PKG_INCL} | sort -u | pkgproto > \
+	${jass_base_dir}/prototype
+echo "i pkginfo=info" >> ${jass_base_dir}/prototype
+echo "i copyright=lib/pkg/copyright" >> ${jass_base_dir}/prototype
+echo "i tsolinfo=lib/pkg/tsolinfo" >> ${jass_base_dir}/prototype
+echo "i depend=lib/pkg/depend" >> ${jass_base_dir}/prototype
+echo "i preremove=lib/pkg/preremove" >> ${jass_base_dir}/prototype
+
+cd ${jass_base_dir}
+
+# ****************************************************************************
+# Create the package's information file (pkginfo).
+# ****************************************************************************
+
+logNotice "Creating the package's info file."
+
+cat > info <<EOF
+PKG="${PKG_NAME}"
+NAME="${PKG_TITL}"
+ARCH="${PKG_ARCH}"
+VERSION="${PKG_VERS}"
+VENDOR=""
+DESC="${PKG_DESC}"
+CATEGORY="${PKG_CATG}"
+BASEDIR="${PKG_ROOT}"
+EMAIL="${PKG_MAIL}"
+HOTLINE=""
+CLASSES="none"
+EOF
+
+# ****************************************************************************
+# Build the package into a temporary directory.
+# ****************************************************************************
+
+logNotice "Creating the package in a scratch directory."
+
+if [ "${QUIET}" = "1" ]; then
+   ( pkgmk -d ${jass_base_dir} -r ${jass_custm_dir} -o ${PKG_NAME} ) > /dev/null 2>&1
+else
+   pkgmk -d ${jass_base_dir} -r ${jass_custm_dir} -o ${PKG_NAME}
+fi
+
+# ****************************************************************************
+# Create the package's stream format (package file).
+# ****************************************************************************
+
+logNotice "Creating the package's stream format (package file)."
+
+if [ "${QUIET}" = "1" ]; then
+   ( echo | pkgtrans -s . ${PKG_NAME}.pkg ) > /dev/null 2>&1
+else
+   echo | pkgtrans -s . ${PKG_NAME}.pkg
+fi
+
+logNotice 'The package has been created as \"${PKG_NAME}\".pkg.'
+
+# ****************************************************************************
+# General housekeeping.
+# ****************************************************************************
+
+cleanupFiles
+
+exit 0

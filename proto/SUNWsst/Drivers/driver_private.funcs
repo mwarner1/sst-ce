@@ -1,0 +1,1285 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)driver_private.funcs	1.19	05/07/11 SMI"
+#
+
+#
+# This file contains all of the driver functions used by the Toolkit's
+# finish functionality.  These functions should be considered private in
+# nature and not accessed directly by finish scripts.  The public functions
+# found in the driver_public.funcs file should be used instead.
+#
+
+
+# ============================================================================
+# State Variables
+# ============================================================================
+
+# The following variable is a global variable defined for this script
+# that would allow files "saved" by the backup_file function to be
+# later removed if the JASS_SAVE_BACKUP variable is set to "0".
+
+JASS_SAVED_LIST=""
+export JASS_SAVED_LIST
+
+# The following variable is a global variable defined for this script
+# that will allow all functions to know the name of the currently
+# running Finish script.  Note that if copy_files is running (outside
+# of a Finish script), this variable will be set to "none".
+
+JASS_FINISH_SCRIPT="none"
+export JASS_FINISH_SCRIPT
+
+
+# ============================================================================
+# Function: mount_filesystems
+#
+# The purpose of this function is to mount any file systems that may be
+# used by the Finish scripts.  This function takes no arguments.
+# ============================================================================
+
+mount_fs()
+{
+   # This is a "helper" function for mount filesystems.  This generally
+   # will not be called directly.
+
+   # Parameters to this function are:
+   # $1     = Server and fully qualified path to mount.
+   # $2     = Name of the mount point.
+
+   mount_src="`clean_path ${1}`"
+   mount_dst="`clean_path ${2}`"
+
+   cd /
+
+   if [ "${mount_src}" = "" ]; then
+      logError 'The server and path to be mounted were not specified.'
+      return
+   fi
+
+   if [ "${mount_dst}" = "" ]; then
+      logError 'The mount point was not specified.'
+      return
+   fi
+
+   if [ ! -d ${mount_dst} ]; then
+      mkdir -p ${mount_dst}
+   fi
+
+   logNotice 'Mounting ${mount_src} on ${mount_dst}.'
+   mount -F nfs ${mount_src} ${mount_dst}
+}
+
+mount_filesystems()
+{
+   if [ "${JASS_STANDALONE}" = "0" ]; then
+      mount_fs ${JASS_PACKAGE_MOUNT} ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}
+      mount_fs ${JASS_PATCH_MOUNT}   ${JASS_ROOT_DIR}${JASS_PATCH_DIR}
+   fi
+}
+
+
+# ============================================================================
+# Function: unmount_filesystems
+#
+# The purpose of this function is to unmount any file systems that may be
+# used by the Finish scripts.  This function takes no arguments.
+# ============================================================================
+
+unmount_fs()
+{
+   # This is a "helper" function for mount filesystems.  This generally
+   # will not be called directly.
+
+   # Parameters to this function are:
+   # $1     = Name of the mount point to unmount.
+
+   umount_dst="`clean_path ${1}`"
+
+   cd /
+
+   if [ "${umount_dst}" = "" ]; then
+      logError 'The mount point to unmount was not specified.'
+      return
+   fi
+
+   logNotice 'Unmounting ${umount_dst}.'
+   umount ${umount_dst}
+   rmdir ${umount_dst}
+}
+
+unmount_filesystems()
+{
+   if [ "${JASS_STANDALONE}" = "0" ]; then
+      unmount_fs ${JASS_ROOT_DIR}${JASS_PACKAGE_DIR}
+      unmount_fs ${JASS_ROOT_DIR}${JASS_PATCH_DIR}
+   fi
+}
+
+
+# ============================================================================
+# Function: link_target/descend_link
+#
+# link_target returns the symbolic link's value, whereas descend_link()
+# converts a symbolic link path to the actual direct path
+# ============================================================================
+
+link_target()
+{
+   # Parameters to this function are:
+   # ${1}       a path to a symbolic link
+
+   # Get the path the link points to
+   ln_targ=`ls -ld "${1}" | nawk '{print $NF}'`
+   echo ${ln_targ}
+}
+
+descend_link()
+{
+   # Parameters to this function are:
+   # ${1}	a path to a symbolic link
+
+   # Get the path the link points to
+   desc_targ=`link_target "${1}"`
+
+   # If linked to relative path, prepend parent dir with slash
+   parent=""
+   if [ `echo "${desc_targ}" | cut -c1` != '/' ] ; then
+      parent=`dirname ${1}`/
+   fi
+
+   echo ${parent}${desc_targ}
+}
+
+
+# ============================================================================
+# Function: backupUndoFile
+#
+# This function takes a file, strips the JASS timestamp from it, and
+# ============================================================================
+
+backupUndoFile() {
+
+   # Parameters to this function are:
+   # $1     = Fully qualified path to source file.
+
+   if [ "${1}" = "" ]; then
+      logError 'The source file was not provided.'
+      return
+   fi
+
+   back_file=$1
+
+   backup_file $back_file -u
+   return $?
+}
+
+
+# ============================================================================
+# Function: cleanup_files
+#
+# This function takes a list of files constructed by the backup_file
+# and disable_rc_file functions and removes each one if the JASS_SAVE_BACKUP
+# variable is set to "0".  This function is primarily intended to only be
+# called by the "driver.run" script, although there is no reason why it
+# could not be called elsewhere.
+# ============================================================================
+
+cleanup_files()
+{
+   # If the backed up are not to be saved, then start removing them
+   if [ "${JASS_SAVE_BACKUP}" = 0 ]; then
+      for token in ${JASS_SAVED_LIST}; do
+         file="`echo ${token} | nawk -F\| '{ print $1 }'`"
+	 if [ -f ${file} ]; then
+            srcFile="`clean_path ${file}`"
+	    logNotice 'Removing saved file, ${srcFile}'
+	    rm -f "${srcFile}"
+            fix_s="`strip_path ${srcFile}`"
+	    add_to_manifest R ${fix_s}
+	 elif [ -d ${file} ]; then
+            srcFile="`clean_path ${file}`"
+	    logNotice 'Removing saved directory, ${srcFile}'
+	    rm -rf ${srcFile}
+            fix_s="`strip_path ${srcFile}`"
+	    add_to_manifest R ${fix_s}
+	 fi
+      done
+   # Otherwise, write files' checksums to the checksum manifest file
+   else
+      for token in ${JASS_SAVED_LIST}; do
+         file="`echo ${token} | nawk -F\| '{ print $1 }'`"
+         ck="`echo ${token} | nawk -F\| '{ print $2 }'`"
+         # because of the backup_in_safe_directory interface, the
+         # information in JASS_SAVED_LIST needs to be increased. The problem
+         # is what is the original file name?
+         # src files are either .JASS.XXXX or foo.JASS/bar.JASS.XXX
+         # To avoid guessing, we will add a 3rd field, the original filename
+	 origFile="`echo ${token} | nawk -F\| '{ print $3 }'`"
+
+	 if [ -h ${file} -o -d ${file} ] ; then
+	    :
+	 elif [ -f ${file} ] ; then
+	    srcFile=`clean_path ${file} | sed -e 's,\.JASS\..\{14\}$,,'`
+	    dstFile="`clean_path ${file}`"
+	    if [ -n "${origFile}" ]; then
+	       srcFile="${origFile}"
+	    fi
+            if [ "${ck}" = "" ]; then
+               ck="`checksum ${srcFile}`"
+            fi
+            fix_d="`strip_path ${dstFile}`"
+	    echo "${fix_d}\t${ck}\t${origFile}" >> ${JASS_RUN_CHECKSUM}
+	 else
+	    # Sometimes, the backup_file will be moved before
+	    # The end of the script. In that case, sometimes
+	    # we still need a checksum updated.
+	    srcFile=`clean_path ${file} | sed -e 's,\.JASS\..\{14\}$,,'`
+	    dstFile="`clean_path ${file}`"
+	    if [ -n "${origFile}" ]; then
+	       srcFile="${origFile}"
+	    fi
+	    if [ -f ${srcFile} ]; then
+	       if [ "${ck}" = "" ]; then
+		  ck="`checksum ${srcFile}`"
+	       fi
+	       fix_d="`strip_path ${dstFile}`"
+	       echo "${fix_d}\t${ck}\t${origFile}" >> ${JASS_RUN_CHECKSUM}
+            fi
+	 fi
+      done
+   fi
+
+   JASS_SAVED_LIST=""
+}
+
+
+# ===========================================================================
+# checksum_crc() and checksum_md5()
+#
+# Computes a checksum on a given file using cksum(1) or digest(1),
+# respectively.
+#
+# On Solaris 2.5.1-9, the two checksum values produced by the
+# cksum command (first and second fields) are returned (separated by a colon
+# instead of whitespace [default]).  On Solaris 10, the value of the digest
+# command (MD5 algorithm) is returned.
+#
+# Called by checksum()
+#
+# ===========================================================================
+
+checksum_crc()
+{
+   [ -z "${1}" ] && return
+   if [ -f "${1}" ]; then
+      cksum "${1}" | nawk '{print $1 ":" $2 }'
+   else
+      echo "-1:-1"
+   fi
+}
+
+checksum_md5()
+{
+   [ -z "${1}" ] && return
+   if [ -f "${1}" ]; then
+      if [ `digest -l 2>/dev/null | grep -c "md5"` = 1 ]; then
+         digest -a md5 "${1}"
+      else
+         # md5 algorithm not available, must use cksum
+         checksum_crc "${1}"
+      fi
+   else
+      echo "-1"
+   fi
+}
+
+
+# ===========================================================================
+# get_network_information()
+#
+# Determine network information for this system.
+# That is, network node (uname -n), host id, host address, and mac address.
+# Return result in  $node, $iface, $iaddr, and $macaddr, respectively.
+# If not known, set the variable to "Not Configured".
+#
+# Called by print_banner().
+# ===========================================================================
+
+get_network_information()
+{
+   node=`uname -n`
+
+   if [ "$JASS_ZONE_NAME" = "global"  ] ; then
+      # JumpStart or no zone or global zone
+      # Get interface from /etc/hostname.*
+      iface=`egrep -l "^${node}$" ${JASS_ROOT_DIR}etc/hostname.* 2>/dev/null \
+         | cut -d. -f2 | head -1`
+      if [ -z "$iface" ] ; then
+         iface=`ls -1 ${JASS_ROOT_DIR}etc/hostname.* 2>/dev/null \
+            | cut -d. -f2 | head -1`
+      fi
+
+   else # zone
+      # Get interface from ifconfig
+      iface=`/usr/sbin/ifconfig -a | egrep -v '^[ 	]' | grep -v '^lo' \
+         | grep ':' | sed 's/:[ 	].*//' | head -1`
+   fi
+
+   if [ "$iface" != ""  ] ; then
+      if /usr/sbin/ifconfig ${iface} >/dev/null 2>&1 ; then
+         # Get IP address and MAC address from ifconfig
+         iaddr=`/usr/sbin/ifconfig   ${iface} 2>/dev/null | grep -w inet \
+           | nawk '{print $2}'`
+         macaddr=`/usr/sbin/ifconfig ${iface} 2>/dev/null | grep -w ether \
+           | nawk '{print $2}'`
+      fi
+
+      # if macaddr not in ifconfig output, try getting it from arp
+      if [ "$macaddr" = ""  ] ; then
+         /usr/sbin/ping $node 1 >/dev/null 2>&1
+         macaddr=`/usr/sbin/arp $node 2>/dev/null | nawk '{print $4}'`
+      fi
+   fi
+
+   if [ "$macaddr" = ""  ] ; then
+      macaddr="Not Configured"
+   fi
+
+   if [ "$iaddr" = ""  ] ; then
+      iaddr="Not Configured"
+   fi
+}
+
+
+# ===========================================================================
+# print_banner()
+#
+# The purpose of this function is print a banner to standard output
+# providing identifying information for a given JASS run.  This banner
+# includes information such as node name, host ID, Ethernet Address,
+# node IP address and JASS version information.
+# ===========================================================================
+
+print_banner()
+{
+   get_network_information
+
+   if check_os_min_revision 5.10 ; then # include zone name
+      BANNER_MSG="Toolkit Version: ${JASS_VERSION}
+Node name:       ${node}
+Zone name:       ${JASS_ZONE_NAME}
+Host ID:         `hostid`
+Host address:    ${iaddr}
+MAC address:     ${macaddr}
+OS version:      ${JASS_OS_REVISION}
+Date:            `date`"
+
+   else
+      BANNER_MSG="Toolkit Version: ${JASS_VERSION}
+Node name:       ${node}
+Host ID:         `hostid`
+Host address:    ${iaddr}
+MAC address:     ${macaddr}
+OS version:      ${JASS_OS_REVISION}
+Date:            `date`"
+   fi
+
+   logBanner '${BANNER_MSG}'
+}
+
+
+# ============================================================================
+# Function: is_legacy_service()
+#
+# This function is used to verify if a service is a SMF recognized legacy service
+# in Solaris  10 and newer versions of the OS.
+# This function in a standalone mode is for checking actual state
+# of a legacy service. However, this function in JumpStart mode is only to check
+# if the svc name "lrc:" indicate the service is a legacy service.
+#
+# parameters:  $1  FMRI in SMF format of either lrc:/etc/xxxx/rc_file or
+#                  svc:/xxxx/xxx/service:instance
+# returns:     0 - the FMRI is a legacy service under SMF
+#              1 - the FMRI is not a legacy service
+# ============================================================================
+
+is_legacy_service()
+{
+    # Parameters to this function are:
+    # $1     = FMRI of the service
+
+    svcName="${1}"
+    _retCode=1
+    lrc="`echo ${svcName} | nawk -F: '{ print $1}'`"
+    if [ "${lrc}" = "lrc" ]; then
+       _retCode=0
+    fi
+    if [ "${JASS_STANDALONE}" = "1" ]; then
+       if svcprop -q "${svcName}" ; then
+          svcState="`svcs -H -o state ${svcName}`"
+          if [ $? = 0 ]; then
+             if [ "${svcState}" = "legacy_run" ]; then
+                _retCode=0
+             fi
+          fi
+       fi
+    else
+       if [ "${lrc}" != "svc" ]; then
+          logError 'SMF is not functional yet in JumpStart mode. Therefore service ${svcName} cannot be identified by using SMF commands. We assume it is a legacy service.'
+          _retCode=0
+       fi
+    fi
+    return ${_retCode}
+ }
+
+
+# ============================================================================
+# Function: _is_bad_fmri_nolog()
+# This function is used to check the format of FMRI. It does not log the result
+# making it more suitable for internal use.
+#
+# Parameters: $1 - FMRI of SMF service in term of svc:/xxx/xxx/service:instance
+#
+# returns      1 - FMRI format is ok
+#              0 - FMRI format is not what expected.
+# ============================================================================
+_is_bad_fmri_nolog()
+{
+   _tmp="`echo \"${1}\"| nawk '{ print substr($1,0,4)}'`"
+   _ret=0
+   if [ "${_tmp}" = "svc:" ]; then
+      _ret=1
+   elif [ "${_tmp}" = "lrc:" ]; then
+      _ret=1
+   fi
+   return $_ret
+}
+
+
+# ============================================================================
+# Function: _is_bad_fmri()
+# This function is used to check the format of FMRI
+#
+# Parameters: $1 - FMRI of SMF service in term of svc:/xxx/xxx/service:instance
+#             $2 - function calling this function
+#
+# returns      1 - FMRI format is ok
+#              0 - FMRI format is not what expected.
+# ============================================================================
+_is_bad_fmri()
+{
+   _func="${2}"
+   if _is_bad_fmri_nolog "$1" ; then
+     logError 'Parameter Error: FMRI to function $_func: parameter ${1}.'
+     return 0
+   else
+      return 1
+   fi
+}
+
+
+# ============================================================================
+# Function: is_service_enabled()
+#
+# This function is used to verify if a service is enabled in SMF in Solaris
+# 10 and newer versions of the OS.
+# This function checks live system by using SMF commands.  And it checks the
+# upgrade manifest to see if there are pending commands to enable the service.
+#
+# The following logic applied on check upgrade manifest:
+# 1. obtained last line number of cmd "svcadm enable FMRI"
+# 2. obtained last line number of cmd "svcadm disable FMRI"
+# 3. compare those two line numbers to determine if FMRI will be disabled or
+#    enabled.
+#
+# Warning: this function can be only called in standalone mode.
+# Use SMF commands instead of this for a live system.
+#
+# Parameters:
+#    $1   - FMRI of SMF service in term of svc:/xxx/xxx/service:instance
+#
+# Return:
+#    0    - the service is enabled or will be enabled after reboot
+#    1    - the service is disabled and no enable script in upgrade manifest or
+#           unrecognized FMRI
+# ============================================================================
+is_service_enabled()
+{
+   # Parameters to this function are:
+   # $1     = FMRI of the service
+   svcName="${1}"
+   retCode=1
+
+   if _is_bad_fmri "${svcName}" "is_service_enable" ; then
+      return $retCode
+   fi
+
+   if [ "${JASS_STANDALONE}" = "1" ]; then
+      # See if the service is enabled or disabled now:
+      if is_option_enabled "${svcName}" "general/enabled" "" "true" ; then
+         retCode=0
+         return $retCode
+      fi
+
+      # If svcadm enable -t was used, general/enabled refers to after the
+      # reboot, and general_ovr/enabled is the current state.
+      if is_option_enabled "${svcName}" "general_ovr/enabled" "" "true" ; then
+         retCode=0
+         return $retCode
+      fi
+
+      value=""
+      if svcprop -q "${svcName}" ; then
+         svcState=`svcs -H -o state ${svcName}`
+         if [ "${svcState}" != "disabled" ] ; then
+            if [ "${svcState}" != "uninitialized" ]; then # enabled
+               retCode=0
+            fi
+         fi
+      fi
+
+      # See if the service will be enabled or disabled after reboot:
+      _upgradeFile=${JASS_ROOT_DIR}var/svc/profile/upgrade
+      if [ -f ${_upgradeFile} ]; then
+         _enLn=0
+         _disEnLn=0
+         tmp=`grep -n "${svcName}" ${_upgradeFile}|grep  "svcadm"|grep "enable"|tail -1`
+         if [ "${tmp}" != "" ] ; then
+            _enLn=`echo "${tmp}" | nawk -F: '{print $1 }'`
+         fi
+         tmp=`grep -n "${svcName}" ${_upgradeFile}|grep  "svcadm"|grep "disable"|tail -1`
+         if [ "${tmp}" != "" ] ; then
+            _disEnLn=`echo "${tmp}" | nawk -F: '{print $1 }'`
+         fi
+
+         if [ ${_enLn} -gt ${_disEnLn} ]; then
+            retCode=0
+         elif [ ${_enLn} -lt ${_disEnLn} ]; then
+            retCode=1
+         fi
+      fi
+
+   else
+       logError 'SMF is not loaded in JumpStart mode. Service ${svcName} cannot be identified by use SMF. Assume it is not configured.'
+   fi
+
+   return ${retCode}
+}
+
+
+# ============================================================================
+# Function: is_option_enabled()
+#
+# Verify if a property of a service has expected value in SMF for Solaris 10
+# and newer versions of the OS.  For use in JumpStart mode only.
+# Check the upgrade manifest to see if there is a pending command to enable
+# the service for JumpStart installs.
+#
+# The following logic applied on checking the upgrade manifest:
+# 1. Determine line numbers of "select FMRI" command output
+# 2. For all selected FMRIs, see if the next line has command setprop ${prop}
+# 3. Compare this line with expected value.
+#
+# Warning: this function can be only called in standalone mode.
+# Use SMF commands instead of this for a live system.
+#
+# Parameters:
+#    $1   - FMRI of SMF service in term of svc:/xxx/xxx/service:instance
+#    $2   - property Name
+#    $3   - pattern string in property, can be ""
+#    $4   - expected value/string; may start with a "-" (be careful with grep)
+#
+# Return:
+#    0    - the property has the expected value or will have expected value
+#           after reboot
+#    1    - the service is disabled and no enable script is in the in upgrade
+#           manifest or the FMRI is unrecognized
+# ============================================================================
+is_option_enabled()
+{
+
+   svcName="$1"
+   prop="$2"
+   propSvc="$3"
+   propOpt="$4"
+   _retCode=1
+
+   if [ "${JASS_STANDALONE}" = "0" ]; then
+      logError 'SMF is not loaded in JumpStart mode. Service ${svcName} cannot be identified by use SMF. Assume it is not configured.'
+   fi
+
+   # check live system
+   if svcprop -q "${svcName}" ; then
+      value=""
+      get_service_property_value 0 "${svcName}" "${prop}" ""
+      if [ "${propSvc}" != "" ]; then
+         tmp=`echo "${value}"|grep "${propSvc}"`
+         if [ "${tmp}"  != "" ]; then
+            tmp=`echo "${value}" | egrep -e "${propOpt}"`
+            # option is enabled.
+            if [ "${tmp}" != "" ]; then
+               _retCode=0;
+            fi
+         fi
+      else
+         tmp=`echo "${value}" | egrep -e "${propOpt}"`
+         # option is enabled.
+         if [ "${tmp}" != "" ]; then
+            _retCode=0;
+         fi
+      fi
+   fi
+
+   _upgradeFile=${JASS_ROOT_DIR}var/svc/profile/upgrade
+   if [ -f ${_upgradeFile} ]; then
+      tmp=`grep -n select ${_upgradeFile}|grep "${svcName}"`
+
+      for sel in ${tmp}; do
+         ln=`echo ${sel} | nawk -F: '{print $1}'`
+         cnt=`expr "${ln}" : '^[0-9]'`
+         if [ "${cnt}" = "0"  ]; then
+            continue
+         fi
+         ln=`expr $ln + 1 `
+         tmp=`grep -n setprop ${_upgradeFile}|grep "${prop}"|grep $ln`
+         if [ "${tmp}" = "" ]; then
+               continue
+         fi
+
+         if [ "${propSvc}" != "" ]; then
+            tmp1=`echo "${tmp}"|grep "addOpt"`
+            if [ "${tmp1}" = "" ]; then
+               tmp=`echo "${tmp}"|grep "${propSvc}"`
+               if [ "${tmp}" = "" ]; then
+                  continue
+               else
+                  tmp=`echo "${tmp}"| egrep -e ${propOpt}`
+                  if [ "${tmp}" = "" ]; then
+                     _retCode=1
+                  else
+                     _retCode=0
+                  fi
+               fi
+
+            else
+               tmp=`grep "addOpt" ${_upgradeFile}| grep "${propSvc}"| egrep -e "${propOpt}"`
+               if [ "${tmp}" = "" ]; then
+                  continue
+               else
+                  _retCode=0
+               fi
+            fi
+
+         else
+            tmp=`echo "${tmp}"| egrep -e "${propOpt}"`
+            if [ "${tmp}" = "" ]; then
+               if [ "${_retCode}" = "0" ]; then
+                  _retCode=1
+               fi
+            else
+               if [ "${_retCode}" = "1" ]; then
+                  _retCode=0
+               fi
+            fi
+         fi
+      done
+   fi
+   return ${_retCode}
+}
+
+
+# ============================================================================
+# Function: _create_file_if_needed()
+#
+# This function is used to create a SMF upgrade manifest file, if it does not
+# exists.
+#
+# parameters:   $1 - smf upgrade manifest file name
+# returns:      none.
+# ============================================================================
+_create_file_if_needed ()
+{
+   _file="${1}"
+   if [ ! -f ${_file} ]; then
+      touch           ${_file}
+      chown root:root ${_file}
+      chmod 700       ${_file}
+   fi
+}
+
+
+# ============================================================================
+# Function: _delete_smf_block()
+#
+# This function is used to delete a block of code from SMF upgrade manifest.
+# The block is tagged with <script_name>BEGIN<timestamp> and end with
+# <script_name>END<tmpstamp>.
+# Only delete the block generated by prior hardening/undo run.
+#
+# parameters:   $1 - 0 hardinging 1 undo
+#               $2 - SMF upgrade manifest name
+#               $3 - timestamp to be matched to
+#                  "" indicate to use JASS_TIMESTAMP environment variable
+# returns       none
+# ============================================================================
+_delete_smf_block()
+{
+   # Parameters to this function are:
+   # $1     = script
+
+   _upgradeFile="${1}"
+   _timestamp="${2}"
+
+
+   if [ ! -f ${_upgradeFile} ] ; then
+      return
+   fi
+
+   tmp=`grep "^#<${JASS_SCRIPT}>BEGIN:${_timestamp}" ${_upgradeFile}`
+   if [ "${tmp}"  != "" ] ; then
+      _begin_blk="#<${JASS_SCRIPT}>BEGIN"
+      _end_blk="#<${JASS_SCRIPT}>END"
+
+      #delete the block
+      _modified_smf_manifest=`dirname ${_upgradeFile}`/jass-`basename ${_upgradeFile}`
+      cat /dev/null > ${_modified_smf_manifest} || {
+         logError 'Unable to create temp jass SMF manifest file.'
+         return
+      }
+      sed -e "/^${_begin_blk}:${_timestamp}/,/^${_end_blk}:${_timestamp}/d" < ${_upgradeFile} > ${_modified_smf_manifest}
+      if [ -s ${_modified_smf_manifest} ]; then
+         cp ${_modified_smf_manifest} ${_upgradeFile}
+      else
+         rm -f ${_upgradeFile}
+      fi
+      rm -f ${_modified_smf_manifest}
+   fi
+}
+
+
+# ============================================================================
+# Function: _write_smf_blk_begin()
+#
+# This function is used to write begin of code to smf upgrade file.
+#
+# parameters:   $1 SMF upgrade manifest
+# returns: none
+# ============================================================================
+_write_smf_blk_begin()
+{
+   _file=${1}
+
+   #may need to create SMF upgrade manifest
+   _create_file_if_needed ${_file}
+
+   if [ "${JASS_MODE}" = "UNDO"  ] ; then
+      echo "#<${JASS_SCRIPT}_UNDO>BEGIN:${JASS_TIMESTAMP}">>${_file}
+   else
+      echo "#<${JASS_SCRIPT}>BEGIN:${JASS_TIMESTAMP}">>${_file}
+      add_to_manifest X "_delete_smf_block /var/svc/profile/upgrade ${JASS_TIMESTAMP}"
+   fi
+}
+
+
+# ============================================================================
+# Function: _write_smf_blk_end()
+#
+# This function is used to write end of code to smf upgrade file.
+#
+# parameters:   $1 SMF upgrade manifest
+# returns: none
+# ============================================================================
+_write_smf_blk_end()
+{
+   _upgradeFile=${1}
+   if [ "${JASS_MODE}" = "UNDO" ] ; then
+      echo "#<${JASS_SCRIPT}_UNDO>END:${JASS_TIMESTAMP}">>${_upgradeFile}
+   else
+      echo "#<${JASS_SCRIPT}>END:${JASS_TIMESTAMP}">>${_upgradeFile}
+   fi
+}
+
+
+# ============================================================================
+# Function: _enable_or_disable_service
+#
+# This function is used to enable or disable a SMF-enabled service in Solaris
+# 10 and newer versions of the OS.
+#
+# Parameters:  $1 FMRI the service to be enabled or disabled
+#              $2 SMF upgrade manifest
+#              $3 1 - enable service. 0 - disable service
+# returns:     none.
+# ============================================================================
+
+_enable_or_disable_service()
+{
+   # $1     = FMRI of the service
+   # $2     = SMF upgrade manifest file
+   _svcName="${1}"
+   _upgradeFile="${2}"
+   _disable="${3}"
+   _write_smf_blk_begin ${_upgradeFile}
+   echo "if svcprop -q \"${_svcName}\" ; then " >> ${_upgradeFile}
+   if [ "${_disable}" = "0" ]; then
+      echo "   svcadm -v  disable  ${_svcName}" >> ${_upgradeFile}
+   else
+      echo "   svcadm -v  enable ${_svcName}" >> ${_upgradeFile}
+   fi
+   echo "else">>${_upgradeFile}
+   echo "   echo \"SST: The service ${_svcName} is not installed. \"">> ${_upgradeFile}
+   echo "fi" >> ${_upgradeFile}
+   _write_smf_blk_end ${_upgradeFile}
+}
+
+# ============================================================================
+# Function: _delete_converted_inetd_entry
+#
+# This function is used to remove the manifest and smf entries for an smf
+# service that was added by the Toolkit.
+# Only works on Solaris 10 and newer versions of the OS.
+#
+# Parameters:  $1 FMRI the service deleted
+# returns:     none.
+# ============================================================================
+
+_delete_converted_inetd_entry()
+{
+   # $1     = FMRI of the service
+   _svcName="${1}"
+   _svcFile=`_xml_file_from_fmri "${1}"`
+   _upgradeFile="${JASS_ROOT_DIR}/var/svc/profile/upgrade"
+   _write_smf_blk_begin ${_upgradeFile}
+   cat >> ${_upgradeFile} <<-EOT
+	/usr/sbin/svccfg <<-EOB
+		delete ${_svcName}
+		quit
+		EOB
+	/usr/bin/rm ${_svcFile}
+	EOT
+   _write_smf_blk_end ${_upgradeFile}
+}
+
+# ============================================================================
+# Function: _xml_file_from_fmri
+#
+# This function is used to retrieve the manifest filename generated by
+# inetconv for a given FMRI.
+#
+# Parameters:  $1 FMRI
+# returns:     The manifest file name.
+# ============================================================================
+
+_xml_file_from_fmri()
+{
+   # $1     = FMRI of the service
+   _xmlsvcName="${1}"
+   _xmlsvcName=`/usr/bin/echo ${_xmlsvcName} | /usr/bin/sed -e \
+      's/\//-/g'`
+   _xmlsvcName=`/usr/bin/echo ${_xmlsvcName} | /usr/bin/sed -e \
+      's/^svc:\-network\-rpc\-/\/var\/svc\/manifest\/network\/rpc\//'`
+   _xmlsvcName=`/usr/bin/echo ${_xmlsvcName} | /usr/bin/sed -e \
+      's/^svc:\-network\-/\/var\/svc\/manifest\/network\//'`
+   _xmlsvcName=`/usr/bin/echo ${_xmlsvcName} | /usr/bin/sed -e \
+      's/:default$/.xml/'`
+   echo "${_xmlsvcName}"
+}
+
+
+# ============================================================================
+# Function: get_service_property_value
+#
+# This function is used to get a property value of a SMF-enabled service
+# in Solaris 10 and newer versions of the OS.
+#
+# Parameters:     $1    0 standalone use SMF commands immediately.
+#                       1 write script to SMF upgrade manifest, defer SMF
+#                       command until next reboot.
+#                 $2    FMRI to get value
+#                 $3    property of FMRI
+#                 $4    SMF upgrade manifest
+# Returns:        value="" error condition
+#                 value = property value of FMRI
+#
+#============================================================================
+
+get_service_property_value()
+{
+   # $1     = delayed execution
+   # $2     = FMRI of the service
+   # $3     = property type (groupname/property name)
+   # $4     = SMF upgrade manifest
+
+   _delayed="${1}"
+   _svcName="${2}"
+   _svcProp="${3}"
+   _upgradeFile="${4}"
+
+   value=""
+   if _is_bad_fmri "${_svcName}" "get_service_property_value" ; then
+      return
+   fi
+   if [ "${_delayed}" = "1" ]; then
+      # write to smf manifest
+      echo "value=\`svcprop -c -p \"${_svcProp}\" \"${_svcName}\" 2>/dev/null \` " >> ${_upgradeFile}
+   elif [ "${_delayed}" = "0" ]; then
+      value=`svcprop -c -p "${_svcProp}" "${_svcName}" 2>/dev/null`
+   else
+      logError 'Parameter error: get_service_property_value: expected value 0 or 1, actual value ${_delayed}.'
+   fi
+}
+
+
+# ============================================================================
+# Function: _set_service_property_value
+#
+# This function is used to set a property value of a SMF-enabled service
+# in Solaris 10 and newer versions of the OS. This function should be only called
+# in hardening.
+#
+# Parameters:   $1   FMRI of the service
+#               $2   property
+#               $3   value to set
+#               $4   SMF upgrade file
+# returns:
+#               none
+# ============================================================================
+
+_set_service_property_value()
+{
+   # $1     = FMRI of the service
+   # $2     = property
+   # $3     = value
+   # $4     = SMF upgrade file
+
+   _svcName="${1}"
+   _svcProp="${2}"
+   _svcVal="${3}"
+   _upgradeFile="${4}"
+
+   echo "svccfg << _EOF_" >> ${_upgradeFile}
+   echo "select ${_svcName}" >> ${_upgradeFile}
+   echo "setprop ${_svcProp} = \"$_svcVal\"" >> ${_upgradeFile}
+   echo "quit" >> ${_upgradeFile}
+   echo "_EOF_" >> ${_upgradeFile}
+}
+
+
+# ============================================================================
+# Function: _undo_service_property_value
+#
+# This function is used to restore a property value of a SMF-enabled service
+# in Solaris 10 and newer versions of the OS. This function should be only
+# called in UNDO mode.
+#
+# Parameters:   $1   FMRI of the service
+#               $2   property
+#               $3   value to set
+#               $4   SMF upgrade file
+# returns:
+#               none
+# ============================================================================
+
+_undo_service_property_value()
+{
+   # $1     = FMRI of the service
+   # $2     = property
+   # $3     = value
+   # $4     = SMF upgrade file
+
+   _svcName="${1}"
+   _svcProp="${2}"
+   _svcVal="${3}"
+   _upgradeFile="${4}"
+
+   _write_smf_blk_begin ${_upgradeFile}
+   echo "if svcprop -q \"${_svcName}\" ; then " >> ${_upgradeFile}
+   echo "   value=\"\"" >>${_upgradeFile}
+   get_service_property_value  1 "${_svcName}" "${_svcProp}" ${_upgradeFile}
+   echo "   if [ \"\${value}\" != \"${_svcVal}\" ]; then ">>${_upgradeFile}
+
+   _set_service_property_value "${_svcName}" "${_svcProp}" "${_svcVal}" ${_upgradeFile}
+   echo "      if [ \$? = 0 ]; then" >> ${_upgradeFile}
+   echo "         echo \"SST: Set the property ${_svcProp}, a part of  service ${_svcName}, =${_svcVal}.\"">>${_upgradeFile}
+   echo "      else">>${_upgradeFile}
+   echo "         echo \"SST: The attemp to set the property ${_svcProp}, a part of service ${_svcName}, =${_svcVal} failed.\"">>${_upgradeFile}
+   echo "      fi" >> ${_upgradeFile}
+   echo "   else">>${_upgradeFile}
+   echo "      echo \"SST: The property ${_svcProp}, a part of service ${_svcName}, is already ${_svcVal}.\"">>${_upgradeFile}
+   echo "   fi">>${_upgradeFile}
+   echo "else">>${_upgradeFile}
+   echo "   echo \"SST: The service ${_svcName} is not installed.\"">>${_upgradeFile}
+   echo "fi">>${_upgradeFile}
+   _write_smf_blk_end ${_upgradeFile}
+}
+
+
+# ============================================================================
+# Function: write_svc_prop_to_upgrade_file()
+#
+# This function write to svc upgrade file for setting SMF-enabled services
+# property value in Solaris 10 and newer versions of the OS.
+# Parameters:   $1   FMRI of the service
+#               $2   property
+#               $3   value to set
+#               $4   upgrade file
+# returns:
+#               none
+# ============================================================================
+write_svc_prop_to_upgrade_file ()
+{
+   svcName="${1}"
+   svcProp="${2}"
+   svcVal="${3}"
+   upgradeFile="${4}"
+
+   echo "if svcprop -q \"${svcName}\" ; then " >> ${upgradeFile}
+   echo "   value=\"\"" >>${upgradeFile}
+   echo "   changeValue=0" >>${upgradeFile}
+   get_service_property_value  1 "${svcName}" "${svcProp}" "${upgradeFile}"
+   echo "   if [ \"\${value}\" != \"${svcVal}\" ]; then ">>${upgradeFile}
+   echo "      changeValue=1" >>${upgradeFile}
+   _set_service_property_value "${svcName}" "${svcProp}" "${svcVal}" ${upgradeFile}
+   if [ "${JASS_SAVE_BACKUP}" = "1" ]; then
+      echo "      if [ \$? = 0 ]; then " >> ${upgradeFile}
+
+      manifest_file="${JASS_RUN_MANIFEST}"
+      if [ "${JASS_STANDALONE}" = "0" ] ; then
+         manifest_file=`echo "${manifest_file}" | sed 's/^\/a\//\//g'`
+      fi
+      # when in jumpstart mode upgradeFile = /a/var/svc/profile/upgrade, while in standalone mode upgrade
+      # file is /var/svc/profile/upgrade. undo is always in standalone mode
+      echo "         echo \"X\\t${JASS_SCRIPT}\\t_undo_service_property_value ${svcName} ${svcProp} \\\"\$value\\\" /var/svc/profile/upgrade \">>${manifest_file}" >> ${upgradeFile}
+      echo "         echo \"SST: Set property ${svcProp}, a part of service ${svcName}, =${svcVal}.\"" >> ${upgradeFile}
+
+      echo "      else" >> ${upgradeFile}
+      echo "         echo \"SST: The attempt to set property ${svcProp}, a part of service ${svcName},=${svcVal} failed.\"" >> ${upgradeFile}
+      echo "      fi" >> ${upgradeFile}
+   fi
+   echo "   else">>${upgradeFile}
+   echo "      echo \"SST: The property ${svcProp}, a part of service ${svcName}, is already ${svcVal}.\"">>${upgradeFile}
+   echo "   fi">>${upgradeFile}
+   echo "else">>${upgradeFile}
+   echo "   echo \"SST: Service ${svcName} is not installed.\"">>${upgradeFile}
+   echo "fi" >> ${upgradeFile}
+}
+
+
+# ============================================================================
+# Function: _lock_user_account
+#
+# This function is used to lock a user in Solaris
+# 10 and newer versions of the OS.
+# Parameters:   $1  - user id to be locked
+# Return:    none
+# ============================================================================
+_lock_user_account()
+{
+   # $1     = user id
+   user="${1}"
+   if is_user_account_locked "${user}"; then
+      :
+   else
+      chroot ${JASS_ROOT_DIR} /usr/bin/passwd -l ${user} >/dev/null
+   fi
+}
+
+
+# ============================================================================
+# Function: _unlock_user_account
+#
+# This function is used to unlock a user in Solaris
+# 10 and newer versions of the OS.
+# Parameters:   $1  - user id to be locked
+# Return:    none
+# ============================================================================
+_unlock_user_account()
+{
+   # $1     = user id
+   user="${1}"
+   if is_user_account_locked "${user}" ; then
+      chroot ${JASS_ROOT_DIR} /usr/bin/passwd -u ${user} >/dev/null
+   fi
+}
+
+# ============================================================================
+# Function: _get_rwx_bit_values()
+#
+# Return the bit values for ls output (rw[xts]) of 4, 2, and 1, respectively.
+# For example, "rwx" and "rwt" returns 7, "rw-" returns 6.
+#
+# For use by get_file_permissions().
+#
+# Note: x, t, and s all indicate execute bit is on,
+# and -, T, S, l, and L all indicate execute bit is off.
+# See the ls(1) man page.
+#
+# Input:
+# $1	bit values from ls output (rw[xts]). "-" means bit is off.
+#
+# Return:
+# bit permission value (0 - 7).  0 if invalid.
+#
+# ============================================================================
+_get_rwx_bit_values()
+{
+   case ${1} in
+   rw[xts]) return 7;;
+   rw-)     return 6;;
+   r-[xts]) return 5;;
+   r--)     return 4;;
+   -w[xts]) return 3;;
+   -w-)     return 2;;
+   --[xts]) return 1;;
+   ---)     return 0;;
+   *)       return 0;;
+   esac
+}
+
+
+# ============================================================================
+# Function: get_file_permissions()
+#
+# Given a regular or special file or directory, print the file permission
+# bits in chmod(1) octal format.
+#
+# Input:
+# $1	name of regular or special file or directory
+#
+# Return:
+# 0	if file found (else file not found)
+#
+# Output:
+# File permission bits (if file found), otherwise nothing is output.
+# Value returned is in octal with a leading "0".
+#
+# ============================================================================
+get_file_permissions()
+{
+   if [ -z "$1" ] ; then
+      return 1
+   elif [ ! -f "$1" -a ! -d "$1" -a ! -b "$1" -a ! -c "$1" ] ; then
+      return 1
+   fi
+
+   filePerms=0
+
+   # 04000 2048 set user id (S)
+   if [ -u "$1" ] ; then
+      filePerms=`expr $filePerms + 1024`
+   fi
+
+   # 02000 1024 set group id and enable mandatory locking (S)
+   if [ -g "$1" ] ; then
+      filePerms=`expr $filePerms + 1024`
+   fi
+
+   # 01000  512 sticky bit (restricted directory file removal) (t)
+   if [ -k "$1" ] ; then
+      filePerms=`expr $filePerms + 512`
+   fi
+
+   # Get rwx permissions from ls output
+   # Note: x, t, and s all indicate execute bit is on
+   lsoutput=`ls -ld $1`
+
+   # 00700  448 rwx by owner
+   fileUser=`echo $lsoutput | cut -b 2-4`
+   _get_rwx_bit_values $fileUser
+   userBits=$?
+
+   # 00070   56 rwx by group
+   fileGroup=`echo $lsoutput | cut -b 5-7`
+   _get_rwx_bit_values $fileGroup
+   groupBits=$?
+
+   # 00007    7 rwx by other
+   fileOther=`echo $lsoutput | cut -b 8-10`
+   _get_rwx_bit_values $fileOther
+   otherBits=$?
+
+   filePerms=`expr \( $userBits \* 64 \) + \( $groupBits \* 8 \) + $otherBits + $filePerms`
+
+   printf "%05o\n" $filePerms
+   return 0
+}
+
+
+# ============================================================================
+# Function: get_file_owner()
+#
+# Given a regular or special file or directory, print the file owner.
+#
+# Input:
+# $1	name of regular or special file or directory
+#
+# Return:
+# 0	if file found (else file not found)
+#
+# Output:
+# File owner (if file found), otherwise nothing is output
+#
+# ============================================================================
+get_file_owner()
+{
+   if [ -z "$1" ] ; then
+      return 1
+   elif [ ! -f "$1" -a ! -d "$1" -a ! -b "$1" -a ! -c "$1" ] ; then
+      return 1
+   fi
+
+   ls -ld "$1" | nawk '{print $3}'
+   return 0
+}
+
+
+# ============================================================================
+# Function: get_file_group()
+#
+# Given a regular or special file or directory, print the file group.
+#
+# Input:
+# $1	name of regular or special file or directory
+#
+# Return:
+# 0	if file found (else file not found)
+#
+# Output:
+# File group (if file found), otherwise nothing is output
+#
+# ============================================================================
+get_file_group()
+{
+   if [ -z "$1" ] ; then
+      return 1
+   elif [ ! -f "$1" -a ! -d "$1" -a ! -b "$1" -a ! -c "$1" ] ; then
+      return 1
+   fi
+
+   ls -ld "$1" | nawk '{print $4}'
+   return 0
+}

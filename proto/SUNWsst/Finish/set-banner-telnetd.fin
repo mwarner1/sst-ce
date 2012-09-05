@@ -1,0 +1,73 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)set-banner-telnetd.fin	3.11	05/04/12 SMI"
+#
+# This programs adds the banner ${JASS_BANNER_TELNETD} to the
+# /etc/default/telnetd file to be used by the in.telnetd(1M) daemon.
+#
+
+logMessage "Setting the service banner for the TELNET daemon."
+echo ""
+
+if check_os_min_revision 5.11; then
+ if ! is_service_installed svc:/network/telnet:default ; then
+  logMessage "Telnet not installed. Skipping."
+ fi
+
+elif check_os_min_revision 5.6 ; then
+   TELNETD="${JASS_ROOT_DIR}etc/default/telnetd"
+
+   # If the file was not found, then create it.
+
+   if [ ! -f ${TELNETD} ]; then
+      create_a_file -m 640 -o root:sys ${TELNETD}
+      echo ""
+   fi
+
+   oldValue=`grep '^BANNER=' ${TELNETD} | nawk -F= '{ print $2 }' 2>/dev/null`
+
+   if [ "${oldValue}" != "${JASS_BANNER_TELNETD}" ]; then
+
+      backup_file ${TELNETD}
+      echo ""
+
+      logMessage 'Setting \\\"BANNER\\\" to \\\"${JASS_BANNER_TELNETD}\\\" in ${TELNETD}.'
+
+      cat ${TELNETD}.${JASS_SUFFIX} |\
+         sed "s/^BANNER=.*$/BANNER=${JASS_BANNER_TELNETD}/g" > ${TELNETD}
+
+      # The following case is needed if the BANNER line was not
+      # found in the file.
+
+      if [ `grep -c '^BANNER=' ${TELNETD}` = 0 ]; then
+         cat >> ${TELNETD} << EOF
+BANNER=${JASS_BANNER_TELNETD}
+EOF
+      fi
+   fi
+else
+   logInvalidOSRevision "5.6+"
+fi

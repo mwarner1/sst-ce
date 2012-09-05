@@ -1,0 +1,121 @@
+<!DOCTYPE refentry PUBLIC "-//Sun Microsystems//DTD DocBook V3.0-Based SolBook Subset V2.0//EN" [
+
+<!-- Begin Document Specific Declarations -->
+
+<?Fm: Validation Off>
+
+<!ENTITY file-name CDATA "audit_public_funcs">
+<!ENTITY ModifiedDate CDATA "29 July 2005">
+<!ENTITY man4 CDATA "File Formats">
+<!ENTITY release CDATA "Solaris Security Toolkit 4.2">
+<!ENTITY suncopy CDATA "Copyright (c) 2005, Sun Microsystems, Inc. All Rights Reserved">
+<!ENTITY synp-tt CDATA "SYNOPSIS">
+<!ENTITY desc-tt CDATA "DESCRIPTION">
+<!ENTITY SST-REFMAN CDATA "Solaris Security Toolkit 4.2 Reference Manual">
+<!ENTITY exam-tt CDATA "EXAMPLES">
+<!ENTITY attr-tt CDATA "ATTRIBUTES">
+<!ENTITY also-tt CDATA "SEE ALSO">
+
+<!-- End Document Specific Declarations -->
+
+]>
+<refentry lang = "en" os = "solaris"><refmeta><refentrytitle lang = "en">&file-name;</refentrytitle>
+<manvolnum>4</manvolnum>
+<refmiscinfo class = "date">&ModifiedDate;</refmiscinfo>
+<refmiscinfo class = "sectdesc">&man4;</refmiscinfo>
+<refmiscinfo class = "software">&release;</refmiscinfo>
+<refmiscinfo class = "arch">generic</refmiscinfo>
+<refmiscinfo class = "copyright">&suncopy;</refmiscinfo><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>alias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>unalias command</primary></indexterm><indexterm
+CLASS = "singular" SIGNIFICANCE = "Normal"><primary>pseudonym, create
+or remove</primary></indexterm></refmeta>
+<refnamediv>
+<refname>&file-name;</refname><refpurpose>list all public audit functions
+in audit_public.funcs file</refpurpose></refnamediv>
+<refsynopsisdiv><title>&synp-tt;</title>
+<synopsis os = "solaris"><filename>audit_public_funcs</filename></synopsis></refsynopsisdiv>
+<refsect1 lang = "en"><title>&desc-tt;</title>
+<para>All auditing functions used in audit scripts are located in the <filename>Drivers</filename> directory in the audit_public.funcs file. Functions defined in this file are public and can be freely used in both standard and custom audit scripts. In many cases, the functions defined in this file are stubs that call functions defined in the <filename>audit_private.funcs</filename> file. These stubs were implemented to allow users to code their scripts to these public interfaces without needing to know if the underlying code is modified or enhanced in later releases.</para>
+<para>Framework functions provide flexibility for you to change the behavior of the Solaris Security Toolkit software without modifying source code. </para></refsect1>
+<refsect1 lang = "en"><title>EXTENDED DESCRIPTION</title>
+<note role = "note" os = "solaris"><para>Two types of audit functions are in the software: private and public. The functions defined in the <filename>audit_private.funcs</filename> file are private and not for public use. Never use the private scripts defined in this file. Only use the public scripts defined in the <filename>audit_public.funcs</filename> file.</para></note>
+<para>Use these functions as part of audit scripts to assess components of the system's stored and run-time configurations. These functions are public interfaces to the Solaris Security Toolkit software's audit framework.</para>
+<para>When customizing or creating audit scripts, use the following functions to perform standard operations:</para>
+<para><itemizedlist mark = "bullet" spacing = "normal"><listitem><para><filename>check_fileContentsExist</filename> and <filename>check_fileContentsNotExist</filename></para></listitem>
+<listitem><para><filename>check_fileExists</filename> and <filename>check_fileNotExists</filename></para></listitem>
+<listitem><para><filename>check_fileGroupMatch</filename> and <filename>check_fileGroupNoMatch</filename></para></listitem>
+<listitem><para><filename>check_fileModeMatch</filename> and <filename>check_fileModeNoMatch</filename></para></listitem>
+<listitem><para><filename>check_fileOwnerMatch</filename> and <filename>check_fileOwnerNoMatch</filename></para></listitem>
+<listitem><para><filename>check_fileTemplate</filename></para></listitem>
+<listitem><para><filename>check_fileTypeMatch</filename> and <filename>check_fileTypeNoMatch</filename></para></listitem>
+<listitem><para><filename>check_if_crontab_entry_present</filename></para></listitem>
+<listitem><para><filename>check_keyword_value_pair</filename></para></listitem>
+<listitem><para><filename>check_minimized</filename></para></listitem>
+<listitem><para><filename>check_minimized_service</filename></para></listitem>
+<listitem><para><filename>check_packageExists</filename> and <filename>check_packageNotExists</filename></para></listitem>
+<listitem><para><filename>check_patchExists</filename> and <filename>check_patchNotExists</filename></para></listitem>
+<listitem><para><filename>check_processArgsMatch</filename> and <filename>check_processArgsNoMatch</filename></para></listitem>
+<listitem><para><filename>check_processExists</filename> and <filename>check_processNotExists</filename></para></listitem>
+<listitem><para><filename>check_serviceConfigExists</filename> and <filename>check_serviceConfigNotExists</filename></para></listitem>
+<listitem><para><filename>check_serviceDisabled</filename> and <filename>check_serviceEnabled</filename></para></listitem>
+<listitem><para><filename>check_serviceInstalled</filename> and <filename>check_serviceNotInstalled</filename></para></listitem>
+<listitem><para><filename>check_serviceOptionDisabled</filename> and <filename>check_serviceOptionEnabled</filename></para></listitem>
+<listitem><para><filename>check_servicePropDisabled</filename></para></listitem>
+<listitem><para><filename>check_serviceRunning and check_serviceNotRunning</filename></para></listitem>
+<listitem><para><filename>check_startScriptExists</filename> and <filename>check_startScriptNotExists</filename></para></listitem>
+<listitem><para><filename>check_stopScriptExists</filename> and <filename>check_stopScriptNotExists</filename></para></listitem>
+<listitem><para>check_userLocked and check_userNotLocked</para></listitem>
+<listitem><para><filename>finish_audit</filename></para></listitem>
+<listitem><para>get_cmdFromService</para></listitem>
+<listitem><para><filename>start_audit</filename></para></listitem></itemizedlist></para>
+<para>For detailed information and instructions on the use of each of these functions please refer to the &ldquo;Framework Functions&rdquo; chapter of the <citetitle pubwork = "book">&SST-REFMAN;</citetitle>.</para></refsect1>
+<refsect1 lang = "en"><title>&exam-tt;</title>
+<example width = "100" os = "solaris"><title>Checking for the Existence of a File</title><screen width = "100" format = "linespecific">
+check_fileExists /etc/inet/inetd.conf 1 LOG
+</screen></example>
+<example width = "70" arch = "sparc" os = "solaris"><title>Checking for the Existence of a Package</title><screen width = "70" format = "linespecific">
+check_packageExists SUNWsshdu 1 LOG
+</screen></example></refsect1>
+<refsect1 lang = "en"><title>&attr-tt;</title>
+<para>See <citerefentry><refentrytitle lang = "en">attributes</refentrytitle>
+<manvolnum>5</manvolnum></citerefentry> for descriptions of the following attributes.</para><informaltable frame = "all" colsep = "1" rowsep = "0" tabstyle = "Table-RulesAllNoTitle" os = "solaris">
+<tgroup cols = "2" align = "left">
+<colspec colnum = "1" colname = "1" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<colspec colnum = "2" colname = "2" colwidth = "3*"  align = "left" colsep = "0" rowsep ="0">
+<thead valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "center" valign = "top" os = "solaris"><para>ATTRIBUTE TYPE</para></entry>
+<entry colname = "2" align = "center" valign = "top" os = "solaris"><para>ATTRIBUTE VALUES</para></entry>
+</row>
+</thead>
+<tbody valign = "top">
+<row rowsep = "1" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Availability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>SUNWsst</para></entry>
+</row>
+<row rowsep = "0" valign = "top">
+<entry colname = "1" align = "left" valign = "top" os = "solaris"><para>Stability</para></entry>
+<entry colname = "2" align = "left" valign = "top" os = "solaris"><para>Unstable</para></entry>
+</row>
+</tbody>
+</tgroup></informaltable></refsect1>
+<refsect1 lang = "en"><title>&also-tt;</title>
+<para><citerefentry><refentrytitle lang = "en">add-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">common_log_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">common_misc_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">driver_public_funcs</refentrytitle>
+<manvolnum>4</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-check-sum</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">jass-execute</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">make-jass-pkg</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">rm-client</refentrytitle>
+<manvolnum>1M</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle lang = "en">security_drivers</refentrytitle>
+<manvolnum>7</manvolnum></citerefentry></para></refsect1></refentry>

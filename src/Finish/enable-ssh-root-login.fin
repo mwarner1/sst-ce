@@ -1,0 +1,86 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)enable-ssh-root-login.fin 1.4     06/10/13 SMI"
+#
+# This script changes the PermitRootLogin variable in the 
+# /etc/ssh/sshd_config file, to allow direct remote login 
+# to the 'root' account.
+#
+
+LOGIN=${JASS_ROOT_DIR}etc/ssh/sshd_config
+PARAM=PermitRootLogin
+
+logMessage 'Enabling the function: SSH direct, remote login as the \\\"root\\\" account'
+echo ""
+
+if check_os_min_revision 5.9 ; then
+
+   pkgExists=0
+   if check_os_min_revision 5.10 ; then
+      if is_service_installed svc:/network/ssh:default ; then
+         pkgExists=1 
+      else
+         logNotice "SSH (Service svc:/network/ssh:default) does not appear to be installed."
+       fi
+   else
+      if pkginfo -q -R ${JASS_ROOT_DIR} SUNWsshdr ; then
+         pkgExists=1 
+      else 
+         logNotice "SSH (package SUNWsshdr) does not appear to be installed."
+      fi
+   fi
+
+   if [ $pkgExists -eq 1 ] ; then
+      if [ ! -f ${LOGIN} ]; then
+         create_a_file -m 644 -o root:sys ${LOGIN}
+         echo ""
+      fi
+
+      if [ `grep -c "^[^#]*${PARAM}[ 	]*yes$" ${LOGIN}` = 0 ]; then
+
+         backup_file ${LOGIN}
+         echo ""
+
+         logMessage 'Setting the \\\"${PARAM}\\\" parameter to \\\"yes\\\" in ${LOGIN}.'
+
+         # First comment out all PermitRootLogin entries then
+         # uncomment the "PermitRootLogin yes" one if it exists.
+         # If it doesn't exist then add the a new setting of yes.
+
+         cat ${LOGIN}.${JASS_SUFFIX} | \
+              sed "s/^[ 	]*${PARAM}[ 	]/#${PARAM} /g" | \
+   	      sed "s/#[ #	]*${PARAM}[ 	]*yes/${PARAM} yes/" > ${LOGIN}
+   
+         if [ `grep "^[^#]*${PARAM}[ 	]yes$" ${LOGIN} | wc -l` = 0 ]; then
+           echo "${PARAM} yes" >> ${LOGIN}
+         fi
+      fi
+   else
+      logNotice "Skipping enabling ssh remote root login to the system."
+   fi
+else
+   logInvalidOSRevision "5.9+"
+fi

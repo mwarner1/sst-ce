@@ -1,0 +1,128 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident  "@(#)set-log-file-permissions.aud 1.3     07/01/09 SMI"
+#
+
+# ****************************************************************************
+# Service definition section.
+# ****************************************************************************
+
+service="Check Log File Permissions"
+servfil="set-log-file-permissions.aud"
+
+# Log files:
+SYSLOG=${JASS_ROOT_DIR}var/log/syslog
+AUTHLOG=${JASS_ROOT_DIR}var/log/authlog
+UTMPX=${JASS_ROOT_DIR}var/adm/utmpx
+WTMPX=${JASS_ROOT_DIR}var/adm/wtmpx
+LOGINLOG=${JASS_ROOT_DIR}var/adm/loginlog
+CONNLOG=${JASS_ROOT_DIR}var/log/connlog
+# Log directories:
+SA=${JASS_ROOT_DIR}var/adm/sa
+AUDIT=${JASS_ROOT_DIR}var/audit
+
+#-----------------------------------------------------------------------------
+
+servhdr_txt="
+Description of Service or Function:
+
+   The purpose of this check is to determine if log file permission
+   and ownership are correct.
+
+Rationale for Verification Check:
+
+   Incorrect log file permissions on files can allow someone to alter or
+   delete logged events, obliterating any record of the loged event.
+
+   It's critical to protect system log files from being modified by
+   unauthorized individuals.  Also, certain logs contain sensitive data that
+   should only be available to the system administrator.
+
+Determination of Compliance:
+
+   This check reports a failure for each log file with incorrect permission.
+   Log files checked are ${SYSLOG}, ${AUTHLOG}, ${UTMPX}, ${WTMPX},
+   ${LOGINLOG}, ${CONNLOG}, ${SA}/*, and ${AUDIT}/*.
+"
+
+#-----------------------------------------------------------------------------
+
+# ****************************************************************************
+# Check processing section.
+# ****************************************************************************
+
+start_audit "${servfil}" "${service}" "${servhdr_txt}"
+
+check_fileOwnerMatch  "${SYSLOG}" 'root' 1 LOG
+check_fileGroupMatch  "${SYSLOG}" 'sys' 1 LOG
+check_fileModeNoMatch "${SYSLOG}" "-100 -20 -10 -2 -1" 1 LOG
+
+check_fileOwnerMatch  "${AUTHLOG}" 'root' 1 LOG
+check_fileGroupMatch  "${AUTHLOG}" 'sys' 1 LOG
+check_fileModeNoMatch "${AUTHLOG}" "-100 -40 -20 -10 -4 -2 -1" 1 LOG
+
+check_fileOwnerMatch  "${UTMPX}" 'root' 1 LOG
+check_fileGroupMatch  "${UTMPX}" 'bin' 1 LOG
+check_fileModeNoMatch "${UTMPX}" "-100 -20 -10 -2 -1" 1 LOG
+
+check_fileOwnerMatch  "${WTMPX}" 'adm' 1 LOG
+check_fileGroupMatch  "${WTMPX}" 'adm' 1 LOG
+check_fileModeNoMatch "${WTMPX}" "-100 -10 -2 -1" 1 LOG
+
+for file in "${CONNLOG}" "${LOGINLOG}" ; do
+   group="sys"
+   if [ "${file}" = "${CONNLOG}" ]; then
+      group="root"
+   fi
+
+   if [ -f "${file}" ] ; then
+      check_fileOwnerMatch  "${file}" 'root' 1 LOG
+      check_fileGroupMatch  "${file}" "${group}" 1 LOG
+      check_fileModeNoMatch "${file}" "-100 -40 -20 -10 -4 -2 -1" 1 LOG
+   fi
+done
+
+for file in ${SA}/* ; do
+   if [ -f "${file}" ] ; then
+      check_fileOwnerMatch  "${file}" 'sys' 1 LOG
+      check_fileGroupMatch  "${file}" 'sys' 1 LOG
+      check_fileModeNoMatch "${file}" "-100 -20 -10 -2 -1" 1 LOG
+   fi
+done
+
+for file in ${AUDIT}/* ; do
+   if [ -f "${file}" ] ; then
+      check_fileOwnerMatch  "${file}" 'root' 1 LOG
+      check_fileGroupMatch  "${file}" 'root' 1 LOG
+      check_fileModeNoMatch "${file}" "-100 -20 -10 -4 -2 -1" 1 LOG
+   fi
+done
+
+if [ "${SCRIPT_SCORE}" = "0" ] ; then
+   logSuccess 'No files were found with incorrect permission or ownership.'
+fi
+
+finish_audit

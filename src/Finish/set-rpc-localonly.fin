@@ -1,0 +1,78 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+#ident	"@(#)set-rpc-localonly.fin		1.4	06/09/05 SMI"
+# 
+# This script sets the Remote Procedure Call (RPC) service to
+# only respond to local requests.  This will prevent other machines
+# from accessing this service.  Where this functionality is not
+# available, this script will disable the service instead.
+# 
+# If this script disables rpc service, it will also remove
+# NIS entries from /etc/nsswitch.conf, to prevent system lockout.
+#
+NSSWITCH=${JASS_ROOT_DIR}etc/nsswitch.conf
+
+logMessage "Securing the service: Remote Procedure Call (RPC) Portmapper"
+echo ""
+
+svc="
+   svc:/network/rpc/bind:default
+   svc:/network/rpc/keyserv:default
+"
+
+if check_sbd_available ; then
+   # bind needs to be set to local only mode
+   if  check_serviceInstalled "svc:/network/rpc/bind:default" 0 ; then 
+      set_service_property_value "svc:/network/rpc/bind:default" \
+       "config/local_only" "true" "application" "boolean"
+   fi
+   # and leave keyserv alone now.  This will also fix residual 
+   # NIS/bind off issues.
+else
+   if check_os_min_revision 5.10 ; then
+      disable_service_immediate "${svc}"
+   else
+      if [ "${JASS_KILL_SCRIPT_DISABLE}" = "1" ]; then
+	 disable_rc_file ${JASS_ROOT_DIR}etc/rcS.d K41rpc
+	 disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K41rpc
+	 disable_rc_file ${JASS_ROOT_DIR}etc/rc0.d K85rpc
+	 disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K41rpc
+	 disable_rc_file ${JASS_ROOT_DIR}etc/rc1.d K67rpc
+      fi
+      disable_rc_file ${JASS_ROOT_DIR}etc/rc2.d S71rpc
+   fi
+
+   #
+   # Remove NIS/NIS+ from /etc/nsswitch.conf if present.
+   # This avoids lockout of root at login due to a required password change,
+   # which can't be made if nis is specified in nsswitch.conf, but disabled.
+   #
+   if grep -v '^[ 	]*#' ${NSSWITCH} 2>/dev/null |grep nis >/dev/null 2>&1 ; then
+      logNotice "Disabling NIS/NIS+ in nsswitch.conf since RPC is disabled."
+      backup_file ${NSSWITCH}
+      cp ${JASS_ROOT_DIR}etc/nsswitch.dns ${NSSWITCH}
+   fi
+fi

@@ -1,0 +1,12 @@
+.MAKE_VERSION:	VERSION-1.0
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/Files/root:
+	[ -d ../../../proto/SUNWsst/Files/root ] || /bin/mkdir -p ../../../proto/SUNWsst/Files/root
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/Files/root/.cshrc:
+	/usr/bin/cp -f .cshrc ../../../proto/SUNWsst/Files/root/.cshrc
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/root/.cshrc
+.BUILT_LAST_MAKE_RUN:
+../../../proto/SUNWsst/Files/root/.profile:
+	/usr/bin/cp -f .profile ../../../proto/SUNWsst/Files/root/.profile
+	/usr/bin/chmod 444 ../../../proto/SUNWsst/Files/root/.profile

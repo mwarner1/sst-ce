@@ -1,0 +1,210 @@
+#!/bin/sh
+#
+# CDDL HEADER START
+#
+# The contents of this file are subject to the terms of the
+# Common Development and Distribution License (the License).
+# You may not use this file except in compliance with the License.
+#
+# You can obtain a copy of the license at usr/src/CDDL.txt
+# or http://www.opensolaris.org/os/licensing.
+# See the License for the specific language governing permissions
+# and limitations under the License.
+#
+# When distributing Covered Code, include this CDDL HEADER in each
+# file and include the License file at usr/src/CDDL.txt.
+# If applicable, add the following below this CDDL HEADER, with the
+# fields enclosed by brackets [] replaced with your own identifying
+# information: Portions Copyright [yyyy] [name of copyright owner]
+#
+# CDDL HEADER END
+#
+#
+# Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
+# Use is subject to license terms.
+#
+# ident	"@(#)enable-bsm.fin	3.23	05/05/11 SMI"
+#
+# This script enables the SunSHIELD Basic Security Module service.
+# The abort disable code added during enabling is overridden to permit
+# abort sequences.  In addition, default audit configuration is installed
+# in files /etc/security/{audit_control,audit_class,audit_event}.
+# the 'audit_warn' email alias is added, if necessary,
+#
+
+AUDITCONTROL="${JASS_ROOT_DIR}etc/security/audit_control"
+AUDITCLASS="${JASS_ROOT_DIR}etc/security/audit_class"
+AUDITEVENT="${JASS_ROOT_DIR}etc/security/audit_event"
+SYSTEM="${JASS_ROOT_DIR}etc/system"
+ALIASES="${JASS_ROOT_DIR}etc/mail/aliases"
+# Audit_warn email alias
+AUDIT_WARN="root"
+JASS_AUDIT_FILES="	/etc/security/audit_control
+			/etc/security/audit_class
+			/etc/security/audit_event"
+
+
+logMessage "Enabling the SunSHIELD Basic Security Module (BSM)"
+echo
+
+if check_os_min_revision "5.8" ; then
+   if [ -x ${JASS_ROOT_DIR}etc/security/bsmconv ]; then
+   
+      #
+      # See if we are in a non-global zone and, if so,
+      # if per-zone configurations are enabled.
+      #
+      perZoneAuditing=0
+      if check_os_min_revision 5.10; then
+         if [ "${JASS_ZONE_NAME}" != "global" ] ; then
+            /usr/sbin/chroot ${JASS_ROOT_DIR} /usr/sbin/auditconfig -getpolicy \
+               2>/dev/null | grep -w perzone >/dev/null
+            if [ $? -eq 0 ] ; then
+               perZoneAuditing=1
+            fi
+         fi
+      fi
+   
+   
+      #
+      # See BSM auditing is enabled
+      #
+      auditAlreadyEnabled=0
+      auditJustEnabled=0
+      if [ "${JASS_STANDALONE}" = "1" ]; then
+   
+         auditState=`/usr/sbin/chroot ${JASS_ROOT_DIR} \
+            /usr/sbin/auditconfig -getcond 2>/dev/null | grep -cw "auditing"`
+         # bsmconv adds this to /etc/system: set c2audit:audit_load = 1
+         auditLoad=`grep -c "^[^*]*set.*c2audit:audit_load.*=.*1" \
+            ${JASS_ROOT_DIR}etc/system`
+   
+         if [ "${auditState}" = 1 -o "${auditLoad}" != 0 ]; then
+            logNotice "BSM Auditing has already been enabled."
+            echo
+            auditAlreadyEnabled=1
+         fi
+      fi
+   
+   
+      #
+      # Enable BSM auditing if not enabled.
+      #
+      # Do this for Solaris 9 or earlier and for global zones.
+      #
+      if [ "${auditAlreadyEnabled}" = "0" ] ; then # need to enable it
+         if [ "${JASS_ZONE_NAME}" = "global" ]; then
+            # Solaris <= 9 or global zone
+
+            # Perform backup, since both bsmconv and the "ed" command
+            # will both modify /etc/system
+            backup_file ${SYSTEM}
+            echo
+            oldFile="${SYSTEM}.${JASS_SUFFIX}"
+   
+            # Record the checksum since the copy undo operation will occur
+            # after BSM has already removed its lines from /etc/system.
+   
+            fix_d=`echo ${oldFile} | sed -e "s,${JASS_ROOT_DIR}/,/,"`
+            echo "${fix_d}\t`checksum ${SYSTEM}`" >> ${JASS_RUN_CHECKSUM}
+   
+            # Enable auditing on the system by running bsmconv.
+            logMessage 'Executing ${JASS_ROOT_DIR}etc/security/bsmconv.'
+            echo
+            ( LANG=C; LC_ALL=C; export LANG LC_ALL;
+                 echo "y" | /etc/security/bsmconv ${JASS_ROOT_DIR}
+            )
+   
+            # Add appropriate manifest entry to enable automatic undo.
+            add_to_manifest X "( LANG=C; LC_ALL=C; export LANG LC_ALL; \
+               echo y y | xargs -n 1 | /etc/security/bsmunconv )"
+   
+            #
+            # Remove abort disable configuration to permit abort sequences.
+            #
+            echo
+            logMessage \
+               'Removing the \\\"abort disable\\\" code that was added to file
+${JASS_ROOT_DIR}etc/system by command ${JASS_ROOT_DIR}etc/security/bsmconv.'
+            echo
+   
+            ed -s ${SYSTEM} <<- EOF-EOF > /dev/null 2>&1
+		g/^set abort_enable *= *0/s/^set abort_enable *= *0/\* &/g
+		.
+		w
+		q
+		EOF-EOF
+   
+            auditJustEnabled=1
+   
+   
+         else # Solaris 10, but not global zone
+            logFailure "When per-zone BSM auditing is configured, auditing must\
+be enabled for each zone.  To enable, run this from the global zone:\
+/etc/security/bsmconv /root/directory/name/for/zone"
+         fi
+      fi
+   
+   
+      #
+      # Setup BSM configuration files
+      #
+      # If BSM Auditing is enabled or has been just enabled, and
+      # we are in the global zone, running Solaris 9 or earlier, or
+      # per-zone auditing is enabled, setup configuration files for it:
+      #	/etc/security/{audit_control,audit_class,audit_event}
+      #	/etc/aliases
+      #
+      if [ "${auditAlreadyEnabled}" = "1" -o "${auditJustEnabled}" = "1" ]
+      then
+         if [ "${JASS_ZONE_NAME}" = "global" -o "${perZoneAuditing}" = "1" ]
+         then
+   
+            logMessage "Copying files from the 'Auditing in the Solaris OE' BluePrint OnLine article
+available at http://www.sun.com/blueprints"
+            echo
+   
+            # Copy Solaris-version specific audit files:
+            copy_files "${JASS_AUDIT_FILES}"
+   
+   
+            #
+            # Add audit_warn email alias if not there.
+            #
+            # Do this for Solaris 9 or earlier, global zones, and non-global
+            # zones when per-zone configuration is enabled.
+            #
+            echo
+            logMessage "Checking if the 'audit_warn' alias is installed."
+            echo
+   
+            grep "^audit_warn:" ${ALIASES} > /dev/null 2>&-
+            if [ $? -eq 1 ]; then # audit_warn email alias is missing--add it
+               backup_file ${ALIASES}
+               echo
+   
+               logMessage \
+                  "Installing 'audit_warn' alias for the 'root' account."
+               echo
+               echo "audit_warn: ${AUDIT_WARN}" >> ${ALIASES}
+   
+               if check_os_min_revision 5.9 ; then
+                  NEWALIASES=usr/sbin/newaliases
+               else
+                  NEWALIASES=usr/bin/newaliases
+               fi
+   
+               if [ -x ${JASS_ROOT_DIR}${NEWALIASES} ] ; then
+                  /usr/sbin/chroot ${JASS_ROOT_DIR} /${NEWALIASES}
+               fi
+            fi # audit_warn email alias
+         fi # global zone or per-zone auditing
+      fi # audit enabled
+   
+   else
+      logFileNotFound "${JASS_ROOT_DIR}etc/security/bsmconv"
+   fi
+   
+else
+   logInvalidOSRevision "5.8-5.10"
+fi
